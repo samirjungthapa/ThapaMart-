@@ -3,13 +3,12 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { authStart, authSuccess, authFail } from '../store/slices/authSlice.js';
 import api from '../store/api.js';
-import { FiMail, FiLock, FiAlertCircle } from 'react-icons/fi';
-import { motion } from 'framer-motion';
+import ThapaMartLogo from '../components/ThapaMartLogo.jsx';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,124 +17,52 @@ const Login = () => {
   const redirect = new URLSearchParams(location.search).get('redirect') || '/';
 
   useEffect(() => {
-    if (userInfo) {
-      navigate(redirect);
-    }
-  }, [userInfo, navigate, redirect]);
+    if (userInfo) navigate(redirect);
+  }, [navigate, userInfo, redirect]);
 
-  const handleSubmit = async (e) => {
+  const submitHandler = async (e) => {
     e.preventDefault();
     dispatch(authStart());
     try {
-      const { data } = await api.post('/auth/login', { email, password });
+      const { data } = await api.post('/users/login', { email, password });
       dispatch(authSuccess(data));
     } catch (err) {
-      dispatch(
-        authFail(err.response && err.response.data.message ? err.response.data.message : err.message)
-      );
+      dispatch(authFail(err.response?.data?.message || 'Invalid email or password'));
     }
   };
 
   return (
-    <div className="premium-mesh-bg min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="max-w-md w-full glass-panel rounded-3xl p-8 sm:p-10 shadow-premium border border-white/50 dark:border-white/5"
-      >
+    <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyItems:'center', justifyContent:'center', padding:'3rem 1rem', background:'#FFFFFF' }}>
+      <div style={{ width:'100%', maxWidth:'28rem', border:'1px solid #E5E7EB', padding:'3rem' }}>
         
-        {/* Title */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Welcome Back
-          </h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            Sign in to your premium ThapaMart account
-          </p>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', marginBottom:'2.5rem' }}>
+          <ThapaMartLogo size="md" variant="wordmark" />
+          <h2 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'2.5rem', fontWeight:900, color:'#09090B', margin:'1.5rem 0 0.5rem' }}>Sign In</h2>
         </div>
 
-        {/* Error Notification */}
-        {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-sm flex items-center space-x-2.5">
-            <FiAlertCircle className="w-5 h-5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
+        {error && <div style={{ padding:'1rem', background:'#FEF2F2', border:'1px solid #FECACA', color:'#DC2626', fontSize:'0.75rem', fontWeight:600, marginBottom:'1.5rem', textAlign:'center' }}>{error}</div>}
 
-        {/* Login Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          
-          <div className="space-y-4">
-            
-            {/* Email Field */}
-            <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
-                  <FiMail className="w-5 h-5" />
-                </span>
-                <input
-                  type="email"
-                  required
-                  placeholder="name@domain.com"
-                  className="pl-11 pr-5 py-3 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Password Field */}
-            <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">
-                  <FiLock className="w-5 h-5" />
-                </span>
-                <input
-                  type="password"
-                  required
-                  placeholder="••••••••"
-                  className="pl-11 pr-5 py-3 w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
-
-          </div>
-
-          {/* Submit button */}
+        <form onSubmit={submitHandler} style={{ display:'flex', flexDirection:'column', gap:'1.5rem' }}>
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center py-3.5 px-4 rounded-full bg-primary hover:bg-primary-dark text-white font-semibold text-sm shadow-premium transition-all duration-300 hover:scale-102 disabled:bg-slate-350 disabled:scale-100 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Authenticating...' : 'Sign In'}
-            </button>
+            <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.5rem' }}>Email Address</label>
+            <input type="email" required value={email} onChange={e=>setEmail(e.target.value)} style={{ width:'100%', background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'0.875rem 1rem', color:'#09090B', fontSize:'0.875rem', outline:'none' }} onFocus={e=>e.currentTarget.style.borderColor='#09090B'} onBlur={e=>e.currentTarget.style.borderColor='#E5E7EB'} />
           </div>
 
+          <div>
+            <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.5rem' }}>Password</label>
+            <input type="password" required value={password} onChange={e=>setPassword(e.target.value)} style={{ width:'100%', background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'0.875rem 1rem', color:'#09090B', fontSize:'0.875rem', outline:'none' }} onFocus={e=>e.currentTarget.style.borderColor='#09090B'} onBlur={e=>e.currentTarget.style.borderColor='#E5E7EB'} />
+          </div>
+
+          <button type="submit" disabled={loading} style={{ width:'100%', padding:'1rem', background:'#000000', color:'#FFFFFF', fontSize:'0.75rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer', marginTop:'1rem' }}>
+            {loading ? 'Processing...' : 'Sign In'}
+          </button>
         </form>
 
-        {/* Footer info links */}
-        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800/50 text-center text-sm text-slate-500 dark:text-slate-400">
-          <span>New to ThapaMart? </span>
-          <Link to={`/register?redirect=${redirect}`} className="font-semibold text-primary hover:text-primary-dark hover:underline">
-            Create account
-          </Link>
+        <div style={{ marginTop:'2rem', textAlign:'center', fontSize:'0.875rem', color:'#71717A' }}>
+          Don't have an account? <Link to={redirect ? `/register?redirect=${redirect}` : '/register'} style={{ color:'#09090B', fontWeight:700, textDecoration:'none', borderBottom:'1px solid #09090B' }}>Create Account</Link>
         </div>
-
-      </motion.div>
-
+      </div>
     </div>
   );
 };
-
 export default Login;

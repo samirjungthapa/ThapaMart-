@@ -1,50 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
+import { Star, Heart, ShoppingBag, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
 import { addToCart } from '../store/slices/cartSlice.js';
 import { addToWishlist } from '../store/slices/wishlistSlice.js';
 import api from '../store/api.js';
-import { FiStar, FiHeart, FiShoppingBag, FiCheck, FiXOctagon } from 'react-icons/fi';
 import ProductCard from '../components/ProductCard.jsx';
-
-const fallbackProducts = [
-  {
-    id: "prod-1",
-    title: "Pro Sound Max Wireless Headphones",
-    description: "Experience premium sound quality with active noise cancellation, 40-hour battery life, and comfortable memory foam earcups.",
-    category: "electronics",
-    price: 189.99,
-    stock: 25,
-    images: ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80"],
-    ratings: 4.8,
-    reviews: [
-      { name: 'Sarah J.', rating: 5, comment: 'Simply incredible sound stage!' },
-      { name: 'Mitch P.', rating: 4.5, comment: 'Comfy but slightly bulky.' }
-    ]
-  },
-  {
-    id: "prod-2",
-    title: "Minimalist Leather Smart Watch",
-    description: "A sleek, premium smart watch with heart rate tracking, fitness features, and a hand-crafted genuine leather band.",
-    category: "electronics",
-    price: 249.99,
-    stock: 15,
-    images: ["https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&auto=format&fit=crop&q=80"],
-    ratings: 4.6,
-    reviews: []
-  },
-  {
-    id: "prod-3",
-    title: "Classic Cotton Bomber Jacket",
-    description: "Premium cotton bomber jacket designed for comfort and style. Water-resistant outer shell with thermal inner lining.",
-    category: "fashion",
-    price: 89.99,
-    stock: 50,
-    images: ["https://images.unsplash.com/photo-1551028719-00167b16eac5?w=600&auto=format&fit=crop&q=80"],
-    ratings: 4.5,
-    reviews: []
-  }
-];
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -57,9 +18,9 @@ const ProductDetails = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState([]);
-  const [recentlyViewed, setRecentlyViewed] = useState([]);
   
-  // Review form states
+  const [deliveryRegion, setDeliveryRegion] = useState('inside-ringroad');
+  
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
   const [reviewSuccess, setReviewSuccess] = useState(false);
@@ -69,24 +30,13 @@ const ProductDetails = () => {
     try {
       const { data } = await api.get(`/products/${id}`);
       setProduct(data);
-      
-      // Fetch related products dynamically
       if (data && data.category) {
-        const relatedRes = await api.get('/products', {
-          params: { category: data.category, limit: 4 }
-        });
+        const relatedRes = await api.get('/products', { params: { category: data.category, limit: 4 } });
         const list = (relatedRes.data.products || []).filter(p => (p.id || p._id) !== (data.id || data._id));
         setRelatedProducts(list.slice(0, 4));
       }
     } catch (err) {
-      console.warn("ℹ️ API failed. Running local product details finder.");
-      const mockProd = fallbackProducts.find(p => p.id === id || p._id === id);
-      setProduct(mockProd || fallbackProducts[0]);
-      
-      // Fallback related
-      const currentCategory = mockProd ? mockProd.category : 'electronics';
-      const fallbackList = fallbackProducts.filter(p => p.category === currentCategory && (p.id !== id));
-      setRelatedProducts(fallbackList);
+      setProduct(null);
     } finally {
       setLoading(false);
     }
@@ -99,37 +49,12 @@ const ProductDetails = () => {
     setReviewError('');
   }, [id]);
 
-  useEffect(() => {
-    if (product) {
-      // Save to recently viewed
-      const saved = localStorage.getItem('recentlyViewed');
-      let list = saved ? JSON.parse(saved) : [];
-      list = list.filter(item => (item.id || item._id) !== (product.id || product._id));
-      list.unshift(product);
-      localStorage.setItem('recentlyViewed', JSON.stringify(list.slice(0, 8)));
-
-      // Set other recently viewed (excluding current)
-      setRecentlyViewed(list.filter(item => (item.id || item._id) !== (product.id || product._id)).slice(0, 4));
-    }
-  }, [product]);
-
   const handleAddToCart = () => {
-    dispatch(
-      addToCart({
-        product: product.id || product._id,
-        title: product.title,
-        price: product.price,
-        image: product.images[0],
-        stock: product.stock,
-        quantity: Number(quantity),
-      })
-    );
+    dispatch(addToCart({ product: product.id || product._id, title: product.title, price: product.price, image: product.images[0], stock: product.stock, quantity: Number(quantity) }));
     navigate('/cart');
   };
 
-  const handleAddToWishlist = () => {
-    dispatch(addToWishlist(product));
-  };
+  const handleAddToWishlist = () => { dispatch(addToWishlist(product)); };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -138,196 +63,168 @@ const ProductDetails = () => {
       await api.post(`/products/${product.id || product._id}/reviews`, { rating, comment });
       setReviewSuccess(true);
       setComment('');
-      fetchProductDetails(); // Refresh product ratings
+      fetchProductDetails(); 
     } catch (err) {
-      setReviewError(
-        err.response && err.response.data.message ? err.response.data.message : 'Failed to submit review'
-      );
+      setReviewError(err.response?.data?.message || 'Failed to submit review');
     }
+  };
+
+  const getDeliveryInfo = () => {
+    if (deliveryRegion === 'inside-ringroad') return { cost: 100, time: 'Same day or next day' };
+    if (deliveryRegion === 'outside-ringroad') return { cost: 150, time: '1 to 2 business days' };
+    return { cost: 250, time: '2 to 4 business days' };
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-primary"></div>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'60vh', background:'#FFFFFF' }}>
+        <div style={{ width:'3rem', height:'3rem', borderRadius:'50%', border:'2px solid #E5E7EB', borderTopColor:'#09090B', animation:'spin 1s linear infinite' }} />
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <p className="text-lg text-slate-500">Product not found.</p>
-        <Link to="/shop" className="text-primary hover:underline">Back to shop</Link>
+      <div style={{ textAlign:'center', padding:'5rem 2rem', minHeight:'60vh', background:'#FFFFFF' }}>
+        <p style={{ color:'#71717A', marginBottom:'1rem' }}>Product not found.</p>
+        <Link to="/shop" style={{ color:'#09090B', textDecoration:'none', fontWeight:700, borderBottom:'1px solid #09090B' }}>Back to shop</Link>
       </div>
     );
   }
 
+  const delivery = getDeliveryInfo();
+
   return (
-    <div className="premium-mesh-bg min-h-screen py-12">
+    <div style={{ padding:'3rem 0', minHeight:'100vh', background:'#FFFFFF' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Main Grid: Image Gallery + Product Info */}
+        {/* Main Product Info */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start mb-16">
           
-          {/* Left: Product Images */}
-          <div className="glass-panel rounded-3xl p-6 shadow-premium border border-slate-100 dark:border-slate-800">
-            <div className="overflow-hidden rounded-2xl aspect-square bg-slate-50 dark:bg-slate-900">
-              <img
-                src={product.images[0]}
-                alt={product.title}
-                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
-              />
+          {/* Images */}
+          <div style={{ position:'sticky', top:'5rem' }}>
+            <div style={{ aspectRatio:'4/5', background:'#F9FAFB', overflow:'hidden', border:'1px solid #E5E7EB' }}>
+              <img src={product.images[0]} alt={product.title} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
             </div>
           </div>
 
-          {/* Right: Product Details Info */}
-          <div className="space-y-6">
+          {/* Details */}
+          <div style={{ display:'flex', flexDirection:'column', gap:'1.5rem', paddingTop:'2rem' }}>
             <div>
-              <span className="text-xs font-bold text-primary dark:text-accent uppercase tracking-widest">
+              <span style={{ display:'inline-block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.5rem' }}>
                 {product.category}
               </span>
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white mt-1">
+              <h1 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'3rem', fontWeight:900, color:'#09090B', lineHeight:1.1, letterSpacing:'-0.02em' }}>
                 {product.title}
               </h1>
             </div>
 
-            {/* Ratings Summary */}
-            <div className="flex items-center space-x-2 pb-4 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex text-amber-400">
-                <FiStar className="w-4 h-4 fill-current" />
-              </div>
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                {product.ratings || '5.0'}
-              </span>
-              <span className="text-slate-400 text-sm">|</span>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                {product.reviews ? product.reviews.length : 0} verified customer reviews
-              </span>
+            <div style={{ display:'flex', alignItems:'center', gap:'0.75rem', paddingBottom:'1.5rem', borderBottom:'1px solid #E5E7EB' }}>
+              <div style={{ display:'flex', color:'#D4AF37' }}><Star size={14} style={{ fill:'#D4AF37' }} /></div>
+              <span style={{ fontSize:'0.875rem', fontWeight:700, color:'#09090B' }}>{product.ratings || '5.0'}</span>
+              <span style={{ color:'#E5E7EB' }}>|</span>
+              <span style={{ fontSize:'0.75rem', color:'#71717A' }}>{product.reviews?.length || 0} Reviews</span>
             </div>
 
-            {/* Price tag */}
-            <div className="text-3xl font-extrabold text-slate-900 dark:text-white">
-              ${product.price}
+            <div style={{ fontSize:'1.5rem', fontWeight:900, color:'#09090B' }}>
+              Rs. {Number(product.price).toLocaleString('en-NP')}
             </div>
 
-            {/* Description */}
-            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+            <p style={{ fontSize:'0.875rem', color:'#52525B', lineHeight:1.8 }}>
               {product.description}
             </p>
 
-            {/* Stock Badge */}
-            <div className="flex items-center space-x-2">
+            <div style={{ borderTop:'1px solid #E5E7EB', borderBottom:'1px solid #E5E7EB', padding:'1.5rem 0', display:'flex', alignItems:'center', gap:'1.5rem' }}>
+              <span style={{ fontSize:'0.75rem', fontWeight:800, color:'#09090B', textTransform:'uppercase', letterSpacing:'0.05em' }}>Status:</span>
               {product.stock > 0 ? (
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-xs font-semibold">
-                  <FiCheck className="mr-1.5 w-3.5 h-3.5" /> In Stock ({product.stock} units remaining)
-                </span>
+                <span style={{ color:'#10B981', fontSize:'0.75rem', fontWeight:700 }}>In Stock ({product.stock} available)</span>
               ) : (
-                <span className="inline-flex items-center px-3 py-1 rounded-full bg-red-500/10 text-red-600 text-xs font-semibold">
-                  <FiXOctagon className="mr-1.5 w-3.5 h-3.5" /> Out of stock
-                </span>
+                <span style={{ color:'#EF4444', fontSize:'0.75rem', fontWeight:700 }}>Out of Stock</span>
               )}
             </div>
 
-            {/* Quantity Selector & Add to Cart button */}
             {product.stock > 0 && (
-              <div className="flex items-center space-x-4 pt-4">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Qty</label>
-                  <select
-                    value={quantity}
-                    onChange={(e) => setQuantity(Number(e.target.value))}
-                    className="py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-sm focus:outline-none"
-                  >
-                    {[...Array(Math.min(product.stock, 10))].map((_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        {i + 1}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="flex-grow pt-5">
-                  <button
-                    onClick={handleAddToCart}
-                    className="w-full flex items-center justify-center py-3.5 px-6 rounded-full bg-primary hover:bg-primary-dark text-white font-semibold text-sm shadow-premium transition-all duration-300 hover:scale-102"
-                  >
-                    <FiShoppingBag className="mr-2 w-4 h-4" /> Add to Cart
-                  </button>
-                </div>
-
-                <div className="pt-5">
-                  <button
-                    onClick={handleAddToWishlist}
-                    className="p-3.5 rounded-full border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-200 transition-all hover:scale-105"
-                  >
-                    <FiHeart className="w-5 h-5" />
-                  </button>
-                </div>
+              <div style={{ display:'flex', alignItems:'center', gap:'1rem', marginTop:'1rem' }}>
+                <select value={quantity} onChange={e=>setQuantity(Number(e.target.value))} style={{ width:'5rem', background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'1rem', color:'#09090B', fontSize:'0.875rem', outline:'none', cursor:'pointer' }}>
+                  {[...Array(Math.min(product.stock, 10))].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
+                </select>
+                <button onClick={handleAddToCart} style={{ flexGrow:1, display:'flex', alignItems:'center', justifyContent:'center', gap:'0.5rem', padding:'1rem 2rem', background:'#000000', color:'#FFFFFF', fontSize:'0.875rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer', transition:'background 0.2s' }} onMouseEnter={e=>e.currentTarget.style.background='#27272A'} onMouseLeave={e=>e.currentTarget.style.background='#000000'}>
+                  Add to Bag
+                </button>
+                <button onClick={handleAddToWishlist} style={{ padding:'1rem', background:'#FFFFFF', border:'1px solid #E5E7EB', color:'#09090B', cursor:'pointer', transition:'border-color 0.2s' }} onMouseEnter={e=>e.currentTarget.style.borderColor='#09090B'} onMouseLeave={e=>e.currentTarget.style.borderColor='#E5E7EB'}>
+                  <Heart size={20} />
+                </button>
               </div>
             )}
+
+            <div className="grid grid-cols-3 gap-4 pt-4 mt-4">
+              {[
+                { Icon: ShieldCheck, text: 'Authentic' },
+                { Icon: RefreshCw,   text: 'Returns' },
+                { Icon: Truck,       text: 'Fast Ship' },
+              ].map(({ Icon, text }) => (
+                <div key={text} style={{ display:'flex', alignItems:'center', gap:'0.5rem' }}>
+                  <Icon size={16} style={{ color:'#09090B' }} />
+                  <span style={{ fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.05em' }}>{text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Delivery Estimator */}
+            <div style={{ background:'#F9FAFB', padding:'1.5rem', marginTop:'2rem' }}>
+              <h4 style={{ fontSize:'0.75rem', fontWeight:800, color:'#09090B', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'1rem' }}>Delivery Estimate</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <select value={deliveryRegion} onChange={e=>setDeliveryRegion(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }}>
+                  <option value="inside-ringroad">Inside Ring Road</option>
+                  <option value="outside-ringroad">Outside Ring Road</option>
+                  <option value="outside-valley">Outside Valley</option>
+                </select>
+                <div style={{ display:'flex', flexDirection:'column', justifyContent:'center', fontSize:'0.75rem' }}>
+                  <p style={{ color:'#71717A' }}>Cost: <strong style={{ color:'#09090B' }}>Rs. {delivery.cost}</strong></p>
+                  <p style={{ color:'#71717A', marginTop:'0.25rem' }}>Time: <strong style={{ color:'#09090B' }}>{delivery.time}</strong></p>
+                </div>
+              </div>
+            </div>
 
           </div>
         </div>
 
-        {/* Reviews Section */}
-        <div className="border-t border-slate-100 dark:border-slate-850 pt-12">
-          <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-8">
-            Product Reviews
-          </h2>
-
+        {/* Reviews */}
+        <div style={{ paddingTop:'4rem', borderTop:'1px solid #E5E7EB' }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'2.5rem', fontWeight:900, color:'#09090B', marginBottom:'3rem', textAlign:'center' }}>Customer Reviews</h2>
+          
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            
-            {/* Reviews list */}
             <div className="lg:col-span-2 space-y-6">
               {!product.reviews || product.reviews.length === 0 ? (
-                <div className="glass-panel rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-sm">
-                  This product has not been reviewed yet. Be the first to share your thoughts!
+                <div style={{ padding:'3rem', textAlign:'center', color:'#71717A', border:'1px solid #E5E7EB', background:'#F9FAFB' }}>
+                  No reviews yet. Share your experience.
                 </div>
               ) : (
                 product.reviews.map((rev, idx) => (
-                  <div key={idx} className="glass-card rounded-2xl p-5 border border-slate-100 dark:border-slate-850">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">{rev.name}</h4>
-                      <div className="flex text-amber-400">
-                        {[...Array(Math.floor(rev.rating))].map((_, i) => (
-                          <FiStar key={i} className="w-3.5 h-3.5 fill-current" />
-                        ))}
+                  <div key={idx} style={{ borderBottom:'1px solid #E5E7EB', paddingBottom:'1.5rem' }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'0.5rem' }}>
+                      <h4 style={{ fontSize:'0.875rem', fontWeight:700, color:'#09090B' }}>{rev.name}</h4>
+                      <div style={{ display:'flex', color:'#D4AF37' }}>
+                        {[...Array(Math.floor(rev.rating))].map((_, i) => <Star key={i} size={12} style={{ fill:'#D4AF37' }} />)}
                       </div>
                     </div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                      {rev.comment}
-                    </p>
+                    <p style={{ fontSize:'0.875rem', color:'#52525B', lineHeight:1.6 }}>{rev.comment}</p>
                   </div>
                 ))
               )}
             </div>
 
-            {/* Write review form */}
             <div className="lg:col-span-1">
-              <div className="glass-panel rounded-2xl p-6 border border-slate-100 dark:border-slate-800">
-                <h3 className="font-bold text-slate-800 dark:text-white text-base mb-4">Write a Review</h3>
-                
+              <div style={{ background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'2rem' }}>
+                <h3 style={{ fontSize:'1rem', fontWeight:800, color:'#09090B', marginBottom:'1.5rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>Write a Review</h3>
                 {userInfo ? (
-                  <form onSubmit={handleReviewSubmit} className="space-y-4">
-                    {reviewSuccess && (
-                      <div className="p-3 text-xs rounded-lg bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                        Review submitted successfully!
-                      </div>
-                    )}
-                    {reviewError && (
-                      <div className="p-3 text-xs rounded-lg bg-red-500/10 text-red-600 border border-red-500/20">
-                        {reviewError}
-                      </div>
-                    )}
-
+                  <form onSubmit={handleReviewSubmit} style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
+                    {reviewSuccess && <div style={{ padding:'0.75rem', background:'#ECFDF5', color:'#059669', fontSize:'0.75rem', border:'1px solid #A7F3D0' }}>Review submitted.</div>}
+                    {reviewError && <div style={{ padding:'0.75rem', background:'#FEF2F2', color:'#DC2626', fontSize:'0.75rem', border:'1px solid #FECACA' }}>{reviewError}</div>}
+                    
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Rating</label>
-                      <select
-                        value={rating}
-                        onChange={(e) => setRating(Number(e.target.value))}
-                        className="w-full py-2 px-3 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none"
-                      >
+                      <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', marginBottom:'0.5rem' }}>Rating</label>
+                      <select value={rating} onChange={e=>setRating(Number(e.target.value))} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }}>
                         <option value="5">5 - Excellent</option>
                         <option value="4">4 - Good</option>
                         <option value="3">3 - Average</option>
@@ -337,68 +234,28 @@ const ProductDetails = () => {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Comment</label>
-                      <textarea
-                        required
-                        rows="4"
-                        placeholder="Write your product experience..."
-                        className="w-full p-3 text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary"
-                        value={comment}
-                        onChange={(e) => setComment(e.target.value)}
-                      />
+                      <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', marginBottom:'0.5rem' }}>Review</label>
+                      <textarea required rows="4" value={comment} onChange={e=>setComment(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }} />
                     </div>
 
-                    <button
-                      type="submit"
-                      className="w-full py-2.5 rounded-full bg-primary hover:bg-primary-dark text-white font-semibold text-xs transition-all shadow-premium"
-                    >
-                      Submit Review
-                    </button>
+                    <button type="submit" style={{ width:'100%', padding:'1rem', background:'#000000', color:'#FFFFFF', fontSize:'0.75rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer' }}>Submit</button>
                   </form>
                 ) : (
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Please <Link to="/login" className="text-primary hover:underline font-semibold">login</Link> to write a review.
-                  </p>
+                  <p style={{ fontSize:'0.8rem', color:'#71717A' }}>Please <Link to="/login" style={{ color:'#09090B', fontWeight:700, borderBottom:'1px solid #09090B' }}>login</Link> to review.</p>
                 )}
               </div>
             </div>
-
           </div>
         </div>
 
-        {/* AI Product Recommendations (Related Products) */}
+        {/* Related */}
         {relatedProducts.length > 0 && (
-          <div className="border-t border-slate-100 dark:border-slate-850 pt-12 mt-16">
-            <div className="mb-10 text-center sm:text-left">
-              <span className="px-2 py-0.5 rounded-full bg-primary/10 dark:bg-accent/10 text-[9px] font-bold text-primary dark:text-accent uppercase tracking-wider">
-                Smart Suggestions
-              </span>
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mt-2">
-                AI Product Recommendations
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">Based on current item interest and category popularity trends.</p>
+          <div style={{ paddingTop:'6rem', marginTop:'6rem', borderTop:'1px solid #E5E7EB' }}>
+            <div style={{ textAlign:'center', marginBottom:'3rem' }}>
+              <h2 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'2.5rem', fontWeight:900, color:'#09090B' }}>You May Also Like</h2>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {relatedProducts.map((prod) => (
-                <ProductCard key={prod.id || prod._id} product={prod} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Recently Viewed Products */}
-        {recentlyViewed.length > 0 && (
-          <div className="border-t border-slate-100 dark:border-slate-850 pt-12 mt-16">
-            <div className="mb-10 text-center sm:text-left">
-              <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                Recently Viewed
-              </h2>
-              <p className="text-xs text-slate-500 mt-1">Pick up where you left off.</p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {recentlyViewed.map((prod) => (
-                <ProductCard key={prod.id || prod._id} product={prod} />
-              ))}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map(prod => <ProductCard key={prod.id || prod._id} product={prod} />)}
             </div>
           </div>
         )}
@@ -407,5 +264,4 @@ const ProductDetails = () => {
     </div>
   );
 };
-
 export default ProductDetails;

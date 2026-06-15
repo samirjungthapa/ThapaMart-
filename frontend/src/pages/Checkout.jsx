@@ -1,285 +1,169 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { saveShippingAddress, saveBillingInfo, clearCart, calcPrices } from '../store/slices/cartSlice.js';
+import { clearCart, calcPrices } from '../store/slices/cartSlice.js';
 import api from '../store/api.js';
-import { FiMapPin, FiCreditCard, FiLock, FiCheckCircle } from 'react-icons/fi';
-import { motion } from 'framer-motion';
 
 const Checkout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { cartItems, shippingAddress, billingInfo, coupon } = useSelector((state) => state.cart);
   const { userInfo } = useSelector((state) => state.auth);
-
-  // Form states
-  const [address, setAddress] = useState(shippingAddress.address || '');
-  const [city, setCity] = useState(shippingAddress.city || '');
-  const [postalCode, setPostalCode] = useState(shippingAddress.postalCode || '');
-  const [country, setCountry] = useState(shippingAddress.country || '');
-
-  // Payment states
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCVC, setCardCVC] = useState('');
-
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { cartItems, coupon } = useSelector((state) => state.cart);
 
   const prices = calcPrices({ cartItems, coupon });
 
-  const handlePlaceOrder = async (e) => {
+  useEffect(() => {
+    if (!userInfo) navigate('/login?redirect=/checkout');
+    if (cartItems.length === 0) navigate('/cart');
+  }, [userInfo, cartItems, navigate]);
+
+  const [shippingAddress, setShippingAddress] = useState({ address:'', city:'', postalCode:'', country:'Nepal' });
+  const [paymentMethod, setPaymentMethod] = useState('eSewa');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const submitHandler = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    const shippingDetails = { address, city, postalCode, country, fullName: userInfo.name };
-    dispatch(saveShippingAddress(shippingDetails));
+    const orderData = {
+      orderItems: cartItems.map(item => ({ name: item.title, qty: item.quantity, image: item.image, price: item.price, product: item.product })),
+      shippingAddress,
+      paymentMethod,
+      itemsPrice: prices.itemsPrice,
+      taxPrice: prices.taxPrice,
+      shippingPrice: prices.shippingPrice,
+      totalPrice: prices.totalPrice,
+    };
 
     try {
-      // Create order in backend
-      const orderItems = cartItems.map(item => ({
-        product: item.product,
-        title: item.title,
-        price: item.price,
-        image: item.image,
-        quantity: item.quantity
-      }));
-
-      const { data: order } = await api.post('/orders', {
-        orderItems,
-        shippingAddress: shippingDetails,
-        billingInfo: shippingDetails,
-        paymentMethod: 'Stripe',
-        itemsPrice: prices.itemsPrice,
-        taxPrice: prices.taxPrice,
-        shippingPrice: prices.shippingPrice,
-        totalPrice: prices.totalPrice,
-      });
-
-      // Process payment (simulated or real Stripe transaction depending on key status)
-      const { data: payment } = await api.post('/payment/process', {
-        amount: prices.totalPrice,
-      });
-
-      if (payment.success) {
-        // Mark order as paid
-        await api.put(`/orders/${order.id || order._id}/pay`, {
-          id: payment.client_secret,
-          status: 'succeeded'
-        });
-
-        dispatch(clearCart());
-        navigate(`/order-success?orderId=${order.id || order._id}`);
+      const { data } = await api.post('/orders', orderData);
+      dispatch(clearCart());
+      if (paymentMethod === 'Cash On Delivery') {
+        navigate('/order-success?id=' + data._id);
       } else {
-        navigate('/order-failed');
+        alert(`Proceeding to ${paymentMethod} payment gateway...`);
+        navigate('/order-success?id=' + data._id);
       }
-
     } catch (err) {
-      setError(
-        err.response && err.response.data.message ? err.response.data.message : 'Checkout transaction failed.'
-      );
+      setError(err.response?.data?.message || 'Order creation failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="premium-mesh-bg min-h-screen py-12">
+    <div style={{ padding:'3rem 0', minHeight:'100vh', background:'#FFFFFF' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div className="mb-10 text-center sm:text-left">
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Secure Checkout</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Complete your details to place the order.</p>
+        <div style={{ marginBottom:'3rem', textAlign:'center' }}>
+          <h1 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'3rem', fontWeight:900, color:'#09090B', letterSpacing:'-0.02em', marginBottom:'0.5rem' }}>
+            Checkout
+          </h1>
+          <div style={{ width:'2rem', height:'1px', background:'#09090B', margin:'0 auto' }} />
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 text-sm">
-            {error}
-          </div>
-        )}
+        {error && <div style={{ padding:'1rem', background:'#FEF2F2', border:'1px solid #FECACA', color:'#DC2626', marginBottom:'2rem', textAlign:'center' }}>{error}</div>}
 
-        <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
           
-          {/* Shipping Details & Card payment info */}
-          <div className="lg:col-span-2 space-y-8">
-            
-            {/* Address box */}
-            <div className="glass-panel rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-premium">
-              <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
-                <FiMapPin className="text-primary w-5 h-5" />
-                <h2 className="font-bold text-slate-800 dark:text-white text-base">Shipping Destination</h2>
-              </div>
+          {/* Form */}
+          <div>
+            <form id="checkout-form" onSubmit={submitHandler} style={{ display:'flex', flexDirection:'column', gap:'3rem' }}>
+              
+              <div>
+                <h2 style={{ fontSize:'1.125rem', fontWeight:800, color:'#09090B', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'1.5rem', borderBottom:'1px solid #09090B', paddingBottom:'0.5rem' }}>
+                  Shipping Information
+                </h2>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Street Address</label>
-                  <input
-                    type="text"
-                    required
-                    className="p-3 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:outline-none"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">City</label>
-                  <input
-                    type="text"
-                    required
-                    className="p-3 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:outline-none"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Postal Code</label>
-                  <input
-                    type="text"
-                    required
-                    className="p-3 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:outline-none"
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Country</label>
-                  <input
-                    type="text"
-                    required
-                    className="p-3 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:outline-none"
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Details */}
-            <div className="glass-panel rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-premium">
-              <div className="flex items-center space-x-2 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
-                <FiCreditCard className="text-accent w-5 h-5" />
-                <h2 className="font-bold text-slate-800 dark:text-white text-base">Payment Details</h2>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Card Number</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400"><FiCreditCard /></span>
-                    <input
-                      type="text"
-                      required
-                      placeholder="4242 4242 4242 4242"
-                      className="pl-9 pr-4 py-3 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:outline-none"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
+                <div style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }}>
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">Expiration Date</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="MM / YY"
-                      className="p-3 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:outline-none"
-                      value={cardExpiry}
-                      onChange={(e) => setCardExpiry(e.target.value)}
-                    />
+                    <label style={{ display:'block', fontSize:'0.75rem', fontWeight:700, color:'#71717A', marginBottom:'0.5rem' }}>Street Address</label>
+                    <input type="text" required value={shippingAddress.address} onChange={e=>setShippingAddress({...shippingAddress, address:e.target.value})} style={{ width:'100%', background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'0.875rem 1rem', color:'#09090B', fontSize:'0.875rem', outline:'none' }} />
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1.5">CVC / CVV</label>
-                    <input
-                      type="password"
-                      required
-                      placeholder="•••"
-                      className="p-3 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 text-xs focus:outline-none"
-                      value={cardCVC}
-                      onChange={(e) => setCardCVC(e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-2 flex items-center space-x-2 text-[10px] text-slate-400 font-semibold uppercase">
-                  <FiLock className="text-emerald-500" />
-                  <span>Payments are processed securely via Stripe.</span>
-                </div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Right: Checkout Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="glass-panel rounded-2xl p-6 border border-slate-100 dark:border-slate-800 shadow-premium">
-              <h3 className="font-bold text-slate-800 dark:text-white text-base pb-3 border-b border-slate-100 dark:border-slate-800 mb-4">
-                Order Summary
-              </h3>
-
-              {/* Items Summary list */}
-              <div className="divide-y divide-slate-100 dark:divide-slate-850 max-h-48 overflow-y-auto mb-4">
-                {cartItems.map((item) => (
-                  <div key={item.product} className="py-3 flex justify-between items-center text-xs">
-                    <div className="flex items-center space-x-3">
-                      <img src={item.image} alt={item.title} className="w-8 h-8 rounded-lg object-cover" />
-                      <span className="font-medium text-slate-700 dark:text-slate-300 line-clamp-1 max-w-[120px]">{item.title}</span>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label style={{ display:'block', fontSize:'0.75rem', fontWeight:700, color:'#71717A', marginBottom:'0.5rem' }}>City</label>
+                      <input type="text" required value={shippingAddress.city} onChange={e=>setShippingAddress({...shippingAddress, city:e.target.value})} style={{ width:'100%', background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'0.875rem 1rem', color:'#09090B', fontSize:'0.875rem', outline:'none' }} />
                     </div>
-                    <span className="font-bold text-slate-800 dark:text-white">
-                      x{item.quantity} - ${(item.price * item.quantity).toFixed(2)}
-                    </span>
+                    <div>
+                      <label style={{ display:'block', fontSize:'0.75rem', fontWeight:700, color:'#71717A', marginBottom:'0.5rem' }}>Postal Code</label>
+                      <input type="text" required value={shippingAddress.postalCode} onChange={e=>setShippingAddress({...shippingAddress, postalCode:e.target.value})} style={{ width:'100%', background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'0.875rem 1rem', color:'#09090B', fontSize:'0.875rem', outline:'none' }} />
+                    </div>
                   </div>
-                ))}
-              </div>
-
-              {/* Pricing breakdown */}
-              <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <span className="font-semibold text-slate-800 dark:text-white">${prices.itemsPrice}</span>
-                </div>
-                {coupon && (
-                  <div className="flex justify-between text-emerald-600">
-                    <span>Discount</span>
-                    <span className="font-semibold">-${prices.discount}</span>
+                  <div>
+                    <label style={{ display:'block', fontSize:'0.75rem', fontWeight:700, color:'#71717A', marginBottom:'0.5rem' }}>Country</label>
+                    <input type="text" required value={shippingAddress.country} onChange={e=>setShippingAddress({...shippingAddress, country:e.target.value})} style={{ width:'100%', background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'0.875rem 1rem', color:'#09090B', fontSize:'0.875rem', outline:'none' }} />
                   </div>
-                )}
-                <div className="flex justify-between">
-                  <span>Shipping</span>
-                  <span className="font-semibold text-slate-800 dark:text-white">
-                    {prices.shippingPrice === 0 ? 'Free' : `$${prices.shippingPrice}`}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Tax</span>
-                  <span className="font-semibold text-slate-800 dark:text-white">${prices.taxPrice}</span>
-                </div>
-                <div className="border-t border-slate-100 dark:border-slate-850 pt-3 flex justify-between text-sm font-extrabold text-slate-800 dark:text-white">
-                  <span>Grand Total</span>
-                  <span>${prices.totalPrice}</span>
                 </div>
               </div>
 
-              {/* Place Order submit button */}
-              <button
-                type="submit"
-                disabled={loading || cartItems.length === 0}
-                className="w-full flex items-center justify-center py-3.5 px-6 rounded-full bg-primary hover:bg-primary-dark text-white font-semibold text-sm shadow-premium transition-all duration-300 hover:scale-102 mt-6 disabled:opacity-40 disabled:scale-100"
-              >
-                {loading ? 'Processing Transaction...' : 'Authorize Payment'}
-              </button>
+              <div>
+                <h2 style={{ fontSize:'1.125rem', fontWeight:800, color:'#09090B', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'1.5rem', borderBottom:'1px solid #09090B', paddingBottom:'0.5rem' }}>
+                  Payment Method
+                </h2>
 
-            </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
+                  {['eSewa', 'Khalti', 'IME Pay', 'Cash On Delivery'].map(method => (
+                    <label key={method} style={{ display:'flex', alignItems:'center', gap:'1rem', padding:'1rem', border:`1px solid ${paymentMethod===method ? '#09090B' : '#E5E7EB'}`, background: paymentMethod===method ? '#F9FAFB' : '#FFFFFF', cursor:'pointer' }}>
+                      <input type="radio" name="paymentMethod" value={method} checked={paymentMethod===method} onChange={e=>setPaymentMethod(e.target.value)} style={{ accentColor:'#000000' }} />
+                      <span style={{ fontSize:'0.875rem', fontWeight:700, color:'#09090B' }}>{method}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+            </form>
           </div>
 
-        </form>
+          {/* Order Summary */}
+          <div style={{ background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'2.5rem' }}>
+            <h2 style={{ fontSize:'1.125rem', fontWeight:800, color:'#09090B', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'2rem' }}>
+              Your Order
+            </h2>
 
+            <div style={{ display:'flex', flexDirection:'column', gap:'1.5rem', marginBottom:'2rem' }}>
+              {cartItems.map(item => (
+                <div key={item.product} style={{ display:'flex', gap:'1rem' }}>
+                  <img src={item.image} alt={item.title} style={{ width:'4rem', height:'5rem', objectFit:'cover', background:'#FFFFFF' }} />
+                  <div style={{ flexGrow:1, display:'flex', flexDirection:'column' }}>
+                    <div style={{ fontSize:'0.875rem', fontWeight:700, color:'#09090B' }}>{item.title}</div>
+                    <div style={{ fontSize:'0.75rem', color:'#71717A' }}>Qty: {item.quantity}</div>
+                    <div style={{ fontSize:'0.875rem', fontWeight:900, color:'#09090B', marginTop:'auto' }}>Rs. {(item.price*item.quantity).toLocaleString('en-NP')}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:'1rem', fontSize:'0.875rem', color:'#52525B', borderTop:'1px solid #E5E7EB', paddingTop:'2rem' }}>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <span>Subtotal</span>
+                <span style={{ color:'#09090B', fontWeight:700 }}>Rs. {prices.itemsPrice}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <span>Estimated Shipping</span>
+                <span style={{ color:'#09090B', fontWeight:700 }}>{prices.shippingPrice === 0 ? 'Free' : `Rs. ${prices.shippingPrice}`}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between' }}>
+                <span>Sales Tax</span>
+                <span style={{ color:'#09090B', fontWeight:700 }}>Rs. {prices.taxPrice}</span>
+              </div>
+              <div style={{ display:'flex', justifyContent:'space-between', marginTop:'1rem', paddingTop:'1rem', borderTop:'1px solid #09090B', fontSize:'1.5rem', color:'#09090B', fontWeight:900 }}>
+                <span>Total</span>
+                <span>Rs. {prices.totalPrice}</span>
+              </div>
+            </div>
+
+            <button type="submit" form="checkout-form" disabled={loading} style={{ width:'100%', padding:'1rem', background:'#000000', color:'#FFFFFF', fontSize:'0.875rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer', marginTop:'2.5rem' }}>
+              {loading ? 'Processing...' : 'Place Order'}
+            </button>
+          </div>
+
+        </div>
       </div>
     </div>
   );
 };
-
 export default Checkout;
