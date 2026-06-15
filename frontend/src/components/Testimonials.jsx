@@ -1,86 +1,87 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FiStar } from 'react-icons/fi';
+import { Star, ShieldCheck } from 'lucide-react';
 
-const reviews = [
+const testimonials = [
   {
-    name: 'Sarah Jenkins',
-    role: 'Tech Enthusiast',
-    comment: 'The wireless sound headphones exceed all expectations! Active noise canceling is perfect for my daily commute. Will definitely buy again.',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    name: 'Samir Thapa',
+    location: 'Kathmandu',
+    text: 'The sheer quality of the products is unmatched in Nepal. Delivery was prompt and the packaging felt incredibly premium. ThapaMart is now my go-to for luxury essentials.',
     rating: 5,
   },
   {
-    name: 'David Kojo',
-    role: 'Creative Director',
-    comment: 'Exceptional service and extremely fast shipping! The leather smartwatch looks incredibly premium and fits perfectly into my professional styling.',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    name: 'Priya Shrestha',
+    location: 'Pokhara',
+    text: 'A truly elevated shopping experience. I was looking for authentic high-end electronics and the customer service guided me flawlessly. Highly recommended.',
     rating: 5,
   },
   {
-    name: 'Emily Smith',
-    role: 'Interior Designer',
-    comment: 'ThapaMart has become my go-to shop for home décor. The desk chair is highly adjustable, comfortable, and beautifully constructed.',
-    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&auto=format&fit=crop&q=80',
-    rating: 5,
-  },
+    name: 'Rahul Maharjan',
+    location: 'Lalitpur',
+    text: 'From the UI to the actual product delivery, everything feels world-class. Finally, an e-commerce platform that understands the luxury segment.',
+    rating: 4,
+  }
 ];
 
 const Testimonials = () => {
   return (
-    <section className="py-16 bg-white dark:bg-bg-dark transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section style={{ padding: '6rem 0', background: '#F9FAFB', borderTop: '1px solid #E5E7EB', borderBottom: '1px solid #E5E7EB', overflow: 'hidden' }}>
+      <motion.div 
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+      >
         
-        {/* Section Header */}
-        <div className="text-center max-w-xl mx-auto mb-12">
-          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Loved By Customers
+        <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+          <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '2.5rem', fontWeight: 900, color: '#09090B', letterSpacing: '-0.02em', marginBottom: '1rem' }}>
+            Client Testimonials
           </h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            See what our verified global community has to say about their premium purchases.
-          </p>
+          <p style={{ color: '#52525B', fontSize: '0.875rem' }}>Hear from our most valued customers across Nepal.</p>
         </div>
 
-        {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {reviews.map((rev, index) => (
-            <motion.div
-              key={rev.name + index}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="glass-card rounded-2xl p-6 shadow-premium hover:shadow-premium-hover border border-slate-100 dark:border-slate-800 transition-all flex flex-col justify-between"
-            >
-              <div>
-                {/* Rating */}
-                <div className="flex text-amber-400 mb-4">
-                  {[...Array(rev.rating)].map((_, i) => (
-                    <FiStar key={i} className="w-4 h-4 fill-current" />
-                  ))}
-                </div>
-                <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed italic">
-                  "{rev.comment}"
-                </p>
+          {testimonials.map((t, i) => (
+            <motion.div key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: i * 0.1 }}
+              style={{ background: '#FFFFFF', padding: '2rem', border: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column' }}>
+              
+              <div style={{ display: 'flex', color: '#D4AF37', marginBottom: '1rem' }}>
+                {[...Array(5)].map((_, idx) => (
+                  <Star key={idx} size={14} style={{ fill: idx < t.rating ? '#D4AF37' : 'transparent' }} />
+                ))}
               </div>
 
-              {/* Author Info */}
-              <div className="flex items-center space-x-3.5 mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/50">
-                <img
-                  src={rev.avatar}
-                  alt={rev.name}
-                  className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                />
+              <p style={{ fontSize: '0.875rem', color: '#52525B', lineHeight: 1.8, marginBottom: '2rem', flexGrow: 1, fontStyle: 'italic' }}>
+                "{t.text}"
+              </p>
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #E5E7EB', paddingTop: '1rem' }}>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-800 dark:text-white">{rev.name}</h4>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400">{rev.role}</p>
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 700, color: '#09090B' }}>{t.name}</h4>
+                  <span style={{ fontSize: '0.65rem', color: '#71717A', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t.location}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#09090B' }}>
+                  <ShieldCheck size={14} />
+                  <span style={{ fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verified</span>
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
 
-      </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '4rem', marginTop: '4rem', paddingTop: '4rem', borderTop: '1px solid #E5E7EB' }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '2rem', fontFamily: "'Cormorant Garamond', serif", fontWeight: 900, color: '#09090B' }}>10k+</p>
+            <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#71717A' }}>Satisfied Clients</p>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '2rem', fontFamily: "'Cormorant Garamond', serif", fontWeight: 900, color: '#09090B' }}>100%</p>
+            <p style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#71717A' }}>Authenticity Guarantee</p>
+          </div>
+        </div>
+
+      </motion.div>
     </section>
   );
 };

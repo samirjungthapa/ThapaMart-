@@ -1,65 +1,59 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowUpRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { FiCpu, FiWatch, FiHome, FiSmile, FiActivity, FiTag, FiTv } from 'react-icons/fi';
 
 const categories = [
-  { name: 'Electronics', slug: 'electronics', icon: FiCpu, color: 'from-blue-500/10 to-indigo-500/10 text-blue-500' },
-  { name: 'Fashion', slug: 'fashion', icon: FiTag, color: 'from-pink-500/10 to-rose-500/10 text-pink-500' },
-  { name: 'Home & Living', slug: 'home-living', icon: FiHome, color: 'from-amber-500/10 to-orange-500/10 text-amber-500' },
-  { name: 'Beauty', slug: 'beauty', icon: FiSmile, color: 'from-teal-500/10 to-emerald-500/10 text-teal-500' },
-  { name: 'Sports', slug: 'sports', icon: FiActivity, color: 'from-purple-500/10 to-violet-500/10 text-purple-500' },
-  { name: 'Gaming', slug: 'gaming', icon: FiTv, color: 'from-red-500/10 to-orange-500/10 text-red-500' },
-  { name: 'Accessories', slug: 'electronics', icon: FiWatch, color: 'from-cyan-500/10 to-sky-500/10 text-cyan-500' }, // Map to electronics or accessories for simplicity
+  { id: 'fashion', name: 'Fashion & Apparel', bgImage: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&auto=format&fit=crop&q=80' },
+  { id: 'electronics', name: 'Electronics', bgImage: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&auto=format&fit=crop&q=80' },
+  { id: 'beauty', name: 'Beauty & Wellness', bgImage: 'https://images.unsplash.com/photo-1612817288484-6f916006741a?w=800&auto=format&fit=crop&q=80' },
+  { id: 'home-living', name: 'Home & Living', bgImage: 'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&auto=format&fit=crop&q=80' }
 ];
 
 const CategoriesSection = () => {
   return (
-    <section className="py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section style={{ padding: '6rem 0', background: '#FFFFFF', overflow: 'hidden' }}>
+      <motion.div 
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-100px" }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+      >
         
-        {/* Section Title */}
-        <div className="text-center max-w-xl mx-auto mb-12">
-          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Curated Categories
-          </h2>
-          <p className="mt-2.5 text-sm text-slate-500 dark:text-slate-400">
-            Explore our meticulously designed products tailored for your specific lifestyle and requirements.
-          </p>
+        <div style={{ display: 'flex', alignItems: 'flex-end', justifyItems: 'center', justifyContent: 'space-between', marginBottom: '3rem' }}>
+          <div>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '2.5rem', fontWeight: 900, color: '#09090B', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>Curated Collections</h2>
+            <p style={{ color: '#52525B', fontSize: '0.875rem' }}>Explore our handpicked premium categories.</p>
+          </div>
+          <Link to="/shop" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#09090B', fontSize: '0.8rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none', borderBottom: '1px solid #09090B', paddingBottom: '0.25rem' }}>
+            View All <ArrowUpRight size={14} />
+          </Link>
         </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-6">
-          {categories.map((cat, index) => {
-            const Icon = cat.icon;
-            return (
-              <motion.div
-                key={cat.slug + index}
-                initial={{ opacity: 0, y: 15 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
-                whileHover={{ scale: 1.05 }}
-              >
-                <Link
-                  to={`/shop?category=${cat.slug}`}
-                  className="flex flex-col items-center justify-center p-6 rounded-2xl glass-card border border-slate-100 dark:border-slate-800 shadow-premium hover:shadow-premium-hover transition-all text-center h-full group"
-                >
-                  <div className={`p-4 rounded-xl bg-gradient-to-tr ${cat.color} group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="mt-4.5 text-sm font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary dark:group-hover:text-accent transition-colors">
-                    {cat.name}
-                  </h3>
-                </Link>
-              </motion.div>
-            );
-          })}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {categories.map((cat, i) => (
+            <Link key={cat.id} to={`/shop?category=${cat.id}`} style={{ position: 'relative', height: i === 0 || i === 3 ? '400px' : '300px', overflow: 'hidden', display: 'block', textDecoration: 'none' }}>
+              <div style={{ position: 'absolute', inset: 0, backgroundImage: `url(${cat.bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center', transition: 'transform 0.7s ease' }} 
+                   onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'} 
+                   onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}>
+                
+                {/* Subtle dark gradient just at the bottom so text is readable */}
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 50%)' }} />
+                
+                <div style={{ position: 'absolute', bottom: '2rem', left: '2rem' }}>
+                  <h3 style={{ fontSize: '1.5rem', fontWeight: 800, color: '#FFFFFF', marginBottom: '0.5rem' }}>{cat.name}</h3>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    Shop Now <ArrowUpRight size={12} />
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
 
-      </div>
+      </motion.div>
     </section>
   );
 };
-
 export default CategoriesSection;
