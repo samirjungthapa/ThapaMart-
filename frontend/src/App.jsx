@@ -30,7 +30,7 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   const location = useLocation();
 
   return (
-    <div className="flex flex-col min-h-screen bg-bg-light dark:bg-bg-dark text-slate-900 dark:text-slate-100 transition-colors duration-300">
+    <div className="flex flex-col min-h-screen" style={{ backgroundColor:'#FFFFFF', color:'#09090B' }}>
       
       {/* Navigation Bar */}
       <Navbar />

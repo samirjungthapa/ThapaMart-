@@ -1,42 +1,45 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   darkMode: 'class',
   theme: {
     extend: {
       colors: {
+        // ── MIDNIGHT BLACK + EMERALD GREEN ──────────────────
         primary: {
-          DEFAULT: '#3B82F6',
-          dark: '#2563EB',
+          DEFAULT: '#10B981',  // Emerald 500
+          dark:    '#059669',  // Emerald 600
+          light:   '#34D399',  // Emerald 400
         },
         secondary: {
-          DEFAULT: '#8B5CF6',
-          dark: '#7C3AED',
+          DEFAULT: '#6EE7B7',  // Emerald 300
+          dark:    '#34D399',  // Emerald 400
         },
         accent: {
-          DEFAULT: '#22D3EE',
-          dark: '#06B6D4',
+          DEFAULT: '#A7F3D0',  // Emerald 200
         },
         bg: {
-          light: '#FFFFFF',
-          dark: '#030712',
+          dark:  '#030712',
+          light: '#F9FAFB',
         },
         text: {
+          dark:  '#ECFDF5',
           light: '#0F172A',
-          dark: '#FFFFFF',
-        }
+        },
+        surface: '#0C1A14',
+        iron:    '#111F18',
+        zinc:    '#1C2E24',
       },
       fontFamily: {
-        sans: ['Outfit', 'Inter', 'sans-serif'],
+        sans:  ['Inter', 'sans-serif'],
+        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
       },
       boxShadow: {
-        'premium': '0 8px 32px 0 rgba(31, 38, 135, 0.08)',
-        'premium-hover': '0 12px 40px 0 rgba(31, 38, 135, 0.15)',
-        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
-      }
+        'premium':       '0 4px 24px rgba(0,0,0,0.7)',
+        'premium-hover': '0 8px 40px rgba(0,0,0,0.8)',
+        'green':         '0 0 24px rgba(16,185,129,0.35)',
+        'green-hover':   '0 0 40px rgba(16,185,129,0.55)',
+      },
     },
   },
   plugins: [],
