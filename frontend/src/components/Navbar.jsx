@@ -1,264 +1,215 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { motion } from 'framer-motion';
-import { FiShoppingBag, FiHeart, FiUser, FiSearch, FiLogOut, FiSettings, FiGrid, FiMenu, FiX } from 'react-icons/fi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ShoppingBag, Heart, Search, User, LogOut, LayoutDashboard, Menu, X, ArrowRight } from 'lucide-react';
 import { logout } from '../store/slices/authSlice.js';
-import ThemeToggle from './ThemeToggle.jsx';
+import ThapaMartLogo from './ThapaMartLogo.jsx';
+
+const BG      = '#FFFFFF';
+const BORDER  = '#E5E7EB';
+const TEXT    = '#09090B';
+const MUTED   = '#71717A';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const location = useLocation();
-  const { userInfo } = useSelector((state) => state.auth);
-  const { cartItems } = useSelector((state) => state.cart);
-  const { wishlistItems } = useSelector((state) => state.wishlist);
+  const dispatch = useDispatch();
 
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const { cartItems } = useSelector(state => state.cart);
+  const { wishlistItems } = useSelector(state => state.wishlist);
+  const { userInfo } = useSelector(state => state.auth);
 
   React.useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  const wishlistCount = wishlistItems.length;
-
-  const handleSearchSubmit = (e) => {
+  const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(searchQuery)}`);
+      navigate(`/shop?search=${searchQuery}`);
       setSearchOpen(false);
     }
-  };
-
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
-    setProfileOpen(false);
   };
 
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Shop', path: '/shop' },
-    { name: 'Categories', path: '/categories' },
-    { name: 'Wishlist', path: '/wishlist' },
+    { name: 'Collections', path: '/collections' },
+    { name: 'About', path: '/about' },
   ];
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 ${
-      isScrolled 
-        ? 'glass-panel shadow-premium py-3' 
-        : 'bg-white/10 dark:bg-slate-950/10 backdrop-blur-xs py-5 border-b border-white/5 dark:border-white/2'
-    }`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-12">
-          
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <span className="text-2xl font-extrabold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent tracking-tight">
-                ThapaMart
-              </span>
-            </Link>
-          </div>
+    <>
+      <header
+        style={{
+          position: 'sticky', top: 0, zIndex: 50, width: '100%',
+          background: isScrolled ? 'rgba(255,255,255,0.95)' : BG,
+          backdropFilter: isScrolled ? 'blur(16px)' : 'none',
+          borderBottom: isScrolled ? `1px solid ${BORDER}` : '1px solid transparent',
+          transition: 'all 0.3s ease'
+        }}
+      >
+        {/* Top Announcement Bar */}
+        <div style={{ background: '#000000', color: '#FFFFFF', padding: '0.5rem 0', textAlign: 'center', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          Free shipping on all premium orders over Rs. 10,000 <span style={{ marginLeft: '0.5rem', opacity: 0.7 }}>|</span> <Link to="/shop" style={{ marginLeft: '0.5rem', color: '#FFFFFF', textDecoration: 'underline' }}>Shop Now</Link>
+        </div>
 
-          {/* Desktop Navigation Link items */}
-          <div className="hidden md:flex items-center space-x-2 text-sm font-medium">
-            {navLinks.map((link) => {
-              const isActive = location.pathname === link.path;
-              return (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`relative px-4 py-2 rounded-full transition-colors duration-250 ${
-                    isActive
-                      ? 'text-primary dark:text-accent font-semibold'
-                      : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-                >
-                  <span className="relative z-10">{link.name}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeNavIndicator"
-                      className="absolute inset-0 bg-primary/10 dark:bg-white/10 rounded-full"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Search bar, theme toggle, and icons */}
-          <div className="flex items-center space-x-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '5rem' }}>
             
-            {/* Search Input Icon Trigger */}
-            <div className="relative">
-              {searchOpen ? (
-                <form onSubmit={handleSearchSubmit} className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-full px-3 py-1.5 transition-all duration-300">
-                  <input
-                    type="text"
-                    placeholder="Search Products..."
-                    className="bg-transparent border-none outline-none text-slate-800 dark:text-slate-100 text-sm w-40 sm:w-56"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    autoFocus
-                  />
-                  <button type="submit" className="text-slate-500 hover:text-primary">
-                    <FiSearch className="w-4 h-4" />
-                  </button>
-                  <button type="button" onClick={() => setSearchOpen(false)} className="ml-1.5 text-slate-400 hover:text-slate-600">
-                    <FiX className="w-4 h-4" />
-                  </button>
-                </form>
-              ) : (
-                <button
-                  onClick={() => setSearchOpen(true)}
-                  className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-200 transition-colors"
-                >
-                  <FiSearch className="w-5 h-5" />
-                </button>
-              )}
+            {/* Logo */}
+            <div style={{ flex: '1 1 0%' }}>
+              <Link to="/">
+                <ThapaMartLogo size="md" variant="wordmark" />
+              </Link>
             </div>
 
-            {/* Dark Mode toggle */}
-            <ThemeToggle />
-
-            {/* Wishlist Link */}
-            <Link to="/wishlist" className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-200 transition-colors">
-              <FiHeart className="w-5 h-5" />
-              {wishlistCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-pulse">
-                  {wishlistCount}
-                </span>
-              )}
-            </Link>
-
-            {/* Shopping Cart Link */}
-            <Link to="/cart" className="relative p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-200 transition-colors">
-              <FiShoppingBag className="w-5 h-5" />
-              {cartCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-
-            {/* User Profile / Dashboard dropdown */}
-            <div className="relative">
-              {userInfo ? (
-                <div>
-                  <button
-                    onClick={() => setProfileOpen(!profileOpen)}
-                    className="flex items-center space-x-1.5 focus:outline-none p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            {/* Desktop Nav */}
+            <nav className="hidden md:flex" style={{ flex: '1 1 auto', justifyContent: 'center', gap: '2rem' }}>
+              {navLinks.map((link) => {
+                const isActive = location.pathname === link.path;
+                return (
+                  <Link key={link.name} to={link.path}
+                    style={{
+                      fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em',
+                      color: isActive ? TEXT : MUTED, textDecoration: 'none', position: 'relative', padding: '0.5rem 0',
+                      transition: 'color 0.2s'
+                    }}
+                    onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = TEXT; }}
+                    onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = MUTED; }}
                   >
-                    <img
-                      className="h-8 w-8 rounded-full object-cover border border-slate-200 dark:border-slate-700"
-                      src={userInfo.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
-                      alt="User Avatar"
-                    />
-                  </button>
+                    {link.name}
+                    {isActive && (
+                      <motion.div layoutId="nav-pill" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', background: '#000000' }} />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
 
-                  {profileOpen && (
-                    <div className="absolute right-0 mt-2.5 w-56 rounded-2xl shadow-premium border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 py-2 ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden animate-fade-in-up">
-                      <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{userInfo.name}</p>
-                        <p className="text-xs text-slate-500 truncate">{userInfo.email}</p>
+            {/* Icons */}
+            <div style={{ flex: '1 1 0%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1.25rem' }}>
+              
+              {/* Search Toggle */}
+              <button onClick={() => setSearchOpen(!searchOpen)} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }}>
+                <Search size={20} strokeWidth={1.5} />
+              </button>
+
+              {/* Wishlist */}
+              <Link to="/wishlist" style={{ color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem' }}>
+                <Heart size={20} strokeWidth={1.5} />
+                {wishlistItems.length > 0 && (
+                  <span style={{ position: 'absolute', top: 2, right: 2, width: '14px', height: '14px', background: '#000000', color: '#FFFFFF', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {wishlistItems.length}
+                  </span>
+                )}
+              </Link>
+
+              {/* Cart */}
+              <Link to="/cart" style={{ color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem' }}>
+                <ShoppingBag size={20} strokeWidth={1.5} />
+                {cartItems.length > 0 && (
+                  <span style={{ position: 'absolute', top: 2, right: 2, width: '14px', height: '14px', background: '#000000', color: '#FFFFFF', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {cartItems.reduce((a, c) => a + c.quantity, 0)}
+                  </span>
+                )}
+              </Link>
+
+              {/* Profile Dropdown */}
+              <div style={{ position: 'relative' }}>
+                {userInfo ? (
+                  <button onClick={() => setProfileOpen(!profileOpen)} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }}>
+                    <User size={20} strokeWidth={1.5} />
+                  </button>
+                ) : (
+                  <Link to="/login" style={{ color: TEXT, textDecoration: 'none', padding: '0.5rem' }}>
+                    <User size={20} strokeWidth={1.5} />
+                  </Link>
+                )}
+
+                <AnimatePresence>
+                  {profileOpen && userInfo && (
+                    <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      style={{ position: 'absolute', right: 0, top: '100%', marginTop: '0.5rem', width: '14rem', background: '#FFFFFF', border: `1px solid ${BORDER}`, borderRadius: '0.5rem', padding: '0.5rem', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', transformOrigin: 'top right' }}>
+                      <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${BORDER}`, marginBottom: '0.5rem' }}>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 700, color: TEXT }}>{userInfo.name}</p>
+                        <p style={{ fontSize: '0.7rem', color: MUTED }}>{userInfo.email}</p>
                       </div>
-                      <Link
-                        to="/dashboard"
-                        onClick={() => setProfileOpen(false)}
-                        className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <FiUser className="mr-3 text-slate-500 w-4 h-4" /> Dashboard
-                      </Link>
-                      {userInfo.role === 'admin' && (
-                        <Link
-                          to="/admin"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex items-center px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                        >
-                          <FiGrid className="mr-3 text-slate-500 w-4 h-4" /> Admin Panel
+                      {userInfo.isAdmin && (
+                        <Link to="/admin/dashboard" onClick={() => setProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} onMouseEnter={e=>e.currentTarget.style.background='#F9FAFB'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                          <LayoutDashboard size={16} /> Admin Dashboard
                         </Link>
                       )}
-                      <button
-                        onClick={handleLogout}
-                        className="w-full flex items-center px-4 py-2 text-sm text-red-600 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                      >
-                        <FiLogOut className="mr-3 w-4 h-4" /> Sign out
+                      <Link to="/profile" onClick={() => setProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} onMouseEnter={e=>e.currentTarget.style.background='#F9FAFB'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                        <User size={16} /> My Account
+                      </Link>
+                      <button onClick={() => { dispatch(logout()); setProfileOpen(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.8rem', color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '0.25rem' }} onMouseEnter={e=>e.currentTarget.style.background='#FEF2F2'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                        <LogOut size={16} /> Sign Out
                       </button>
-                    </div>
+                    </motion.div>
                   )}
-                </div>
-              ) : (
-                <Link
-                  to="/login"
-                  className="inline-flex items-center justify-center px-4.5 py-1.5 rounded-full bg-primary hover:bg-primary-dark text-white text-xs font-semibold shadow-premium transition-all hover:scale-105"
-                >
-                  Login
-                </Link>
-              )}
-            </div>
+                </AnimatePresence>
+              </div>
 
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-200"
-              >
-                {mobileMenuOpen ? <FiX className="w-6 h-6" /> : <FiMenu className="w-6 h-6" />}
-              </button>
+              {/* Mobile Menu Toggle */}
+              <div className="md:hidden">
+                <button onClick={() => setMobileMenuOpen(true)} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }}>
+                  <Menu size={20} strokeWidth={1.5} />
+                </button>
+              </div>
             </div>
-
           </div>
         </div>
-      </div>
 
-      {/* Mobile Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 transition-all duration-300 animate-fade-in-up">
-          <div className="px-2 pt-2 pb-4 space-y-1 sm:px-3 text-center">
-            <Link
-              to="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-            >
-              Home
-            </Link>
-            <Link
-              to="/shop"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-            >
-              Shop
-            </Link>
-            <Link
-              to="/categories"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-            >
-              Categories
-            </Link>
-            <Link
-              to="/wishlist"
-              onClick={() => setMobileMenuOpen(false)}
-              className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-            >
-              Wishlist
-            </Link>
+        {/* Search Bar Dropdown */}
+        <AnimatePresence>
+          {searchOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', background: '#FFFFFF', borderBottom: `1px solid ${BORDER}` }}>
+              <div className="max-w-3xl mx-auto px-4 py-6">
+                <form onSubmit={handleSearch} style={{ position: 'relative' }}>
+                  <Search size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: MUTED }} strokeWidth={1.5} />
+                  <input type="text" placeholder="Search for premium products..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus
+                    style={{ width: '100%', background: '#F9FAFB', border: 'none', padding: '1rem 1rem 1rem 3rem', fontSize: '1rem', color: TEXT, outline: 'none' }} />
+                  <button type="submit" style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: '#000000', color: '#FFFFFF', border: 'none', padding: '0.5rem 1rem', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}>Search</button>
+                </form>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
+
+      {/* Mobile Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div style={{ position: 'fixed', inset: 0, zIndex: 999 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileMenuOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '80%', maxWidth: '300px', background: '#FFFFFF', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${BORDER}` }}>
+                <ThapaMartLogo size="sm" variant="wordmark" />
+                <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer' }}><X size={20} strokeWidth={1.5} /></button>
+              </div>
+              <div style={{ padding: '1.5rem', flexGrow: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {navLinks.map((link) => (
+                  <Link key={link.name} to={link.path} onClick={() => setMobileMenuOpen(false)} style={{ fontSize: '1.25rem', fontWeight: 600, color: TEXT, textDecoration: 'none' }}>
+                    {link.name}
+                  </Link>
+                ))}
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
-    </nav>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
-
 export default Navbar;
