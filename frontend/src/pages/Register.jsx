@@ -32,7 +32,7 @@ const Register = () => {
     setMessage('');
     dispatch(authStart());
     try {
-      const { data } = await api.post('/users/register', { name, email, password });
+      const { data } = await api.post('/auth/register', { name, email, password });
       dispatch(authSuccess(data));
     } catch (err) {
       dispatch(authFail(err.response?.data?.message || 'Registration failed'));

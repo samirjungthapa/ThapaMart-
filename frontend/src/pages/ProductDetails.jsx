@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Star, Heart, ShoppingBag, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
 import { addToCart } from '../store/slices/cartSlice.js';
@@ -10,6 +10,7 @@ import ProductCard from '../components/ProductCard.jsx';
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
 
   const { userInfo } = useSelector((state) => state.auth);
@@ -18,8 +19,12 @@ const ProductDetails = () => {
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const [activeImg, setActiveImg] = useState(0);
+  const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+  const [isZooming, setIsZooming] = useState(false);
   
   const [deliveryRegion, setDeliveryRegion] = useState('inside-ringroad');
+
   
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
@@ -45,16 +50,27 @@ const ProductDetails = () => {
   useEffect(() => {
     fetchProductDetails();
     setQuantity(1);
+    setActiveImg(0);
     setReviewSuccess(false);
     setReviewError('');
   }, [id]);
 
   const handleAddToCart = () => {
+    if (!userInfo) {
+      navigate(`/login?redirect=${location.pathname}`);
+      return;
+    }
     dispatch(addToCart({ product: product.id || product._id, title: product.title, price: product.price, image: product.images[0], stock: product.stock, quantity: Number(quantity) }));
     navigate('/cart');
   };
 
-  const handleAddToWishlist = () => { dispatch(addToWishlist(product)); };
+  const handleAddToWishlist = () => { 
+    if (!userInfo) {
+      navigate(`/login?redirect=${location.pathname}`);
+      return;
+    }
+    dispatch(addToWishlist(product)); 
+  };
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -102,11 +118,64 @@ const ProductDetails = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start mb-16">
           
           {/* Images */}
-          <div style={{ position:'sticky', top:'5rem' }}>
-            <div style={{ aspectRatio:'4/5', background:'#F9FAFB', overflow:'hidden', border:'1px solid #E5E7EB' }}>
-              <img src={product.images[0]} alt={product.title} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          <div style={{ position:'sticky', top:'5rem', display:'flex', flexDirection:'column', gap:'1rem' }}>
+            <div 
+              onMouseMove={(e) => {
+                const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+                const x = ((e.clientX - left) / width) * 100;
+                const y = ((e.clientY - top) / height) * 100;
+                setZoomPos({ x, y });
+              }}
+              onMouseEnter={() => setIsZooming(true)}
+              onMouseLeave={() => setIsZooming(false)}
+              style={{ 
+                aspectRatio:'4/5', 
+                background:'#F9FAFB', 
+                overflow:'hidden', 
+                border:'1px solid #E5E7EB',
+                position:'relative',
+                cursor:'zoom-in'
+              }}
+            >
+              <img 
+                src={product.images[activeImg] || product.images[0]} 
+                alt={product.title} 
+                style={{ 
+                  width:'100%', 
+                  height:'100%', 
+                  objectFit:'cover',
+                  transform: isZooming ? 'scale(2.2)' : 'scale(1)',
+                  transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                  transition: isZooming ? 'none' : 'transform 0.2s ease-out'
+                }} 
+              />
             </div>
+
+            {/* Thumbnail Gallery Selector */}
+            {product.images && product.images.length > 1 && (
+              <div style={{ display:'flex', gap:'0.5rem', overflowX:'auto', paddingBottom:'0.5rem' }}>
+                {product.images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImg(idx)}
+                    style={{
+                      width:'70px',
+                      height:'85px',
+                      border: activeImg === idx ? '2px solid #000000' : '1px solid #E5E7EB',
+                      padding:0,
+                      cursor:'pointer',
+                      background:'#F9FAFB',
+                      overflow:'hidden',
+                      flexShrink:0
+                    }}
+                  >
+                    <img src={img} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
 
           {/* Details */}
           <div style={{ display:'flex', flexDirection:'column', gap:'1.5rem', paddingTop:'2rem' }}>

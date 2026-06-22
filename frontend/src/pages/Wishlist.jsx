@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Heart, ArrowRight, Trash2, ShoppingBag } from 'lucide-react';
 import { removeFromWishlist } from '../store/slices/wishlistSlice.js';
@@ -7,11 +7,18 @@ import { addToCart } from '../store/slices/cartSlice.js';
 
 const Wishlist = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { wishlistItems } = useSelector((state) => state.wishlist);
+  const { userInfo } = useSelector((state) => state.auth);
 
   const handleRemove = (id) => { dispatch(removeFromWishlist(id)); };
 
   const handleAddToCart = (product) => {
+    if (!userInfo) {
+      navigate(`/login?redirect=${location.pathname}`);
+      return;
+    }
     dispatch(addToCart({ product: product.id || product._id, title: product.title, price: product.price, image: product.images[0], stock: product.stock, quantity: 1 }));
     dispatch(removeFromWishlist(product.id || product._id));
   };

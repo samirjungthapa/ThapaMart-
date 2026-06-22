@@ -13,15 +13,16 @@ const Checkout = () => {
 
   const prices = calcPrices({ cartItems, coupon });
 
-  useEffect(() => {
-    if (!userInfo) navigate('/login?redirect=/checkout');
-    if (cartItems.length === 0) navigate('/cart');
-  }, [userInfo, cartItems, navigate]);
-
   const [shippingAddress, setShippingAddress] = useState({ address:'', city:'', postalCode:'', country:'Nepal' });
   const [paymentMethod, setPaymentMethod] = useState('eSewa');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [orderPlaced, setOrderPlaced] = useState(false);
+
+  useEffect(() => {
+    if (!userInfo) navigate('/login?redirect=/checkout');
+    if (cartItems.length === 0 && !orderPlaced) navigate('/cart');
+  }, [userInfo, cartItems, navigate, orderPlaced]);
 
   const submitHandler = async (e) => {
     e.preventDefault();
@@ -29,8 +30,17 @@ const Checkout = () => {
     setError('');
 
     const orderData = {
-      orderItems: cartItems.map(item => ({ name: item.title, qty: item.quantity, image: item.image, price: item.price, product: item.product })),
-      shippingAddress,
+      orderItems: cartItems.map(item => ({ 
+        title: item.title, 
+        quantity: item.quantity, 
+        image: item.image, 
+        price: item.price, 
+        product: item.product 
+      })),
+      shippingAddress: {
+        ...shippingAddress,
+        fullName: userInfo?.name || 'Valued Customer'
+      },
       paymentMethod,
       itemsPrice: prices.itemsPrice,
       taxPrice: prices.taxPrice,
@@ -40,12 +50,14 @@ const Checkout = () => {
 
     try {
       const { data } = await api.post('/orders', orderData);
+      setOrderPlaced(true);
       dispatch(clearCart());
+      const orderId = data._id || data.id;
       if (paymentMethod === 'Cash On Delivery') {
-        navigate('/order-success?id=' + data._id);
+        navigate('/order-success?id=' + orderId);
       } else {
         alert(`Proceeding to ${paymentMethod} payment gateway...`);
-        navigate('/order-success?id=' + data._id);
+        navigate('/order-success?id=' + orderId);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Order creation failed');

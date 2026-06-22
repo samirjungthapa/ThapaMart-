@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useSelector } from 'react-redux';
 import Hero from '../components/Hero.jsx';
 import CategoriesSection from '../components/CategoriesSection.jsx';
 import FeaturedProducts from '../components/FeaturedProducts.jsx';
@@ -7,9 +8,11 @@ import FlashSales from '../components/FlashSales.jsx';
 import Testimonials from '../components/Testimonials.jsx';
 import Newsletter from '../components/Newsletter.jsx';
 import ProductCard from '../components/ProductCard.jsx';
+import Storefront from '../components/Storefront.jsx';
 import api from '../store/api.js';
 
 const Home = () => {
+  const { userInfo } = useSelector((state) => state.auth);
   const [products, setProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
 
@@ -30,6 +33,10 @@ const Home = () => {
       setRecentlyViewed(JSON.parse(saved).slice(0, 4));
     }
   }, []);
+
+  if (userInfo) {
+    return <Storefront />;
+  }
 
   return (
     <motion.div

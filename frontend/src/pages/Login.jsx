@@ -24,7 +24,7 @@ const Login = () => {
     e.preventDefault();
     dispatch(authStart());
     try {
-      const { data } = await api.post('/users/login', { email, password });
+      const { data } = await api.post('/auth/login', { email, password });
       dispatch(authSuccess(data));
     } catch (err) {
       dispatch(authFail(err.response?.data?.message || 'Invalid email or password'));

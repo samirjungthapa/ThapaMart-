@@ -1,33 +1,96 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { SlidersHorizontal, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import api from '../store/api.js';
 import ProductCard from '../components/ProductCard.jsx';
 
+const ALL_CATEGORIES = [
+  { id: 'electronics', name: 'Electronics' },
+  { id: 'fashion', name: 'Fashion' },
+  { id: 'home-living', name: 'Home & Living' },
+  { id: 'beauty', name: 'Beauty & Wellness' },
+  { id: 'sports', name: 'Sports & Fitness' },
+  { id: 'gaming', name: 'Gaming' },
+  { id: 'accessories', name: 'Accessories' },
+  { id: 'jewelry', name: 'Fine Jewelry' },
+  { id: 'art', name: 'Art Collection' },
+  { id: 'footwear', name: 'Designer Footwear' }
+];
+
+const PRICE_RANGES = [
+  { id: 'all', name: 'All Prices', min: '', max: '' },
+  { id: 'range1', name: 'Under Rs. 50,000', min: '', max: '50000' },
+  { id: 'range2', name: 'Rs. 50,000 - Rs. 200,000', min: '50000', max: '200000' },
+  { id: 'range3', name: 'Rs. 200,000 - Rs. 500,000', min: '200000', max: '500000' },
+  { id: 'range4', name: 'Over Rs. 500,000', min: '500000', max: '' }
+];
+
 const Shop = () => {
+  const navigate = useNavigate();
   const location = useLocation();
+  const { userInfo } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (!userInfo) {
+      navigate('/login?redirect=/shop');
+    }
+  }, [userInfo, navigate]);
+
   const queryParams = new URLSearchParams(location.search);
 
-  const [keyword, setKeyword]   = useState(queryParams.get('search') || '');
-  const [category, setCategory] = useState(queryParams.get('category') || 'all');
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [sort, setSort]         = useState('newest');
-  const [page, setPage]         = useState(1);
-  const [pages, setPages]       = useState(1);
+  const initialCategory = queryParams.get('category');
+  
+  const [keyword, setKeyword] = useState(queryParams.get('search') || '');
+  const [categories, setCategories] = useState(initialCategory ? (initialCategory === 'all' ? [] : initialCategory.split(',')) : []);
+  const [priceRange, setPriceRange] = useState('all');
+  const [customMin, setCustomMin] = useState('');
+  const [customMax, setCustomMax] = useState('');
+  const [sort, setSort] = useState('newest');
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
   const [products, setProducts] = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setKeyword(queryParams.get('search') || '');
-    setCategory(queryParams.get('category') || 'all');
+    const catParam = queryParams.get('category');
+    setCategories(catParam ? (catParam === 'all' ? [] : catParam.split(',')) : []);
     setPage(1);
   }, [location.search]);
 
+  const toggleCategory = (catId) => {
+    setCategories(prev => 
+      prev.includes(catId) ? prev.filter(c => c !== catId) : [...prev, catId]
+    );
+    setPage(1);
+  };
+
+  const handlePriceRangeChange = (rangeId) => {
+    setPriceRange(rangeId);
+    setCustomMin('');
+    setCustomMax('');
+    setPage(1);
+  };
+
   const fetchProducts = async () => {
     setLoading(true);
+    let minPrice = customMin;
+    let maxPrice = customMax;
+    
+    if (priceRange !== 'all' && priceRange !== 'custom') {
+      const range = PRICE_RANGES.find(r => r.id === priceRange);
+      if (range) {
+        minPrice = range.min;
+        maxPrice = range.max;
+      }
+    }
+
     try {
-      const { data } = await api.get('/products', { params: { keyword, category, minPrice, maxPrice, sort, page, limit: 9 } });
+      const categoryParam = categories.length > 0 ? categories.join(',') : 'all';
+      const { data } = await api.get('/products', { 
+        params: { keyword, category: categoryParam, minPrice, maxPrice, sort, page, limit: 9 } 
+      });
       setProducts(data.products || []);
       setPages(data.pages || 1);
     } catch (err) {
@@ -37,7 +100,9 @@ const Shop = () => {
     }
   };
 
-  useEffect(() => { fetchProducts(); }, [keyword, category, minPrice, maxPrice, sort, page]);
+  useEffect(() => { 
+    fetchProducts(); 
+  }, [keyword, categories, priceRange, customMin, customMax, sort, page]);
 
   return (
     <div style={{ padding:'3rem 0', minHeight:'100vh', background:'#FFFFFF' }}>
@@ -61,8 +126,8 @@ const Shop = () => {
               </div>
 
               {/* Search */}
-              <div style={{ marginBottom:'1.5rem' }}>
-                <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.5rem' }}>Search</label>
+              <div style={{ marginBottom:'2rem' }}>
+                <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.75rem' }}>Search</label>
                 <div style={{ position:'relative' }}>
                   <Search size={14} style={{ position:'absolute', top:'50%', left:'0.875rem', transform:'translateY(-50%)', color:'#71717A' }} />
                   <input type="text" placeholder="Keywords..." value={keyword} onChange={e=>setKeyword(e.target.value)}
@@ -71,34 +136,64 @@ const Shop = () => {
                 </div>
               </div>
 
-              {/* Category */}
-              <div style={{ marginBottom:'1.5rem' }}>
-                <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.5rem' }}>Category</label>
-                <select value={category} onChange={e=>setCategory(e.target.value)}
-                  style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem 1rem', color:'#09090B', fontSize:'0.8rem', outline:'none', cursor:'pointer' }}>
-                  <option value="all">All Categories</option>
-                  <option value="electronics">Electronics</option>
-                  <option value="fashion">Fashion</option>
-                  <option value="home-living">Home & Living</option>
-                  <option value="beauty">Beauty</option>
-                  <option value="sports">Sports & Fitness</option>
-                  <option value="gaming">Gaming</option>
-                </select>
+              {/* Multiple Categories */}
+              <div style={{ marginBottom:'2rem' }}>
+                <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.75rem' }}>Categories</label>
+                <div style={{ display:'flex', flexDirection:'column', gap:'0.5rem' }}>
+                  {ALL_CATEGORIES.map(cat => (
+                    <label key={cat.id} style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={categories.includes(cat.id)} 
+                        onChange={() => toggleCategory(cat.id)}
+                        style={{ accentColor: '#09090B', width: '1rem', height: '1rem', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize:'0.875rem', color:'#52525B' }}>{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
-              {/* Price */}
-              <div style={{ marginBottom:'1.5rem' }}>
-                <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.5rem' }}>Price Range</label>
-                <div style={{ display:'flex', gap:'0.5rem', alignItems:'center' }}>
-                  <input type="number" placeholder="Min" value={minPrice} onChange={e=>setMinPrice(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }} />
-                  <span style={{ color:'#71717A' }}>-</span>
-                  <input type="number" placeholder="Max" value={maxPrice} onChange={e=>setMaxPrice(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }} />
+              {/* Price Range */}
+              <div style={{ marginBottom:'2rem' }}>
+                <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.75rem' }}>Price Range</label>
+                <div style={{ display:'flex', flexDirection:'column', gap:'0.5rem', marginBottom:'1rem' }}>
+                  {PRICE_RANGES.map(range => (
+                    <label key={range.id} style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
+                      <input 
+                        type="radio" 
+                        name="priceRange"
+                        checked={priceRange === range.id} 
+                        onChange={() => handlePriceRangeChange(range.id)}
+                        style={{ accentColor: '#09090B', width: '1rem', height: '1rem', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize:'0.875rem', color:'#52525B' }}>{range.name}</span>
+                    </label>
+                  ))}
+                  <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
+                    <input 
+                      type="radio" 
+                      name="priceRange"
+                      checked={priceRange === 'custom'} 
+                      onChange={() => setPriceRange('custom')}
+                      style={{ accentColor: '#09090B', width: '1rem', height: '1rem', cursor: 'pointer' }}
+                    />
+                    <span style={{ fontSize:'0.875rem', color:'#52525B' }}>Custom Range</span>
+                  </label>
                 </div>
+
+                {priceRange === 'custom' && (
+                  <div style={{ display:'flex', gap:'0.5rem', alignItems:'center' }}>
+                    <input type="number" placeholder="Min" value={customMin} onChange={e=>setCustomMin(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }} />
+                    <span style={{ color:'#71717A' }}>-</span>
+                    <input type="number" placeholder="Max" value={customMax} onChange={e=>setCustomMax(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }} />
+                  </div>
+                )}
               </div>
 
               {/* Sort */}
               <div>
-                <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.5rem' }}>Sort By</label>
+                <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.75rem' }}>Sort By</label>
                 <select value={sort} onChange={e=>setSort(e.target.value)}
                   style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem 1rem', color:'#09090B', fontSize:'0.8rem', outline:'none', cursor:'pointer' }}>
                   <option value="newest">Newest Arrival</option>

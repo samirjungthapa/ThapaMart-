@@ -8,12 +8,17 @@ import Footer from './components/Footer.jsx';
 import CompareDrawer from './components/CompareDrawer.jsx';
 import SplashScreen from './components/SplashScreen.jsx';
 import PageTransition from './components/PageTransition.jsx';
+import SpinWheel from './components/SpinWheel.jsx';
+import MartAI from './components/MartAI.jsx';
+
 
 // Pages
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Shop from './pages/Shop.jsx';
+import Collections from './pages/Collections.jsx';
+import About from './pages/About.jsx';
 import Categories from './pages/Categories.jsx';
 import ProductDetails from './pages/ProductDetails.jsx';
 import Cart from './pages/Cart.jsx';
@@ -43,6 +48,8 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
             <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
             <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
             <Route path="/shop" element={<PageTransition><Shop /></PageTransition>} />
+            <Route path="/collections" element={<PageTransition><Collections /></PageTransition>} />
+            <Route path="/about" element={<PageTransition><About /></PageTransition>} />
             <Route path="/categories" element={<PageTransition><Categories /></PageTransition>} />
             <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
             <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
@@ -62,6 +69,12 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
         removeFromCompare={removeFromCompare}
         clearCompare={clearCompare}
       />
+
+      {/* Gamified Rewards */}
+      {location.pathname === '/checkout' && <SpinWheel />}
+
+      {/* Conversational Assistant */}
+      <MartAI />
 
       {/* Footer */}
       <Footer />
