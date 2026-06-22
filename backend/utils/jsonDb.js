@@ -22,7 +22,7 @@ const initialData = {
     "title": "iPhone 16 Pro Max",
     "description": "Featuring a stunning titanium design, the new Camera Control, and the ultra-powerful A18 Pro chip for high-end intelligence.",
     "category": "electronics",
-    "price": 1199.99,
+    "price": 239000,
     "discount": 5,
     "stock": 15,
     "images": [
@@ -36,7 +36,7 @@ const initialData = {
     "title": "Samsung Galaxy S26 Ultra",
     "description": "Experience the ultimate smartphone camera with 200MP, Galaxy AI features, and built-in S Pen inside a sleek armor aluminum frame.",
     "category": "electronics",
-    "price": 1299.99,
+    "price": 259000,
     "discount": 10,
     "stock": 20,
     "images": [
@@ -50,7 +50,7 @@ const initialData = {
     "title": "MacBook Pro M5 Max",
     "description": "Unprecedented speed and graphics capability with the revolutionary M5 Max chip, 120Hz Liquid Retina XDR screen, and 30-hour battery life.",
     "category": "electronics",
-    "price": 2499.99,
+    "price": 499000,
     "discount": 8,
     "stock": 10,
     "images": [
@@ -64,7 +64,7 @@ const initialData = {
     "title": "Dell XPS 15 OLED Laptop",
     "description": "Stunning 3.5K OLED InfinityEdge touch screen powered by Intel Core i9 processor, NVIDIA GeForce RTX graphics, and CNC aluminum casing.",
     "category": "electronics",
-    "price": 1799.99,
+    "price": 359000,
     "discount": 12,
     "stock": 12,
     "images": [
@@ -78,7 +78,7 @@ const initialData = {
     "title": "Sony WH-1000XM6 Headphones",
     "description": "Industry-leading active noise cancellation, smart adaptive sound control, 45 hours battery life, and crystal-clear high-resolution audio.",
     "category": "electronics",
-    "price": 399.99,
+    "price": 80000,
     "discount": 15,
     "stock": 35,
     "images": [
@@ -92,7 +92,7 @@ const initialData = {
     "title": "Pro Sound Max Wireless Headphones",
     "description": "Experience premium sound quality with active noise cancellation, 40-hour battery life, and comfortable memory foam earcups.",
     "category": "electronics",
-    "price": 189.99,
+    "price": 38000,
     "discount": 10,
     "stock": 25,
     "images": [
@@ -106,7 +106,7 @@ const initialData = {
     "title": "Minimalist Leather Smart Watch",
     "description": "A sleek, premium smart watch with heart rate tracking, fitness features, and a hand-crafted genuine leather band.",
     "category": "electronics",
-    "price": 249.99,
+    "price": 50000,
     "discount": 15,
     "stock": 15,
     "images": [
@@ -120,7 +120,7 @@ const initialData = {
     "title": "Ultra Vision 4K Smart Projector",
     "description": "Transform your living room into a premium home cinema with 5000 lumens, HDR10 support, and built-in Android OS.",
     "category": "electronics",
-    "price": 599.99,
+    "price": 120000,
     "discount": 20,
     "stock": 8,
     "images": [
@@ -134,11 +134,11 @@ const initialData = {
     "title": "Horizon Wireless Charging Pad",
     "description": "Sleek aluminum wireless charger wrapped in genuine Italian leather. Multi-device compatible with fast charging capabilities.",
     "category": "electronics",
-    "price": 49.99,
+    "price": 15000,
     "discount": 0,
     "stock": 80,
     "images": [
-      "https://images.unsplash.com/photo-1622445262465-2481c4574875?w=600&auto=format&fit=crop&q=80"
+      "https://images.unsplash.com/photo-1616440347437-b1c73416efc2?w=600&auto=format&fit=crop&q=80"
     ],
     "ratings": 4.5,
     "reviews": []
@@ -148,7 +148,7 @@ const initialData = {
     "title": "StudioPro Mechanical Keyboard",
     "description": "Hot-swappable custom mechanical keyboard with gasket-mounted design, pre-lubed linear switches, and triple-mode wireless connectivity.",
     "category": "electronics",
-    "price": 179.99,
+    "price": 36000,
     "discount": 10,
     "stock": 30,
     "images": [
@@ -162,7 +162,7 @@ const initialData = {
     "title": "Classic Cotton Bomber Jacket",
     "description": "Premium cotton bomber jacket designed for comfort and style. Water-resistant outer shell with thermal inner lining.",
     "category": "fashion",
-    "price": 89.99,
+    "price": 18000,
     "discount": 10,
     "stock": 50,
     "images": [
@@ -176,7 +176,7 @@ const initialData = {
     "title": "Urban Fit Waterproof Backpack",
     "description": "An elegant, anti-theft laptop backpack with integrated USB charging port, card slots, and waterproof fabric lining.",
     "category": "fashion",
-    "price": 64.99,
+    "price": 15000,
     "discount": 5,
     "stock": 40,
     "images": [
@@ -190,7 +190,7 @@ const initialData = {
     "title": "Sartorial Wool Blend Trench Coat",
     "description": "An elegant, double-breasted trench coat tailored from a premium heavyweight wool blend. Features classic lapels and adjustable waist belt.",
     "category": "fashion",
-    "price": 219.99,
+    "price": 44000,
     "discount": 15,
     "stock": 25,
     "images": [
@@ -204,7 +204,7 @@ const initialData = {
     "title": "ActiveDry Premium Athletic Hoodie",
     "description": "Engineered for training and leisure. High-performance, moisture-wicking fabric with four-way stretch and zippered utility pockets.",
     "category": "fashion",
-    "price": 79.99,
+    "price": 16000,
     "discount": 0,
     "stock": 60,
     "images": [
@@ -218,7 +218,7 @@ const initialData = {
     "title": "Chrono Classic Gold Pocket Watch",
     "description": "Exquisite hand-wound mechanical pocket watch finished in polished 18k gold plating. Visible skeleton dial movements.",
     "category": "fashion",
-    "price": 349.99,
+    "price": 70000,
     "discount": 25,
     "stock": 10,
     "images": [
@@ -232,7 +232,7 @@ const initialData = {
     "title": "Premium Minimalist Sneakers",
     "description": "Clean, low-top sneakers crafted from full-grain leather, featuring a comfortable OrthoLite insole and custom durable rubber cupsole.",
     "category": "fashion",
-    "price": 129.99,
+    "price": 26000,
     "discount": 10,
     "stock": 30,
     "images": [
@@ -246,11 +246,11 @@ const initialData = {
     "title": "Leather Chelsea Boots",
     "description": "Handcrafted suede Chelsea boots featuring elasticated side panels, custom pull tabs, and robust Goodyear welted soles.",
     "category": "fashion",
-    "price": 189.99,
+    "price": 38000,
     "discount": 0,
     "stock": 20,
     "images": [
-      "https://images.unsplash.com/photo-1638247025967-b4e38f68917a?w=600&auto=format&fit=crop&q=80"
+      "https://images.unsplash.com/photo-1608256246200-53e635b5b65f?w=600&auto=format&fit=crop&q=80"
     ],
     "ratings": 4.6,
     "reviews": []
@@ -260,7 +260,7 @@ const initialData = {
     "title": "Designer Sunglasses Aviator",
     "description": "Classic aviator sunglasses featuring polarized scratch-resistant lenses, a lightweight titanium frame, and 100% UV protection.",
     "category": "fashion",
-    "price": 149.99,
+    "price": 30000,
     "discount": 15,
     "stock": 35,
     "images": [
@@ -274,7 +274,7 @@ const initialData = {
     "title": "Cashmere Scarf Charcoal",
     "description": "Luxurious, lightweight scarf woven from 100% pure Himalayan cashmere. Unmatched softness and warmth for cold seasons.",
     "category": "fashion",
-    "price": 69.99,
+    "price": 15000,
     "discount": 5,
     "stock": 45,
     "images": [
@@ -288,7 +288,7 @@ const initialData = {
     "title": "Tailored Slim Fit Suit",
     "description": "Premium Italian wool two-piece suit. Perfect tailoring featuring modern slim lapels, dual vents, and breathable inner lining.",
     "category": "fashion",
-    "price": 499.99,
+    "price": 100000,
     "discount": 20,
     "stock": 15,
     "images": [
@@ -302,7 +302,7 @@ const initialData = {
     "title": "Ergonomic Office Desk Chair",
     "description": "Fully adjustable ergonomic desk chair with breathable mesh back, lumber support, and customizable 3D armrests.",
     "category": "home-living",
-    "price": 299.99,
+    "price": 60000,
     "discount": 10,
     "stock": 10,
     "images": [
@@ -316,7 +316,7 @@ const initialData = {
     "title": "Luxe Hand-Poured Soy Candle Set",
     "description": "A premium set of three soy wax candles scented with lavender, sandalwood, and vanilla oak wood essences.",
     "category": "home-living",
-    "price": 45,
+    "price": 15000,
     "discount": 0,
     "stock": 35,
     "images": [
@@ -330,7 +330,7 @@ const initialData = {
     "title": "Nordic Ceramic Vase Collection",
     "description": "Set of three minimal, matte-finished ceramic vases in earthy tones. Perfect for dried flowers or standalone structural styling.",
     "category": "home-living",
-    "price": 59.99,
+    "price": 15000,
     "discount": 15,
     "stock": 45,
     "images": [
@@ -344,11 +344,11 @@ const initialData = {
     "title": "Solace Weighted Bamboo Blanket",
     "description": "Premium cooling weighted blanket woven from organic bamboo fabric and filled with hypoallergenic micro-glass beads.",
     "category": "home-living",
-    "price": 139.99,
+    "price": 28000,
     "discount": 10,
     "stock": 20,
     "images": [
-      "https://images.unsplash.com/photo-1584100936595-c0654b55a2e6?w=600&auto=format&fit=crop&q=80"
+      "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600&auto=format&fit=crop&q=80"
     ],
     "ratings": 4.7,
     "reviews": []
@@ -358,7 +358,7 @@ const initialData = {
     "title": "Smart Wi-Fi LED Ambient Lamp",
     "description": "Voice-controlled smart desk lamp featuring 16 million colors, custom presets, schedules, and seamless Apple HomeKit/Google Assistant sync.",
     "category": "home-living",
-    "price": 79.99,
+    "price": 16000,
     "discount": 12,
     "stock": 40,
     "images": [
@@ -372,11 +372,11 @@ const initialData = {
     "title": "Premium Espresso Coffee Machine",
     "description": "Professional-grade 15 bar pressure espresso maker with built-in steam wand for perfect micro-foam lattes and cappuccinos.",
     "category": "home-living",
-    "price": 449.99,
+    "price": 90000,
     "discount": 15,
     "stock": 14,
     "images": [
-      "https://images.unsplash.com/photo-1517256064527-09c53b2d0ec6?w=600&auto=format&fit=crop&q=80"
+      "https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=600&auto=format&fit=crop&q=80"
     ],
     "ratings": 4.8,
     "reviews": []
@@ -386,7 +386,7 @@ const initialData = {
     "title": "Modern Oak Wood Coffee Table",
     "description": "Minimalist Scandinavian design table crafted from solid white oak, featuring built-in storage drawers and hidden wire managers.",
     "category": "home-living",
-    "price": 199.99,
+    "price": 40000,
     "discount": 0,
     "stock": 12,
     "images": [
@@ -400,7 +400,7 @@ const initialData = {
     "title": "Abstract Wall Art Canvas",
     "description": "Premium hand-painted abstract oil canvas depicting natural earth tones. Signed by artist and pre-stretched on a pine wood frame.",
     "category": "home-living",
-    "price": 89.99,
+    "price": 18000,
     "discount": 20,
     "stock": 18,
     "images": [
@@ -414,7 +414,7 @@ const initialData = {
     "title": "Ultrasonic Cool Mist Humidifier",
     "description": "Whisper-quiet air humidifier featuring 3L large capacity, automatic dry safety switch-off, and integrated aromatherapy essential oil diffuser.",
     "category": "home-living",
-    "price": 49.99,
+    "price": 15000,
     "discount": 10,
     "stock": 50,
     "images": [
@@ -428,7 +428,7 @@ const initialData = {
     "title": "Premium Chef Knife Set",
     "description": "High-carbon German steel kitchen knife block set. Hand-sharpened double-bevel blades with ergonomic full-tang handles.",
     "category": "home-living",
-    "price": 129.99,
+    "price": 26000,
     "discount": 5,
     "stock": 25,
     "images": [
@@ -442,11 +442,11 @@ const initialData = {
     "title": "Pure Glow Organic Face Oil",
     "description": "Infused with natural rosehip oil, vitamin E, and jojoba extract for clean, hydrated, and radiant skin.",
     "category": "beauty",
-    "price": 34.99,
+    "price": 15000,
     "discount": 0,
     "stock": 100,
     "images": [
-      "https://images.unsplash.com/photo-1608248597481-496100c8c836?w=600&auto=format&fit=crop&q=80"
+      "https://images.unsplash.com/photo-1601049541289-9b1b7bbbfe19?w=600&auto=format&fit=crop&q=80"
     ],
     "ratings": 4.9,
     "reviews": []
@@ -456,7 +456,7 @@ const initialData = {
     "title": "Hyaluronic Acid Glow Serum",
     "description": "A concentrated, fast-absorbing hydrating serum that plumps skin, smooths fine lines, and restores hydration.",
     "category": "beauty",
-    "price": 28.5,
+    "price": 15000,
     "discount": 10,
     "stock": 85,
     "images": [
@@ -470,7 +470,7 @@ const initialData = {
     "title": "Botanical Detox Clay Mask",
     "description": "Purifying face mask formulated with French green clay, active charcoal, organic tea tree oil, and soothing aloe extract.",
     "category": "beauty",
-    "price": 24.99,
+    "price": 15000,
     "discount": 0,
     "stock": 120,
     "images": [
@@ -484,7 +484,7 @@ const initialData = {
     "title": "Velvet Petal Hydrating Lip Balm",
     "description": "Nourishing lip treatment infused with rich organic shea butter, cold-pressed coconut oil, and a delicate vanilla rose aroma.",
     "category": "beauty",
-    "price": 14.99,
+    "price": 15000,
     "discount": 5,
     "stock": 200,
     "images": [
@@ -498,7 +498,7 @@ const initialData = {
     "title": "Radiant Glow Liquid Foundation",
     "description": "Weightless full-coverage liquid foundation featuring hyaluronic acid for a dewy, non-cakey natural finish. 24h wear.",
     "category": "beauty",
-    "price": 39.99,
+    "price": 15000,
     "discount": 15,
     "stock": 90,
     "images": [
@@ -512,7 +512,7 @@ const initialData = {
     "title": "Luxury Makeup Brush Set",
     "description": "12 professional-grade makeup brushes crafted with premium synthetic fibers and sleek birchwood handles in a leather case.",
     "category": "beauty",
-    "price": 49.99,
+    "price": 15000,
     "discount": 20,
     "stock": 60,
     "images": [
@@ -526,7 +526,7 @@ const initialData = {
     "title": "Youth Elixir Anti-Aging Cream",
     "description": "Revitalizing night cream loaded with retinol, peptides, and CoQ10 to boost skin firmness and smooth expression lines.",
     "category": "beauty",
-    "price": 59.99,
+    "price": 15000,
     "discount": 10,
     "stock": 40,
     "images": [
@@ -540,7 +540,7 @@ const initialData = {
     "title": "Rose Water Hydrating Face Mist",
     "description": "Organic cooling mist formulated with pure Damask rose hydrosol to set makeup, soothe irritation, and revive skin on-the-go.",
     "category": "beauty",
-    "price": 19.99,
+    "price": 15000,
     "discount": 0,
     "stock": 150,
     "images": [
@@ -554,7 +554,7 @@ const initialData = {
     "title": "Advanced Carbon Fiber Road Bike",
     "description": "Ultralight carbon fiber frame with Shimano components, designed for fast road races and weekend mountain adventures.",
     "category": "sports",
-    "price": 1299.99,
+    "price": 259000,
     "discount": 10,
     "stock": 5,
     "images": [
@@ -568,7 +568,7 @@ const initialData = {
     "title": "Deep Tissue Muscle Massage Gun",
     "description": "Equipped with 30 speed levels and 6 specialized massage heads to relieve muscle stiffness and accelerate body recovery.",
     "category": "sports",
-    "price": 119.99,
+    "price": 24000,
     "discount": 15,
     "stock": 20,
     "images": [
@@ -582,7 +582,7 @@ const initialData = {
     "title": "Vapor Running Shoes v2",
     "description": "Ultralight responsive running shoes engineered with carbon fiber plate inserts and breathable knit mesh.",
     "category": "sports",
-    "price": 159.99,
+    "price": 32000,
     "discount": 10,
     "stock": 12,
     "images": [
@@ -596,7 +596,7 @@ const initialData = {
     "title": "Apex Smart Fitness Kettlebell",
     "description": "Dynamic smart kettlebell with adjustable weight selector (10 to 40 lbs) and built-in motion sensors for rep and form tracking via Bluetooth app.",
     "category": "sports",
-    "price": 149.99,
+    "price": 30000,
     "discount": 0,
     "stock": 15,
     "images": [
@@ -610,7 +610,7 @@ const initialData = {
     "title": "HydroShield Insulated Water Bottle",
     "description": "Double-walled vacuum insulated stainless steel flask. Keeps beverages ice-cold for up to 24 hours or steaming hot for 12 hours.",
     "category": "sports",
-    "price": 39.99,
+    "price": 15000,
     "discount": 5,
     "stock": 150,
     "images": [
@@ -624,7 +624,7 @@ const initialData = {
     "title": "Premium Eco-Friendly Yoga Mat",
     "description": "6mm non-slip thick yoga mat made from certified biodegradable TPE. Dual-sided textures for superior cushioning and grip during workouts.",
     "category": "sports",
-    "price": 59.99,
+    "price": 15000,
     "discount": 12,
     "stock": 70,
     "images": [
@@ -638,7 +638,7 @@ const initialData = {
     "title": "Smart Fitness Tracker Band",
     "description": "Waterproof fitness band monitor featuring heart rate, blood oxygen monitoring, sleep tracking, and real-time smartphone message logs.",
     "category": "sports",
-    "price": 89.99,
+    "price": 18000,
     "discount": 20,
     "stock": 45,
     "images": [
@@ -652,7 +652,7 @@ const initialData = {
     "title": "High-Performance Tennis Racket",
     "description": "Unstrung carbon graphite tennis racket designed for professional baseline spin. High responsiveness with custom vibration dampener.",
     "category": "sports",
-    "price": 179.99,
+    "price": 36000,
     "discount": 15,
     "stock": 30,
     "images": [
@@ -666,7 +666,7 @@ const initialData = {
     "title": "PlayStation 5 Pro Console",
     "description": "Play your favorite PS5 games with enhanced ray tracing, advanced SSD loading speeds, and immersive 3D spatial audio.",
     "category": "gaming",
-    "price": 699.99,
+    "price": 140000,
     "discount": 5,
     "stock": 10,
     "images": [
@@ -680,11 +680,11 @@ const initialData = {
     "title": "Xbox Series X Elite Bundle",
     "description": "The fastest, most powerful Xbox ever. Includes Xbox Wireless Controller Series 2, 1TB SSD custom chip, and Game Pass access.",
     "category": "gaming",
-    "price": 549.99,
+    "price": 110000,
     "discount": 10,
     "stock": 12,
     "images": [
-      "https://images.unsplash.com/photo-1621259182978-f09e5e2ae090?w=600&auto=format&fit=crop&q=80"
+      "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=600&auto=format&fit=crop&q=80"
     ],
     "ratings": 4.8,
     "reviews": []
@@ -694,7 +694,7 @@ const initialData = {
     "title": "Pro Wireless Gaming Mouse",
     "description": "25k DPI optical sensor mouse featuring sub-micron movement tracking, custom programmable macros, and lightspeed wireless latency.",
     "category": "gaming",
-    "price": 129.99,
+    "price": 26000,
     "discount": 15,
     "stock": 50,
     "images": [
@@ -708,7 +708,7 @@ const initialData = {
     "title": "RGB Gasket Mechanical Keyboard",
     "description": "Hot-swappable custom linear switch gaming keyboard with gasket mounting, sound dampening foam, and customizable 16.8M RGB backlighting.",
     "category": "gaming",
-    "price": 149.99,
+    "price": 30000,
     "discount": 10,
     "stock": 35,
     "images": [
@@ -722,7 +722,7 @@ const initialData = {
     "title": "Surround Sound Gaming Headset",
     "description": "DTS Headphone:X 2.0 7.1 surround sound headset featuring 50mm premium drivers, flip-to-mute mic, and comfortable memory foam cups.",
     "category": "gaming",
-    "price": 99.99,
+    "price": 20000,
     "discount": 20,
     "stock": 40,
     "images": [
@@ -736,11 +736,11 @@ const initialData = {
     "title": "Premium Ergonomic Gaming Desk",
     "description": "Large Carbon fiber texture desktop featuring integrated cable management net, headset hooks, cup holder, and heavy-duty steel frame.",
     "category": "gaming",
-    "price": 249.99,
+    "price": 50000,
     "discount": 0,
     "stock": 15,
     "images": [
-      "https://images.unsplash.com/photo-1598550476439-6847785fce6e?w=600&auto=format&fit=crop&q=80"
+      "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=600&auto=format&fit=crop&q=80"
     ],
     "ratings": 4.5,
     "reviews": []
@@ -750,7 +750,7 @@ const initialData = {
     "title": "Titanium Automatic Chronograph Watch",
     "description": "Exquisite automatic timepiece featuring a lightweight titanium case, scratch-resistant sapphire crystal, and high-precision mechanical movement.",
     "category": "accessories",
-    "price": 599.99,
+    "price": 120000,
     "discount": 10,
     "stock": 15,
     "images": [
@@ -764,7 +764,7 @@ const initialData = {
     "title": "Luxury Minimalist Leather Wallet",
     "description": "Slim bi-fold wallet handcrafted from full-grain Italian leather, featuring RFID blocking technology and multiple card slots.",
     "category": "accessories",
-    "price": 49.99,
+    "price": 15000,
     "discount": 5,
     "stock": 120,
     "images": [
@@ -778,7 +778,7 @@ const initialData = {
     "title": "Classic Aviator Polarized Sunglasses",
     "description": "Timeless aviator sunglasses with polarized UV400 lenses, lightweight stainless steel frames, and comfortable silicone nose pads.",
     "category": "accessories",
-    "price": 129.99,
+    "price": 26000,
     "discount": 15,
     "stock": 80,
     "images": [
@@ -792,7 +792,7 @@ const initialData = {
     "title": "Italian Leather Briefcase",
     "description": "Sophisticated professional briefcase made from hand-stained vegetable-tanned leather, featuring padded laptop sleeve and adjustable strap.",
     "category": "accessories",
-    "price": 249.99,
+    "price": 50000,
     "discount": 8,
     "stock": 25,
     "images": [
@@ -806,7 +806,7 @@ const initialData = {
     "title": "Gold-Plated Cufflinks & Tie Bar Set",
     "description": "Premium brass cufflinks and matching tie bar finished with polished 18k yellow gold plating. Comes in an elegant velvet gift box.",
     "category": "accessories",
-    "price": 79.99,
+    "price": 16000,
     "discount": 0,
     "stock": 40,
     "images": [
@@ -820,7 +820,7 @@ const initialData = {
     "title": "Executive Walnut Desk Organizer",
     "description": "Solid American walnut organizer tray with designated spaces for smartphones, writing utensils, paper clips, and luxury pens.",
     "category": "office",
-    "price": 89.99,
+    "price": 18000,
     "discount": 10,
     "stock": 50,
     "images": [
@@ -834,7 +834,7 @@ const initialData = {
     "title": "Sleek Aluminum Laptop Stand",
     "description": "Ergonomic notebook riser constructed from sandblasted anodized aluminum, designed to match Apple laptops and promote optimal cooling.",
     "category": "office",
-    "price": 45.00,
+    "price": 15000,
     "discount": 0,
     "stock": 110,
     "images": [
@@ -848,7 +848,7 @@ const initialData = {
     "title": "Smart Writing Set & Digital Notebook",
     "description": "Digitize your handwritten notes in real-time. Includes active smart pen, specially coded paper notebook, and companion synchronization app.",
     "category": "office",
-    "price": 199.99,
+    "price": 40000,
     "discount": 12,
     "stock": 30,
     "images": [
@@ -862,7 +862,7 @@ const initialData = {
     "title": "Dimmable LED Screen Monitor Light Bar",
     "description": "Asymmetric optical design illuminates only your desk space without creating screen glare. Features touch controls and adjustable color temperatures.",
     "category": "office",
-    "price": 69.99,
+    "price": 15000,
     "discount": 5,
     "stock": 65,
     "images": [
@@ -876,7 +876,7 @@ const initialData = {
     "title": "Acoustic Desk Privacy Divider Panel",
     "description": "Sound-absorbing polyester fiber desk divider, reducing ambient workspace noise and enhancing visual boundaries in home offices.",
     "category": "office",
-    "price": 119.99,
+    "price": 24000,
     "discount": 15,
     "stock": 18,
     "images": [

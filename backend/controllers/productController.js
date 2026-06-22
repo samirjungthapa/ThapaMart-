@@ -14,7 +14,8 @@ export const getProducts = async (req, res) => {
         query.title = { $regex: keyword, $options: 'i' };
       }
       if (category && category !== 'all') {
-        query.category = category;
+        const categoriesArray = category.split(',').map(c => c.trim().toLowerCase());
+        query.category = { $in: categoriesArray };
       }
       if (minPrice || maxPrice) {
         query.price = {};
@@ -60,7 +61,8 @@ export const getProducts = async (req, res) => {
   }
 
   if (category && category !== 'all') {
-    filteredProducts = filteredProducts.filter(p => p.category.toLowerCase() === category.toLowerCase());
+    const categoriesArray = category.split(',').map(c => c.trim().toLowerCase());
+    filteredProducts = filteredProducts.filter(p => categoriesArray.includes(p.category.toLowerCase()));
   }
 
   if (minPrice) {
