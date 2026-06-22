@@ -5,6 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, Heart, Search, User, LogOut, LayoutDashboard, Menu, X, ArrowRight } from 'lucide-react';
 import { logout } from '../store/slices/authSlice.js';
 import ThapaMartLogo from './ThapaMartLogo.jsx';
+import CartDrawer from './CartDrawer.jsx';
+import CommandPalette from './CommandPalette.jsx';
+
+
 
 const BG      = '#FFFFFF';
 const BORDER  = '#E5E7EB';
@@ -21,6 +25,9 @@ const Navbar = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+
 
   const { cartItems } = useSelector(state => state.cart);
   const { wishlistItems } = useSelector(state => state.wishlist);
@@ -28,9 +35,20 @@ const Navbar = () => {
 
   React.useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
+
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -42,8 +60,10 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Home', path: '/' },
-    { name: 'Shop', path: '/shop' },
-    { name: 'Collections', path: '/collections' },
+    ...(userInfo ? [
+      { name: 'Shop', path: '/shop' },
+      { name: 'Collections', path: '/collections' }
+    ] : []),
     { name: 'About', path: '/about' },
   ];
 
@@ -100,9 +120,10 @@ const Navbar = () => {
             <div style={{ flex: '1 1 0%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1.25rem' }}>
               
               {/* Search Toggle */}
-              <button onClick={() => setSearchOpen(!searchOpen)} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }}>
+              <button onClick={() => setCommandPaletteOpen(true)} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }} title="Search (Ctrl+K)">
                 <Search size={20} strokeWidth={1.5} />
               </button>
+
 
               {/* Wishlist */}
               <Link to="/wishlist" style={{ color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem' }}>
@@ -115,14 +136,15 @@ const Navbar = () => {
               </Link>
 
               {/* Cart */}
-              <Link to="/cart" style={{ color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem' }}>
+              <button onClick={() => setCartDrawerOpen(true)} style={{ background: 'transparent', border: 'none', color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem', cursor: 'pointer' }}>
                 <ShoppingBag size={20} strokeWidth={1.5} />
                 {cartItems.length > 0 && (
                   <span style={{ position: 'absolute', top: 2, right: 2, width: '14px', height: '14px', background: '#000000', color: '#FFFFFF', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {cartItems.reduce((a, c) => a + c.quantity, 0)}
                   </span>
                 )}
-              </Link>
+              </button>
+
 
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }}>
@@ -209,6 +231,8 @@ const Navbar = () => {
           </div>
         )}
       </AnimatePresence>
+      <CartDrawer isOpen={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} />
+      <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
     </>
   );
 };

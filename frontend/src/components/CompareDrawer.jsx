@@ -8,6 +8,12 @@ const CompareDrawer = ({ compareList, removeFromCompare, clearCompare }) => {
 
   if (compareList.length === 0) return null;
 
+  const pricesList = compareList.map(p => Number(p.price));
+  const minPrice = Math.min(...pricesList);
+  const ratingsList = compareList.map(p => Number(p.ratings || 5.0));
+  const maxRating = Math.max(...ratingsList);
+
+
   return (
     <>
       {/* Bottom Sticky Floating Indicator */}
@@ -113,22 +119,29 @@ const CompareDrawer = ({ compareList, removeFromCompare, clearCompare }) => {
                     </tr>
                     <tr className="border-b border-slate-100 dark:border-slate-800">
                       <td className="py-4 font-bold text-slate-500 dark:text-slate-400">Price</td>
-                      {compareList.map((product) => (
-                        <td key={product.id || product._id} className="py-4 px-4 font-black text-slate-900 dark:text-white text-base">
-                          ${product.price}
-                        </td>
-                      ))}
+                      {compareList.map((product) => {
+                        const isBestPrice = Number(product.price) === minPrice;
+                        return (
+                          <td key={product.id || product._id} className={`py-4 px-4 font-black text-base ${isBestPrice ? 'text-emerald-600 bg-emerald-500/10 dark:bg-emerald-500/20' : 'text-slate-900 dark:text-white'}`}>
+                            Rs. {Number(product.price).toLocaleString()} {isBestPrice && <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">BEST PRICE</span>}
+                          </td>
+                        );
+                      })}
                     </tr>
                     <tr className="border-b border-slate-100 dark:border-slate-800">
                       <td className="py-4 font-bold text-slate-500 dark:text-slate-400">Ratings</td>
-                      {compareList.map((product) => (
-                        <td key={product.id || product._id} className="py-4 px-4">
-                          <div className="flex items-center space-x-1.5">
-                            <FiStar className="w-3.5 h-3.5 text-amber-400 fill-current" />
-                            <span className="font-bold">{product.ratings || '5.0'}</span>
-                          </div>
-                        </td>
-                      ))}
+                      {compareList.map((product) => {
+                        const isBestRating = Number(product.ratings || 5.0) === maxRating;
+                        return (
+                          <td key={product.id || product._id} className={`py-4 px-4 ${isBestRating ? 'bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600' : ''}`}>
+                            <div className="flex items-center space-x-1.5">
+                              <FiStar className="w-3.5 h-3.5 text-amber-400 fill-current" />
+                              <span className="font-bold">{product.ratings || '5.0'}</span>
+                            </div>
+                            {isBestRating && <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5">TOP RATED</span>}
+                          </td>
+                        );
+                      })}
                     </tr>
                     <tr className="border-b border-slate-100 dark:border-slate-800">
                       <td className="py-4 font-bold text-slate-500 dark:text-slate-400">Availability</td>

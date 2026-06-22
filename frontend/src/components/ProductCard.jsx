@@ -1,20 +1,31 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Heart, Star } from 'lucide-react';
+import { ShoppingBag, Heart, Star, Eye } from 'lucide-react';
 import { addToCart } from '../store/slices/cartSlice.js';
 import { addToWishlist, removeFromWishlist } from '../store/slices/wishlistSlice.js';
+import QuickViewModal from './QuickViewModal.jsx';
+
 
 const ProductCard = ({ product, index = 0 }) => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { wishlistItems } = useSelector((state) => state.wishlist);
+  const { userInfo } = useSelector((state) => state.auth);
   const isWishlisted = wishlistItems.find((i) => (i.id || i._id) === (product.id || product._id));
 
   const [isHovered, setIsHovered] = useState(false);
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+
 
   const handleAddToCart = (e) => {
     e.preventDefault();
+    if (!userInfo) {
+      navigate(`/login?redirect=${location.pathname}`);
+      return;
+    }
     dispatch(addToCart({
       product: product.id || product._id,
       title: product.title,
@@ -27,6 +38,10 @@ const ProductCard = ({ product, index = 0 }) => {
 
   const toggleWishlist = (e) => {
     e.preventDefault();
+    if (!userInfo) {
+      navigate(`/login?redirect=${location.pathname}`);
+      return;
+    }
     if (isWishlisted) {
       dispatch(removeFromWishlist(product.id || product._id));
     } else {
@@ -42,18 +57,25 @@ const ProductCard = ({ product, index = 0 }) => {
     >
       
       {/* Badges */}
-      <div style={{ position: 'absolute', top: '1rem', left: '1rem', right: '1rem', display: 'flex', justifyContent: 'space-between', zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: '1rem', left: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', zIndex: 10 }}>
         {product.stock <= 5 && product.stock > 0 && (
           <span style={{ padding: '0.25rem 0.5rem', background: '#EF4444', color: '#FFFFFF', fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Low Stock</span>
         )}
         {product.stock === 0 && (
           <span style={{ padding: '0.25rem 0.5rem', background: '#09090B', color: '#FFFFFF', fontSize: '0.6rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sold Out</span>
         )}
-        
-        <button onClick={toggleWishlist} style={{ marginLeft: 'auto', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s' }}>
-          <Heart size={14} style={{ fill: isWishlisted ? '#09090B' : 'transparent', color: isWishlisted ? '#09090B' : '#09090B' }} />
+      </div>
+
+      {/* Floating Action Buttons */}
+      <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', zIndex: 10, opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s ease' }}>
+        <button onClick={toggleWishlist} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '50%', width: '2.2rem', height: '2.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', transition: 'transform 0.2s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.1)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
+          <Heart size={14} style={{ fill: isWishlisted ? '#EF4444' : 'transparent', color: isWishlisted ? '#EF4444' : '#09090B' }} />
+        </button>
+        <button onClick={(e) => { e.preventDefault(); setQuickViewOpen(true); }} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '50%', width: '2.2rem', height: '2.2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', transition: 'transform 0.2s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.1)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'} title="Quick View">
+          <Eye size={14} style={{ color: '#09090B' }} />
         </button>
       </div>
+
 
       {/* Image */}
       <Link to={`/products/${product.id || product._id}`} style={{ display: 'block', position: 'relative', aspectRatio: '4/5', overflow: 'hidden', background: '#F9FAFB' }}>
@@ -92,6 +114,9 @@ const ProductCard = ({ product, index = 0 }) => {
           <ShoppingBag size={14} /> {product.stock === 0 ? 'Out of Stock' : 'Add to Bag'}
         </button>
       </div>
+
+      {/* Quick View Modal */}
+      <QuickViewModal product={product} isOpen={quickViewOpen} onClose={() => setQuickViewOpen(false)} />
 
     </motion.div>
   );
