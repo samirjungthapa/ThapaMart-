@@ -245,7 +245,7 @@ const OrderSuccess = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
-          className="bg-white border border-slate-100 shadow-sm rounded-3xl p-6 sm:p-8 mb-8 print-avoid-break"
+          className="bg-white border border-slate-100 shadow-sm rounded-3xl p-6 sm:p-8 mb-8 print-avoid-break print-hide"
         >
           <h2 className="text-sm font-extrabold uppercase tracking-wider text-zinc-400 mb-6">
             Order Lifecycle Progress

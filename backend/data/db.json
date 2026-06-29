@@ -1076,6 +1076,33 @@
       "paymentStatus": "Pending",
       "orderStatus": "Pending",
       "createdAt": "2026-06-22T07:29:12.382Z"
+    },
+    {
+      "id": "ord-1782732583442",
+      "user": "user-1781547885533",
+      "products": [
+        {
+          "product": "prod-101",
+          "title": "Cartier Love Bracelet",
+          "price": 850000,
+          "quantity": 1,
+          "image": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600&auto=format&fit=crop&q=80"
+        }
+      ],
+      "shippingAddress": {
+        "address": "Jorpati",
+        "city": "KAthamandu",
+        "postalCode": "2204",
+        "country": "Nepal",
+        "fullName": "ASHMIT"
+      },
+      "paymentMethod": "Cash On Delivery",
+      "taxPrice": 110500,
+      "shippingPrice": 0,
+      "totalPrice": 960500,
+      "paymentStatus": "Pending",
+      "orderStatus": "Pending",
+      "createdAt": "2026-06-29T11:29:43.442Z"
     }
   ],
   "carts": {},
