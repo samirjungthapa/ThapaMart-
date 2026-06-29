@@ -58,6 +58,7 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
             <Route path="/order-success" element={<PageTransition><OrderSuccess /></PageTransition>} />
             <Route path="/order-failed" element={<PageTransition><OrderFailed /></PageTransition>} />
             <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+            <Route path="/profile" element={<PageTransition><Dashboard /></PageTransition>} />
             <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
           </Routes>
         </AnimatePresence>
