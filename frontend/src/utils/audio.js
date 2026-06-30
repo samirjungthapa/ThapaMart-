@@ -11,8 +11,18 @@ const getAudioContext = () => {
   return audioCtx;
 };
 
+// Global mute utilities
+export const isMuted = () => {
+  return localStorage.getItem('soundMuted') === 'true';
+};
+
+export const setMuted = (muted) => {
+  localStorage.setItem('soundMuted', muted ? 'true' : 'false');
+};
+
 // Play a short, clean, premium click sound
 export const playClick = () => {
+  if (isMuted()) return;
   try {
     const ctx = getAudioContext();
     const osc = ctx.createOscillator();
@@ -37,6 +47,7 @@ export const playClick = () => {
 
 // Play a smooth "swoosh" sound for drawers opening/closing
 export const playSwoosh = () => {
+  if (isMuted()) return;
   try {
     const ctx = getAudioContext();
     
@@ -75,6 +86,7 @@ export const playSwoosh = () => {
 
 // Play a premium success chime (major chord arpeggio)
 export const playSuccess = () => {
+  if (isMuted()) return;
   try {
     const ctx = getAudioContext();
     const playNote = (freq, delay, duration) => {
@@ -100,6 +112,31 @@ export const playSuccess = () => {
     playNote(329.63, 0.08, 0.45); // E4
     playNote(392.00, 0.16, 0.5); // G4
     playNote(493.88, 0.24, 0.6); // B4
+  } catch (e) {
+    console.warn("Audio synthesis block:", e);
+  }
+};
+
+// Play a mechanical/wood block style tick sound for spin wheel
+export const playTick = () => {
+  if (isMuted()) return;
+  try {
+    const ctx = getAudioContext();
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.02);
+
+    gainNode.gain.setValueAtTime(0.03, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.02);
+
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.02);
   } catch (e) {
     console.warn("Audio synthesis block:", e);
   }

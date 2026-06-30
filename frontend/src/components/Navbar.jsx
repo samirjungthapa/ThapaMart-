@@ -2,13 +2,12 @@ import React, { useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Heart, Search, User, LogOut, LayoutDashboard, Menu, X, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Heart, Search, User, LogOut, LayoutDashboard, Menu, X, ArrowRight, Volume2, VolumeX } from 'lucide-react';
 import { logout } from '../store/slices/authSlice.js';
 import ThapaMartLogo from './ThapaMartLogo.jsx';
 import CartDrawer from './CartDrawer.jsx';
 import CommandPalette from './CommandPalette.jsx';
-
-
+import { isMuted, setMuted, playClick } from '../utils/audio.js';
 
 const BG      = '#FFFFFF';
 const BORDER  = '#E5E7EB';
@@ -27,6 +26,18 @@ const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [muted, setMutedState] = useState(isMuted());
+
+  const toggleSound = () => {
+    const nextMuted = !muted;
+    setMutedState(nextMuted);
+    setMuted(nextMuted);
+    if (!nextMuted) {
+      setTimeout(() => {
+        playClick();
+      }, 50);
+    }
+  };
 
 
   const { cartItems } = useSelector(state => state.cart);
@@ -120,13 +131,17 @@ const Navbar = () => {
             <div style={{ flex: '1 1 0%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '1.25rem' }}>
               
               {/* Search Toggle */}
-              <button onClick={() => setCommandPaletteOpen(true)} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }} title="Search (Ctrl+K)">
+              <button onClick={() => { playClick(); setCommandPaletteOpen(true); }} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }} title="Search (Ctrl+K)">
                 <Search size={20} strokeWidth={1.5} />
               </button>
 
+              {/* Sound Toggle */}
+              <button onClick={toggleSound} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }} title={muted ? "Unmute Sounds" : "Mute Sounds"}>
+                {muted ? <VolumeX size={20} strokeWidth={1.5} /> : <Volume2 size={20} strokeWidth={1.5} />}
+              </button>
 
               {/* Wishlist */}
-              <Link to="/wishlist" style={{ color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem' }}>
+              <Link to="/wishlist" onClick={playClick} style={{ color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem' }}>
                 <Heart size={20} strokeWidth={1.5} />
                 {wishlistItems.length > 0 && (
                   <span style={{ position: 'absolute', top: 2, right: 2, width: '14px', height: '14px', background: '#000000', color: '#FFFFFF', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -136,7 +151,7 @@ const Navbar = () => {
               </Link>
 
               {/* Cart */}
-              <button onClick={() => setCartDrawerOpen(true)} style={{ background: 'transparent', border: 'none', color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem', cursor: 'pointer' }}>
+              <button onClick={() => { playClick(); setCartDrawerOpen(true); }} style={{ background: 'transparent', border: 'none', color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem', cursor: 'pointer' }}>
                 <ShoppingBag size={20} strokeWidth={1.5} />
                 {cartItems.length > 0 && (
                   <span style={{ position: 'absolute', top: 2, right: 2, width: '14px', height: '14px', background: '#000000', color: '#FFFFFF', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -149,11 +164,11 @@ const Navbar = () => {
               {/* Profile Dropdown */}
               <div style={{ position: 'relative' }}>
                 {userInfo ? (
-                  <button onClick={() => setProfileOpen(!profileOpen)} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }}>
+                  <button onClick={() => { playClick(); setProfileOpen(!profileOpen); }} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }}>
                     <User size={20} strokeWidth={1.5} />
                   </button>
                 ) : (
-                  <Link to="/login" style={{ color: TEXT, textDecoration: 'none', padding: '0.5rem' }}>
+                  <Link to="/login" onClick={playClick} style={{ color: TEXT, textDecoration: 'none', padding: '0.5rem' }}>
                     <User size={20} strokeWidth={1.5} />
                   </Link>
                 )}
