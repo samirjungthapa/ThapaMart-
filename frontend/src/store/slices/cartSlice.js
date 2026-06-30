@@ -21,7 +21,10 @@ const initialState = {
 };
 
 const calcPrices = (state) => {
-  const itemsPrice = state.cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const itemsPrice = state.cartItems.reduce((acc, item) => {
+    const activePrice = item.subscribed ? item.price * 0.9 : item.price;
+    return acc + activePrice * item.quantity;
+  }, 0);
   const discount = state.coupon ? itemsPrice * (state.coupon.percent / 100) : 0;
   const subtotalAfterDiscount = itemsPrice - discount;
   const shippingPrice = subtotalAfterDiscount > 150 ? 0 : 15; // Free shipping above $150

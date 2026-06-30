@@ -31,6 +31,8 @@ const ProductDetails = () => {
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reviewError, setReviewError] = useState('');
 
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
   const fetchProductDetails = async () => {
     try {
       const { data } = await api.get(`/products/${id}`);
@@ -53,6 +55,7 @@ const ProductDetails = () => {
     setActiveImg(0);
     setReviewSuccess(false);
     setReviewError('');
+    setIsSubscribed(false);
   }, [id]);
 
   const handleAddToCart = () => {
@@ -60,7 +63,15 @@ const ProductDetails = () => {
       navigate(`/login?redirect=${location.pathname}`);
       return;
     }
-    dispatch(addToCart({ product: product.id || product._id, title: product.title, price: product.price, image: product.images[0], stock: product.stock, quantity: Number(quantity) }));
+    dispatch(addToCart({ 
+      product: product.id || product._id, 
+      title: product.title, 
+      price: product.price, 
+      image: product.images[0], 
+      stock: product.stock, 
+      quantity: Number(quantity),
+      subscribed: isSubscribed
+    }));
     navigate('/cart');
   };
 
@@ -211,6 +222,36 @@ const ProductDetails = () => {
                 <span style={{ color:'#EF4444', fontSize:'0.75rem', fontWeight:700 }}>Out of Stock</span>
               )}
             </div>
+
+            {product.stock > 0 && (
+              <div style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '1rem', borderRadius: '0.75rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: '#09090B' }}>
+                    <input 
+                      type="radio" 
+                      name="subscription_mode" 
+                      checked={!isSubscribed} 
+                      onChange={() => setIsSubscribed(false)} 
+                      style={{ accentColor: '#000000' }}
+                    />
+                    One-time Purchase
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600, color: '#09090B' }}>
+                    <input 
+                      type="radio" 
+                      name="subscription_mode" 
+                      checked={isSubscribed} 
+                      onChange={() => setIsSubscribed(true)} 
+                      style={{ accentColor: '#000000' }}
+                    />
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span>Subscribe & Save (10% OFF) 🔄</span>
+                      <span style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 500 }}>Deliver every month automatically</span>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            )}
 
             {product.stock > 0 && (
               <div style={{ display:'flex', alignItems:'center', gap:'1rem', marginTop:'1rem' }}>

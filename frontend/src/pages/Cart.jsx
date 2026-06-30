@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { ShoppingBag, ArrowRight, X, Trash2, Plus, Minus, Tag, Check, Calendar, ArrowRightCircle } from 'lucide-react';
 import { addToCart, removeFromCart, applyCoupon, removeCoupon, calcPrices } from '../store/slices/cartSlice.js';
 import { motion, AnimatePresence } from 'framer-motion';
+import { playClick } from '../utils/audio.js';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -18,6 +19,48 @@ const Cart = () => {
   const [couponSuccess, setCouponSuccess] = useState('');
   const [showCouponsDrawer, setShowCouponsDrawer] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+
+  // Handle importing shared cart
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sharedCart = params.get('sharedCart');
+    if (sharedCart) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(atob(sharedCart)));
+        if (Array.isArray(decoded)) {
+          decoded.forEach(item => {
+            dispatch(addToCart(item));
+          });
+          showToast('Imported shared cart items successfully!');
+          // Clear query params
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      } catch (err) {
+        console.error('Failed to import shared cart:', err);
+      }
+    }
+  }, []);
+
+  const handleShareCart = () => {
+    playClick();
+    if (cartItems.length === 0) {
+      showToast('Your cart is empty!');
+      return;
+    }
+    const cartData = cartItems.map(item => ({
+      product: item.product,
+      title: item.title,
+      price: item.price,
+      image: item.image,
+      quantity: item.quantity,
+      stock: item.stock,
+      subscribed: item.subscribed || false
+    }));
+    const serialized = btoa(encodeURIComponent(JSON.stringify(cartData)));
+    const shareUrl = `${window.location.origin}/cart?sharedCart=${serialized}`;
+    navigator.clipboard.writeText(shareUrl);
+    showToast('Cart link copied! Send it to your friend. 👥');
+  };
 
   const prices = calcPrices({ cartItems, coupon });
   const subtotal = prices.itemsPrice - prices.discount;
@@ -263,6 +306,13 @@ const Cart = () => {
                     className="bg-black text-white hover:bg-black/90 w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mt-6"
                   >
                     Proceed to Checkout <ArrowRight size={14} />
+                  </button>
+
+                  <button 
+                    onClick={handleShareCart}
+                    className="bg-transparent border border-black hover:bg-black/5 text-black w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all mt-3 cursor-pointer"
+                  >
+                    Share Cart / Invite Friend 👥
                   </button>
                 </div>
 
