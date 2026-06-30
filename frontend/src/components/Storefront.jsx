@@ -29,10 +29,10 @@ const Storefront = () => {
   }, []);
 
   const categories = [
-    { id: 'fashion', name: 'Fashion', icon: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=200&q=80' },
-    { id: 'electronics', name: 'Tech', icon: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=200&q=80' },
-    { id: 'beauty', name: 'Beauty', icon: 'https://images.unsplash.com/photo-1596462502278-27bf85033e5a?w=200&q=80' },
-    { id: 'home-living', name: 'Home', icon: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=200&q=80' }
+    { id: 'fashion', name: 'Fashion', icon: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&q=80' },
+    { id: 'electronics', name: 'Tech', icon: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=400&q=80' },
+    { id: 'beauty', name: 'Beauty', icon: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&q=80' },
+    { id: 'home-living', name: 'Home', icon: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=400&q=80' }
   ];
 
   return (
@@ -64,14 +64,41 @@ const Storefront = () => {
 
         {/* Functional Categories Grid */}
         <div style={{ marginBottom: '4rem' }}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {categories.map((cat) => (
-              <motion.div key={cat.id} whileHover={{ y: -4, boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05)' }} transition={{ duration: 0.2 }}>
-                <Link to={`/shop?category=${cat.id}`} style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', background: '#F9FAFB', border: '1px solid #E5E7EB', textDecoration: 'none', transition: 'border-color 0.2s', height: '100%' }} onMouseEnter={e => e.currentTarget.style.borderColor = '#09090B'} onMouseLeave={e => e.currentTarget.style.borderColor = '#E5E7EB'}>
-                  <div style={{ width: '3rem', height: '3rem', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                    <img src={cat.icon} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <motion.div 
+                key={cat.id} 
+                whileHover={{ y: -6, boxShadow: '0 12px 30px rgba(0,0,0,0.06)' }} 
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                style={{
+                  background: '#FFFFFF',
+                  border: '1px solid #E5E7EB',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  cursor: 'pointer'
+                }}
+              >
+                <Link to={`/shop?category=${cat.id}`} style={{ textDecoration: 'none', display: 'flex', flexDirection: 'column', height: '100%' }}>
+                  <div style={{ position: 'relative', width: '100%', height: '150px', overflow: 'hidden', background: '#F9FAFB' }}>
+                    <img 
+                      src={cat.icon} 
+                      alt={cat.name} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }} 
+                      onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
+                    />
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.15) 0%, transparent 40%)', pointerEvents: 'none' }} />
                   </div>
-                  <span style={{ fontSize: '0.875rem', fontWeight: 700, color: '#09090B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{cat.name}</span>
+                  <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', background: '#FFFFFF' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#09090B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      {cat.name}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: '#71717A', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      Shop Collection <ArrowRight size={10} />
+                    </span>
+                  </div>
                 </Link>
               </motion.div>
             ))}
