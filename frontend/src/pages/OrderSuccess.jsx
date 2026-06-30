@@ -18,6 +18,104 @@ const CONFETTI_PARTICLES = Array.from({ length: 80 }).map((_, i) => ({
   drift: Math.random() * 40 - 20 // random sway drift px
 }));
 
+const LiveDeliveryTracker = () => {
+  const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState('Preparing shipment...');
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setProgress((p) => {
+        if (p >= 100) {
+          setStatus('Delivered! Thank you for choosing ThapaMart. 🎉');
+          clearInterval(interval);
+          return 100;
+        }
+        const next = p + 2;
+        if (next < 20) setStatus('Preparing shipment at ThapaMart Warehouse...');
+        else if (next < 50) setStatus('Package picked up & dispatched via express delivery... 🛵');
+        else if (next < 80) setStatus('On the way to your local hub... 📍');
+        else setStatus('Out for delivery! Arriving at your doorstep shortly... 🛵');
+        return next;
+      });
+    }, 300);
+    return () => clearInterval(interval);
+  }, []);
+
+  const pathLength = 500;
+  const strokeDashoffset = pathLength - (progress / 100) * pathLength;
+
+  return (
+    <div style={{ background: '#FFFFFF', border: '1px solid #F1F5F9', borderRadius: '1.5rem', padding: '1.5rem', marginTop: '0rem', marginBottom: '2rem' }} className="shadow-sm border-slate-100">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div>
+          <h3 style={{ fontSize: '0.85rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#09090B', margin: 0 }}>
+            Live Delivery Tracker
+          </h3>
+          <p style={{ fontSize: '0.75rem', color: '#71717A', margin: '0.25rem 0 0 0' }}>{status}</p>
+        </div>
+        <div style={{ background: '#ECFDF5', color: '#065F46', fontSize: '0.75rem', fontWeight: 700, padding: '0.25rem 0.6rem', borderRadius: '9999px' }}>
+          {progress}%
+        </div>
+      </div>
+
+      <div style={{ width: '100%', position: 'relative', overflow: 'hidden', borderRadius: '0.75rem', background: '#F8FAFC', border: '1px solid #F1F5F9', padding: '1rem' }}>
+        <svg viewBox="0 0 600 200" style={{ width: '100%', height: 'auto' }}>
+          <defs>
+            <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+              <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#F1F5F9" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="600" height="200" fill="url(#grid)" />
+
+          <path d="M50 150 L200 150 L250 80 L400 80 L450 150 L550 150" fill="none" stroke="#E2E8F0" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M50 150 L200 150 L250 80 L400 80 L450 150 L550 150" fill="none" stroke="#10B981" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" strokeDasharray={pathLength} strokeDashoffset={strokeDashoffset} />
+
+          <circle cx="50" cy="150" r="10" fill="#09090B" />
+          <circle cx="50" cy="150" r="6" fill="#FFFFFF" />
+          <text x="50" y="180" textAnchor="middle" style={{ fontSize: '10px', fontWeight: 700, fill: '#09090B' }}>Warehouse</text>
+
+          <circle cx="550" cy="150" r="10" fill="#10B981" />
+          <circle cx="550" cy="150" r="6" fill="#FFFFFF" />
+          <text x="550" y="180" textAnchor="middle" style={{ fontSize: '10px', fontWeight: 700, fill: '#10B981' }}>Home</text>
+
+          {(() => {
+            let x = 50;
+            let y = 150;
+            if (progress <= 30) {
+              const ratio = progress / 30;
+              x = 50 + ratio * 150;
+              y = 150;
+            } else if (progress <= 47) {
+              const ratio = (progress - 30) / 17;
+              x = 200 + ratio * 50;
+              y = 150 - ratio * 70;
+            } else if (progress <= 77) {
+              const ratio = (progress - 47) / 30;
+              x = 250 + ratio * 150;
+              y = 80;
+            } else if (progress <= 90) {
+              const ratio = (progress - 77) / 13;
+              x = 400 + ratio * 50;
+              y = 80 + ratio * 70;
+            } else {
+              const ratio = (progress - 90) / 10;
+              x = 450 + ratio * 100;
+              y = 150;
+            }
+            return (
+              <g transform={`translate(${x}, ${y})`}>
+                <circle r="15" fill="#10B981" opacity="0.3" className="animate-ping" style={{ animationDuration: '2s' }} />
+                <circle r="10" fill="#10B981" />
+                <text y="3" textAnchor="middle" style={{ fontSize: '10px', fill: '#FFFFFF' }}>🛵</text>
+              </g>
+            );
+          })()}
+        </svg>
+      </div>
+    </div>
+  );
+};
+
 const OrderSuccess = () => {
   const location = useLocation();
   const orderId = new URLSearchParams(location.search).get('orderId') || new URLSearchParams(location.search).get('id') || 'unknown';
@@ -280,6 +378,9 @@ const OrderSuccess = () => {
             ))}
           </div>
         </motion.div>
+
+        {/* Live Map Delivery Tracker */}
+        <LiveDeliveryTracker />
 
         {/* Two-Column Invoice & Details Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start print-grid">
