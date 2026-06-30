@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Gift, X, Sparkles, AlertCircle } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { applyCoupon } from '../store/slices/cartSlice.js';
+import { playClick, playSuccess, playTick } from '../utils/audio.js';
 
 const SECTORS = [
   { label: '10% OFF', code: 'THAPA10', percent: 10, color: '#09090B' },
@@ -86,6 +87,7 @@ const SpinWheel = () => {
 
   const spin = () => {
     if (isSpinning || hasSpunToday) return;
+    playClick();
     setIsSpinning(true);
     setPrize(null);
 
@@ -99,10 +101,30 @@ const SpinWheel = () => {
 
     setRotationDegrees(finalRotation);
 
+    // Play physical sound ticks matching ease-out deceleration
+    let tickCount = 0;
+    const totalTicks = 28;
+    const playSpinTicks = (count) => {
+      if (count >= totalTicks) return;
+      playTick();
+      const progress = count / totalTicks;
+      const nextDelay = 40 + progress * progress * 500; // decelerates from 40ms to 540ms
+      setTimeout(() => {
+        playSpinTicks(count + 1);
+      }, nextDelay);
+    };
+    playSpinTicks(0);
+
     setTimeout(() => {
       setIsSpinning(false);
       const wonPrize = SECTORS[targetIdx];
       setPrize(wonPrize);
+      
+      if (wonPrize && wonPrize.code) {
+        playSuccess();
+      } else {
+        playClick();
+      }
       
       // Mark spun today
       const today = new Date().toDateString();
@@ -115,7 +137,7 @@ const SpinWheel = () => {
     <>
       {/* Floating Gift Trigger Badge */}
       <motion.button
-        onClick={() => setIsOpen(true)}
+        onClick={() => { playClick(); setIsOpen(true); }}
         initial={{ scale: 0, y: 50 }}
         animate={{ scale: 1, y: 0 }}
         whileHover={{ scale: 1.1 }}
@@ -148,7 +170,7 @@ const SpinWheel = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => { if (!isSpinning) setIsOpen(false); }}
+              onClick={() => { if (!isSpinning) { playClick(); setIsOpen(false); } }}
               style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(8px)' }}
             />
 
@@ -171,7 +193,7 @@ const SpinWheel = () => {
               {/* Close Button */}
               {!isSpinning && (
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => { playClick(); setIsOpen(false); }}
                   style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', cursor: 'pointer' }}
                 >
                   <X size={20} />
@@ -265,6 +287,7 @@ const SpinWheel = () => {
                         </p>
                         <button
                           onClick={() => {
+                            playSuccess();
                             dispatch(applyCoupon({ code: prize.code, percent: prize.percent }));
                             setCouponApplied(true);
                           }}
