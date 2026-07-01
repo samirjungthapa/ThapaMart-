@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import api from '../store/api.js';
@@ -14,6 +14,7 @@ const statusSteps = ['Pending', 'Processing', 'Shipped', 'Delivered'];
 const Dashboard = () => {
   const navigate = useNavigate();
   const { userInfo } = useSelector((state) => state.auth);
+  const { cartItems } = useSelector((state) => state.cart || { cartItems: [] });
 
   // States
   const [orders, setOrders] = useState([]);
@@ -28,6 +29,13 @@ const Dashboard = () => {
   const [promoSuccess, setPromoSuccess] = useState('');
   const [promoError, setPromoError] = useState('');
   const [notification, setNotification] = useState('');
+  const [scratchedReward, setScratchedReward] = useState(false);
+  const [quests, setQuests] = useState([
+    { id: 1, title: "Customizer Master: Personalize any product in the Personalization Studio", reward: 100, completed: false, claimed: false },
+    { id: 2, title: "Master Negotiator: Bargain with MartAI Stylist", reward: 150, completed: true, claimed: false },
+    { id: 3, title: "Analyst: View your personalized spending analytics", reward: 50, completed: false, claimed: false },
+    { id: 4, title: "Collector: Add at least 3 items to your shopping bag", reward: 200, completed: false, claimed: false }
+  ]);
   
   // Addresses & Cards
   const [addresses, setAddresses] = useState([
@@ -123,6 +131,93 @@ const Dashboard = () => {
 
     fetchMyOrders();
   }, [userInfo, navigate]);
+
+  // Dynamic Quest tracker
+  useEffect(() => {
+    setQuests(prev => prev.map(q => {
+      if (q.id === 1 && cartItems?.some(item => item.engraving)) {
+        return { ...q, completed: true };
+      }
+      if (q.id === 3 && activeTab === 'analytics') {
+        return { ...q, completed: true };
+      }
+      if (q.id === 4 && cartItems?.length >= 3) {
+        return { ...q, completed: true };
+      }
+      return q;
+    }));
+  }, [cartItems, activeTab]);
+
+  const handleClaimReward = (questId, rewardAmount) => {
+    setQuests(prev => prev.map(q => q.id === questId ? { ...q, claimed: true } : q));
+    setLoyaltyPoints(prev => prev + rewardAmount);
+    showToast(`Claimed ${rewardAmount} Pts! Balance updated.`);
+  };
+
+  const canvasRef = useRef(null);
+  const [isScratching, setIsScratching] = useState(false);
+
+  useEffect(() => {
+    if (activeTab !== 'rewards' || !canvasRef.current || scratchedReward) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    // Draw silver scratch surface
+    ctx.fillStyle = '#C0C0C0';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw pattern or text on top
+    ctx.fillStyle = '#71717A';
+    ctx.font = 'bold 11px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('Scratch here with your cursor', canvas.width / 2, canvas.height / 2 - 8);
+    ctx.fillText('to reveal a mystery offer!', canvas.width / 2, canvas.height / 2 + 10);
+  }, [activeTab, scratchedReward]);
+
+  const handleScratchMove = (e) => {
+    if (!canvasRef.current || scratchedReward || (!isScratching && e.type !== 'touchmove')) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const rect = canvas.getBoundingClientRect();
+    
+    // Support touch and mouse positions
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(x, y, 16, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Recalculate percent cleared
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let transparent = 0;
+    for (let i = 3; i < imgData.data.length; i += 4) {
+      if (imgData.data[i] === 0) transparent++;
+    }
+    const pct = (transparent / (canvas.width * canvas.height)) * 100;
+    if (pct > 50) {
+      setScratchedReward(true);
+      setLoyaltyPoints(prev => prev + 100);
+      setOffers(prev => [
+        {
+          code: "SCRATCH10",
+          discount: "$10 OFF",
+          description: "Exclusive unlocked scratchcard reward!",
+          expiry: "Valid till 31 Dec 2026",
+          minSpend: "$30",
+          category: "Scratch Reward",
+          type: "fixed"
+        },
+        ...prev
+      ]);
+      showToast("🎉 Mystery Unlocked! Unlocked a $10 coupon code 'SCRATCH10' and earned +100 Loyalty Points!");
+    }
+  };
 
   // Analytics helper calculations
   const totalSpent = orders
@@ -441,7 +536,7 @@ const Dashboard = () => {
             </div>
           </div>
           
-          <div className="flex space-x-2 flex-wrap gap-y-2">
+          <div className="flex space-x-2 flex-wrap gap-2">
             <button
               onClick={() => setActiveTab('orders')}
               className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
@@ -449,6 +544,22 @@ const Dashboard = () => {
               }`}
             >
               Order History
+            </button>
+            <button
+              onClick={() => setActiveTab('rewards')}
+              className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
+                activeTab === 'rewards' ? 'bg-black text-white shadow-sm' : 'bg-white text-[#71717A] border border-[#E5E7EB] hover:text-[#09090B]'
+              }`}
+            >
+              🏅 Rewards & Gamification
+            </button>
+            <button
+              onClick={() => setActiveTab('analytics')}
+              className={`px-5 py-2 rounded-full text-xs font-semibold transition-all ${
+                activeTab === 'analytics' ? 'bg-black text-white shadow-sm' : 'bg-white text-[#71717A] border border-[#E5E7EB] hover:text-[#09090B]'
+              }`}
+            >
+              📊 Spending Analytics
             </button>
             <button
               onClick={() => setActiveTab('offers')}
@@ -779,6 +890,241 @@ const Dashboard = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'rewards' && (
+          <div className="space-y-8">
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif" }} className="text-4xl font-extrabold text-black">Loyalty Rewards Hub</h2>
+            <p className="text-xs text-[#71717A]">Fulfill shopping quests, scratch mystery cards, and redeem your earned gold points for store credits.</p>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column: Quests Checklist */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-3xl p-6">
+                  <h3 className="text-sm font-extrabold text-black uppercase tracking-wider mb-4 flex items-center gap-2">
+                    🎯 Daily Rewards Quests
+                  </h3>
+                  <div className="space-y-4">
+                    {quests.map((q) => (
+                      <div key={q.id} className="flex items-center justify-between p-4 bg-white border border-[#E5E7EB] rounded-2xl shadow-sm">
+                        <div className="space-y-1 pr-4">
+                          <span className="block text-[9px] text-[#71717A] font-bold uppercase tracking-wider">Quest #{q.id}</span>
+                          <span className="text-xs font-bold text-black block">{q.title}</span>
+                          <span className="inline-block text-[10px] text-amber-600 bg-amber-500/10 px-2 py-0.5 rounded font-black font-mono">+{q.reward} Pts</span>
+                        </div>
+                        
+                        <div>
+                          {q.claimed ? (
+                            <span className="text-xs text-zinc-400 font-bold flex items-center gap-1">
+                              <FiCheckCircle className="text-emerald-500" /> Claimed
+                            </span>
+                          ) : q.completed ? (
+                            <button
+                              onClick={() => handleClaimReward(q.id, q.reward)}
+                              className="bg-emerald-600 text-white hover:bg-emerald-700 px-3.5 py-1.5 rounded-xl text-xs font-black transition-all shadow-sm"
+                            >
+                              Claim Reward
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-[#71717A] bg-zinc-100 px-3 py-1.5 rounded-xl font-bold uppercase tracking-wider">
+                              Incomplete
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Badge Shelf */}
+                <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-3xl p-6">
+                  <h3 className="text-sm font-extrabold text-black uppercase tracking-wider mb-4">🏆 Unlocked Badges Shelf</h3>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    {[
+                      { name: "Deal Hunter", desc: "Redeemed points for voucher", unlocked: loyaltyPoints < 520, icon: "🏷️" },
+                      { name: "Super Stylist", desc: "Used Customizer Studio", unlocked: cartItems?.some(item => item.engraving), icon: "🎨" },
+                      { name: "Negotiator", desc: "Bargained with MartAI", unlocked: true, icon: "🤝" },
+                      { name: "Elite Spinner", desc: "Used spin-the-wheel reward", unlocked: true, icon: "🎡" }
+                    ].map((badge) => (
+                      <div 
+                        key={badge.name} 
+                        className={`p-4 rounded-2xl border text-center transition-all ${
+                          badge.unlocked 
+                            ? 'bg-white border-[#E5E7EB] shadow-sm hover:scale-105' 
+                            : 'bg-zinc-50 border-zinc-150 opacity-50'
+                        }`}
+                      >
+                        <div className="text-3xl mb-2">{badge.icon}</div>
+                        <h4 className="text-xs font-extrabold text-black">{badge.name}</h4>
+                        <p className="text-[9px] text-[#71717A] mt-1">{badge.desc}</p>
+                        <span className={`inline-block text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full mt-2 ${
+                          badge.unlocked ? 'bg-emerald-50 text-emerald-600' : 'bg-zinc-200 text-zinc-650'
+                        }`}>
+                          {badge.unlocked ? 'Unlocked' : 'Locked'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Scratch Card */}
+              <div className="space-y-6">
+                <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-3xl p-6 flex flex-col items-center text-center shadow-sm">
+                  <span className="text-[10px] text-amber-600 bg-amber-500/10 px-2.5 py-1 rounded-full font-black uppercase tracking-widest block mb-3">
+                    🎰 MYSTERY BONANZA
+                  </span>
+                  <h3 className="text-sm font-bold text-black uppercase tracking-wider mb-1">Scratch & Win</h3>
+                  <p className="text-[11px] text-[#71717A] mb-4">Hold left-click and drag across the silver overlay to reveal a surprise code.</p>
+
+                  {!scratchedReward ? (
+                    <div style={{ position: 'relative', width: '260px', height: '140px', overflow: 'hidden', borderRadius: '16px', border: '1px solid #E5E7EB', background: '#FAFAFA' }}>
+                      <canvas
+                        ref={canvasRef}
+                        width={260}
+                        height={140}
+                        onMouseDown={() => setIsScratching(true)}
+                        onMouseUp={() => setIsScratching(false)}
+                        onMouseLeave={() => setIsScratching(false)}
+                        onMouseMove={handleScratchMove}
+                        onTouchStart={() => setIsScratching(true)}
+                        onTouchEnd={() => setIsScratching(false)}
+                        onTouchMove={handleScratchMove}
+                        style={{ cursor: 'crosshair', display: 'block' }}
+                      />
+                    </div>
+                  ) : (
+                    <motion.div 
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 w-[260px] h-[140px] flex flex-col justify-center items-center shadow-inner"
+                    >
+                      <span className="text-[9px] text-emerald-600 font-extrabold uppercase tracking-widest">Reward Unlocked!</span>
+                      <span className="text-3xl font-black text-black font-mono my-1 tracking-wider">SCRATCH10</span>
+                      <span className="text-xs text-zinc-600 font-bold">$10 Off Coupon & +100 Pts</span>
+                    </motion.div>
+                  )}
+                  
+                  <div className="mt-4 p-3 bg-white border border-[#E5E7EB] rounded-2xl w-full text-left">
+                    <span className="block text-[9px] text-[#71717A] uppercase font-bold tracking-wider mb-1">Status</span>
+                    <p className="text-xs text-black font-semibold">
+                      {scratchedReward ? "Ticket fully redeemed!" : "Ticket pristine. Ready to scratch."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'analytics' && (
+          <div className="space-y-8">
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif" }} className="text-4xl font-extrabold text-black">Personalized Spending & Savings</h2>
+            <p className="text-xs text-[#71717A]">Analyze your shopping categories, active budgets, and savings from smart wheel spins and bargaining.</p>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Left Column: Spending Charts */}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-3xl p-6">
+                  <h3 className="text-sm font-extrabold text-black uppercase tracking-wider mb-6">
+                    📊 Category Distribution
+                  </h3>
+                  
+                  {/* Custom CSS Bar Chart */}
+                  <div className="space-y-4">
+                    {[
+                      { category: "Smart Watches & Accessories", pct: 45, spent: 189.99, color: "#000000" },
+                      { category: "Curated Apparel & Clothing", pct: 30, spent: 126.66, color: "#4B5563" },
+                      { category: "Curated Leather Goods", pct: 15, spent: 63.33, color: "#9CA3AF" },
+                      { category: "Others", pct: 10, spent: 42.22, color: "#D1D5DB" }
+                    ].map((item) => (
+                      <div key={item.category} className="space-y-1">
+                        <div className="flex justify-between text-xs font-bold text-black">
+                          <span>{item.category}</span>
+                          <span>${item.spent.toFixed(2)} ({item.pct}%)</span>
+                        </div>
+                        <div className="w-full bg-[#E5E7EB] h-2 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-all duration-1000"
+                            style={{ width: `${item.pct}%`, backgroundColor: item.color }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Monthly Budget Tracker */}
+                <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-3xl p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-extrabold text-black uppercase tracking-wider">
+                      Target Monthly Budget
+                    </h3>
+                    <span className="text-xs font-bold text-black">$500.00 Target</span>
+                  </div>
+                  
+                  <div className="flex justify-between text-xs text-[#71717A] mb-2 font-bold">
+                    <span>Spent: ${totalSpent}</span>
+                    <span>Remaining: ${(500 - Number(totalSpent)).toFixed(2)}</span>
+                  </div>
+
+                  <div className="w-full bg-[#E5E7EB] h-3.5 rounded-full overflow-hidden mb-3">
+                    <div 
+                      className="bg-black h-full rounded-full transition-all duration-1000"
+                      style={{ width: `${Math.min((Number(totalSpent) / 500) * 100, 100)}%` }}
+                    />
+                  </div>
+
+                  <p className="text-[11px] text-[#71717A]">
+                    {Number(totalSpent) < 400 
+                      ? "👍 You are well within your budget limits this month. Smart shopping!" 
+                      : "⚠️ Budget warning! You've used over 80% of your current monthly shopping cap."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column: Savings advisor and details */}
+              <div className="space-y-6">
+                {/* Circular Savings ring representation */}
+                <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-3xl p-6 flex flex-col items-center text-center">
+                  <h3 className="text-sm font-bold text-black uppercase tracking-wider mb-4">Total Discount Savings</h3>
+                  
+                  <div style={{ position: 'relative', width: '130px', height: '130px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {/* SVG Circular indicator */}
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle cx="65" cy="65" r="54" stroke="#E5E7EB" strokeWidth="10" fill="transparent" />
+                      <circle cx="65" cy="65" r="54" stroke="#10B981" strokeWidth="10" fill="transparent"
+                        strokeDasharray={Math.PI * 2 * 54}
+                        strokeDashoffset={Math.PI * 2 * 54 * (1 - 0.72)}
+                        className="transition-all duration-1000"
+                      />
+                    </svg>
+                    <div className="absolute text-center">
+                      <span className="block text-2xl font-black text-black">72%</span>
+                      <span className="block text-[8px] text-[#71717A] font-bold uppercase tracking-wider">Savings Rate</span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-black font-semibold mt-4">
+                    Saved <strong className="text-emerald-600 font-extrabold">$48.50</strong> on coupons & spin rewards!
+                  </p>
+                </div>
+
+                {/* Savings Advisor */}
+                <div className="bg-[#09090B] text-white border border-[#E5E7EB] rounded-3xl p-6 space-y-3">
+                  <span className="text-[9px] bg-emerald-600 text-white px-2 py-0.5 rounded font-black uppercase tracking-widest block w-fit">
+                    AI SMART ADVISOR
+                  </span>
+                  <h4 className="text-xs font-bold uppercase tracking-wide">Tips for Next Purchases</h4>
+                  <ul className="text-xs text-[#A1A1AA] space-y-2 list-disc pl-4 font-medium">
+                    <li>Add 1 more item to bag to complete quest #4 (+$200 Pts).</li>
+                    <li>Claim your completed Master Negotiator reward for +150 Pts.</li>
+                    <li>Redeem your points for fixed voucher coupons to optimize checkout discounts.</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         )}
