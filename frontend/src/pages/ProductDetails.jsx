@@ -32,6 +32,9 @@ const ProductDetails = () => {
   const [reviewError, setReviewError] = useState('');
 
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [engravingText, setEngravingText] = useState('');
+  const [engravingColor, setEngravingColor] = useState('#000000');
+  const [accentColor, setAccentColor] = useState('#FFFFFF');
 
   const fetchProductDetails = async () => {
     try {
@@ -56,6 +59,9 @@ const ProductDetails = () => {
     setReviewSuccess(false);
     setReviewError('');
     setIsSubscribed(false);
+    setEngravingText('');
+    setEngravingColor('#000000');
+    setAccentColor('#FFFFFF');
   }, [id]);
 
   const handleAddToCart = () => {
@@ -70,7 +76,9 @@ const ProductDetails = () => {
       image: product.images[0], 
       stock: product.stock, 
       quantity: Number(quantity),
-      subscribed: isSubscribed
+      subscribed: isSubscribed,
+      engraving: engravingText,
+      customColor: accentColor
     }));
     navigate('/cart');
   };
@@ -160,6 +168,47 @@ const ProductDetails = () => {
                   transition: isZooming ? 'none' : 'transform 0.2s ease-out'
                 }} 
               />
+              {/* Color Accent Tint Overlay */}
+              {accentColor && accentColor !== '#ffffff' && accentColor !== '#FFFFFF' && (
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: accentColor,
+                    mixBlendMode: 'multiply',
+                    opacity: 0.15,
+                    pointerEvents: 'none'
+                  }}
+                />
+              )}
+              {/* Laser Engraving Preview Overlay */}
+              {engravingText && (
+                <div 
+                  style={{ 
+                    position: 'absolute', 
+                    bottom: '15%', 
+                    left: '50%', 
+                    transform: 'translateX(-50%)', 
+                    color: engravingColor,
+                    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                    border: `1px dashed ${engravingColor}`,
+                    padding: '6px 16px',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    fontWeight: '900',
+                    fontFamily: 'monospace',
+                    letterSpacing: '0.15em',
+                    pointerEvents: 'none',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                  }}
+                >
+                  {engravingText.toUpperCase()}
+                </div>
+              )}
             </div>
 
             {/* Thumbnail Gallery Selector */}
@@ -249,6 +298,69 @@ const ProductDetails = () => {
                       <span style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 500 }}>Deliver every month automatically</span>
                     </div>
                   </label>
+                </div>
+              </div>
+            )}
+
+            {/* Personalization Studio */}
+            {product.stock > 0 && (
+              <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '1rem', padding: '1.25rem', marginTop: '1rem' }}>
+                <span style={{ display: 'block', fontSize: '0.65rem', fontWeight: 800, color: '#71717A', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.75rem' }}>
+                  🎨 Personalization Studio
+                </span>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#09090B', marginBottom: '0.25rem' }}>
+                      Custom Laser Engraving
+                    </label>
+                    <input 
+                      type="text" 
+                      maxLength={25}
+                      placeholder="e.g. THAPA ELITE"
+                      value={engravingText}
+                      onChange={(e) => setEngravingText(e.target.value)}
+                      style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.75rem', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '0.5rem', color: '#09090B', outline: 'none' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#09090B', marginBottom: '0.25rem' }}>
+                        Laser Color
+                      </label>
+                      <div style={{ display: 'flex', gap: '0.25rem' }}>
+                        {['#000000', '#D4AF37', '#3B82F6', '#EF4444', '#10B981'].map(color => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setEngravingColor(color)}
+                            style={{ 
+                              width: '18px', 
+                              height: '18px', 
+                              borderRadius: '50%', 
+                              backgroundColor: color, 
+                              border: engravingColor === color ? '2px solid #000' : '1px solid #ccc',
+                              cursor: 'pointer',
+                              padding: 0
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#09090B', marginBottom: '0.25rem' }}>
+                        Color Accent Overlay
+                      </label>
+                      <input 
+                        type="color" 
+                        value={accentColor}
+                        onChange={(e) => setAccentColor(e.target.value)}
+                        style={{ width: '100%', height: '20px', border: '1px solid #E5E7EB', borderRadius: '4px', cursor: 'pointer', background: 'none', padding: 0 }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

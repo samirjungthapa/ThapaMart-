@@ -223,6 +223,21 @@ const Cart = () => {
                         </Link>
                         <p style={{ fontSize: '0.875rem', color: '#71717A' }}>Price: ${Number(item.price).toFixed(2)}</p>
                         
+                        {item.engraving && (
+                          <div className="flex items-center gap-1.5 text-xs text-indigo-650 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md w-fit font-bold">
+                            <span>✨ Engraved:</span>
+                            <span className="font-mono">"{item.engraving}"</span>
+                          </div>
+                        )}
+
+                        {item.customColor && item.customColor !== '#ffffff' && item.customColor !== '#FFFFFF' && (
+                          <div className="flex items-center gap-1.5 text-xs text-[#71717A] mt-1 font-bold">
+                            <span>Palette:</span>
+                            <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: item.customColor, display: 'inline-block', border: '1px solid #d1d5db' }} title={item.customColor}></span>
+                            <span className="font-mono text-[10px] text-zinc-500">{item.customColor}</span>
+                          </div>
+                        )}
+
                         {/* Estimated delivery date */}
                         <div className="flex items-center gap-1.5 text-[11px] text-[#71717A] pt-1">
                           <Calendar size={12} />

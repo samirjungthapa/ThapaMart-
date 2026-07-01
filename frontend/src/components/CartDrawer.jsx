@@ -157,9 +157,20 @@ const CartDrawer = ({ isOpen, onClose }) => {
                       <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                         <div>
                           <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: '#09090B', margin: 0, lineHeight: 1.3 }}>{item.title}</h4>
-                          <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#71717A', marginTop: '0.25rem' }}>
+                          <p style={{ fontSize: '0.85rem', fontWeight: 700, color: '#71717A', marginTop: '0.25rem', marginBottom: '0.25rem' }}>
                             Rs. {Number(item.price).toLocaleString()}
                           </p>
+                          {item.engraving && (
+                            <div style={{ fontSize: '0.65rem', color: '#4F46E5', background: '#EEF2F6', border: '1px solid #E0E7FF', padding: '2px 6px', borderRadius: '4px', marginTop: '2px', display: 'inline-block', fontWeight: 'bold' }}>
+                              Engraving: "{item.engraving}"
+                            </div>
+                          )}
+                          {item.customColor && item.customColor !== '#ffffff' && item.customColor !== '#FFFFFF' && (
+                            <div style={{ fontSize: '0.65rem', color: '#71717A', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', fontWeight: 'bold' }}>
+                              Accent: <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: item.customColor, display: 'inline-block', border: '1px solid #ccc' }} />
+                              <span style={{ fontSize: '9px', fontFamily: 'monospace' }}>{item.customColor}</span>
+                            </div>
+                          )}
                         </div>
                         
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.5rem' }}>
