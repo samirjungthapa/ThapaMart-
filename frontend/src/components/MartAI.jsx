@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, Sparkles } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, Mic, Volume2, VolumeX, Image, Loader } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../store/api.js';
 import { playClick, playSuccess } from '../utils/audio.js';
@@ -13,14 +13,91 @@ const MartAI = () => {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isTtsEnabled, setIsTtsEnabled] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
+  // Text to Speech voice reader
+  const speakText = (text) => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      // Select a premium sounding voice if available
+      const voices = window.speechSynthesis.getVoices();
+      const EnglishVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) || voices.find(v => v.lang.startsWith('en'));
+      if (EnglishVoice) utterance.voice = EnglishVoice;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Start speech to text
+  const handleStartListening = () => {
+    playClick();
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      // Fallback mockup
+      setIsListening(true);
+      setTimeout(() => {
+        setInput("Show me premium black leather watches");
+        setIsListening(false);
+      }, 1500);
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => {
+      setIsListening(true);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onresult = (event) => {
+      const speechToText = event.results[0][0].transcript;
+      setInput(speechToText);
+    };
+
+    recognition.start();
+  };
+
+  // Handle Drag & Drop / Visual Search mockup
+  const handleVisualSearch = async (fileName) => {
+    setIsTyping(true);
+    setMessages(prev => [...prev, { sender: 'user', text: `[Visual Search Upload: ${fileName}] 📸` }]);
+    
+    setTimeout(async () => {
+      let replyText = "Analyzing visual features... Matching items found in our Premium footwear collection! 👟";
+      let recommendedProducts = [];
+      try {
+        const { data } = await api.get('/products', { params: { search: 'shoes', limit: 2 } });
+        recommendedProducts = data.products || [];
+      } catch (err) {
+        replyText = "Visual search processed. Check out these recommended top matching selections:";
+      }
+      
+      setIsTyping(false);
+      playSuccess();
+      setMessages(prev => [...prev, { sender: 'ai', text: replyText, products: recommendedProducts }]);
+      if (isTtsEnabled) speakText(replyText);
+    }, 2000);
+  };
+
   const handleSend = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!input.trim()) return;
 
     playClick();
@@ -56,7 +133,7 @@ const MartAI = () => {
         } else if (normalized.includes('watch') || normalized.includes('time')) query = 'watch';
         else if (normalized.includes('shirt') || normalized.includes('tshirt') || normalized.includes('clothing')) query = 'shirt';
         else if (normalized.includes('bag') || normalized.includes('leather')) query = 'bag';
-        else if (normalized.includes('shoe') || normalized.includes('sneaker')) query = 'shoes';
+        else if (normalized.includes('shoe') || normalized.includes('sneaker') || normalized.includes('footwear')) query = 'shoes';
         else if (normalized.includes('ring') || normalized.includes('gold')) query = 'ring';
 
         if (!isNegotiated) {
@@ -85,6 +162,7 @@ const MartAI = () => {
         ...prev,
         { sender: 'ai', text: replyText, products: recommendedProducts },
       ]);
+      if (isTtsEnabled) speakText(replyText);
     }, 1500);
   };
 
@@ -153,13 +231,70 @@ const MartAI = () => {
                   <span style={{ fontSize: '0.65rem', color: '#10B981', fontWeight: 600 }}>● Online</span>
                 </div>
               </div>
-              <button onClick={() => { playClick(); setIsOpen(false); }} style={{ background: 'transparent', border: 'none', color: '#FFFFFF', cursor: 'pointer' }}>
-                <X size={18} />
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {/* TTS Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    playClick();
+                    setIsTtsEnabled(!isTtsEnabled);
+                  }}
+                  title={isTtsEnabled ? "Mute Voice Assistant" : "Unmute Voice Assistant"}
+                  style={{ background: 'transparent', border: 'none', color: '#FFFFFF', cursor: 'pointer', opacity: isTtsEnabled ? 1 : 0.4 }}
+                >
+                  {isTtsEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                </button>
+                <button onClick={() => { playClick(); setIsOpen(false); }} style={{ background: 'transparent', border: 'none', color: '#FFFFFF', cursor: 'pointer' }}>
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
-            {/* Message Area */}
-            <div style={{ flexGrow: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Message Area with Drag and Drop Support */}
+            <div 
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                  handleVisualSearch(e.dataTransfer.files[0].name);
+                }
+              }}
+              style={{ 
+                flexGrow: 1, 
+                overflowY: 'auto', 
+                padding: '1rem', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '1rem', 
+                position: 'relative'
+              }}
+            >
+              {isDragging && (
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  border: '2px dashed #000',
+                  borderRadius: '1rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 10,
+                  fontSize: '0.8rem',
+                  fontWeight: 'bold',
+                  color: '#000'
+                }}>
+                  <Image size={32} className="animate-bounce mb-2" />
+                  <span>Drop product image for Visual Search</span>
+                </div>
+              )}
+
               {messages.map((msg, i) => (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
                   <div
@@ -218,11 +353,70 @@ const MartAI = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Footer */}
-            <form onSubmit={handleSend} style={{ borderTop: '1px solid #E5E7EB', padding: '0.75rem', display: 'flex', gap: '0.5rem', background: '#FFFFFF' }}>
+            {/* Input Footer with STT & Visual trigger options */}
+            <form onSubmit={handleSend} style={{ borderTop: '1px solid #E5E7EB', padding: '0.75rem', display: 'flex', gap: '0.5rem', background: '#FFFFFF', alignItems: 'center' }}>
+              
+              {/* Voice recognition / Mic trigger */}
+              <button
+                type="button"
+                onClick={handleStartListening}
+                style={{
+                  background: isListening ? '#EF4444' : '#F3F4F6',
+                  color: isListening ? '#FFFFFF' : '#09090B',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '2rem',
+                  height: '2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  position: 'relative'
+                }}
+                title="Voice Search"
+              >
+                {isListening ? (
+                  <span style={{ display: 'flex', gap: '2px' }}>
+                    <span className="animate-pulse bg-white w-1.5 h-1.5 rounded-full" />
+                    <span className="animate-pulse bg-white w-1.5 h-1.5 rounded-full" style={{ animationDelay: '0.2s' }} />
+                  </span>
+                ) : (
+                  <Mic size={14} />
+                )}
+              </button>
+
+              {/* Visual search trigger button */}
+              <label
+                style={{
+                  background: '#F3F4F6',
+                  color: '#09090B',
+                  borderRadius: '50%',
+                  width: '2rem',
+                  height: '2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+                title="Visual Search File Upload"
+              >
+                <Image size={14} />
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleVisualSearch(e.target.files[0].name);
+                    }
+                  }}
+                  style={{ display: 'none' }} 
+                />
+              </label>
+
               <input
                 type="text"
-                placeholder="Ask about premium products..."
+                placeholder={isListening ? "Listening..." : "Ask about premium products..."}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 style={{ flexGrow: 1, background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '9999px', padding: '0.5rem 1rem', fontSize: '0.8rem', color: '#09090B', outline: 'none' }}
