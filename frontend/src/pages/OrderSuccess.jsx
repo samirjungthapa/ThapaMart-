@@ -176,7 +176,134 @@ const OrderSuccess = () => {
   };
 
   const handlePrint = () => {
-    window.print();
+    const printWindow = window.open("", "_blank");
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Receipt #${finalOrderId} - ThapaMart</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+          <style>
+            body { font-family: 'Inter', sans-serif; background-color: #FAFAFA; color: #18181B; margin: 0; padding: 40px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .receipt-container { max-width: 750px; margin: 0 auto; background: #FFFFFF; border: 1px solid #E4E4E7; border-radius: 24px; padding: 48px; box-shadow: 0 4px 20px rgba(0,0,0,0.02); }
+            
+            .brand-section { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #F4F4F5; padding-bottom: 24px; }
+            .brand-logo { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 32px; font-weight: 800; letter-spacing: -0.02em; color: #09090B; }
+            .brand-sub { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #10B981; margin-top: 2px; }
+            .receipt-badge { background: #ECFDF5; border: 1px solid #A7F3D0; color: #047857; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; padding: 6px 14px; border-radius: 99px; }
+            
+            .meta-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; margin: 32px 0; }
+            .meta-block h4 { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #71717A; letter-spacing: 0.05em; margin: 0 0 10px 0; }
+            .meta-block p { font-size: 13px; font-weight: 505; line-height: 1.6; color: #27272A; margin: 0; }
+            .meta-block strong { color: #09090B; font-weight: 700; }
+            
+            .details-table { width: 100%; border-collapse: collapse; margin: 32px 0; }
+            .details-table th { text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #71717A; letter-spacing: 0.05em; padding: 12px 16px; border-bottom: 1px solid #E4E4E7; background: #FAF9F6; }
+            .details-table td { padding: 16px; font-size: 13px; font-weight: 600; color: #27272A; border-bottom: 1px solid #F4F4F5; }
+            .details-table td.qty { color: #71717A; }
+            .details-table td.price { text-align: right; }
+            .details-table th.price { text-align: right; }
+            
+            .summary-section { margin-left: auto; width: 300px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #E4E4E7; padding-top: 20px; }
+            .summary-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 500; color: #71717A; }
+            .summary-row.total { font-size: 18px; font-weight: 800; color: #09090B; margin-top: 4px; padding-top: 12px; border-top: 1px solid #F4F4F5; }
+            
+            .footer-note { text-align: center; margin-top: 48px; border-top: 1px dashed #E4E4E7; padding-top: 24px; }
+            .footer-note p { font-size: 11px; color: #71717A; margin: 0 0 4px 0; font-weight: 500; }
+            
+            @media print {
+              body { background-color: #FFFFFF; padding: 0; }
+              .receipt-container { border: none; padding: 0; box-shadow: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-container">
+            <div class="brand-section">
+              <div>
+                <div class="brand-logo">THAPAMART</div>
+                <div class="brand-sub">Premium E-Commerce</div>
+              </div>
+              <div class="receipt-badge">${order?.orderStatus || 'Processing'}</div>
+            </div>
+
+            <div class="meta-grid">
+              <div class="meta-block">
+                <h4>Customer Details</h4>
+                <p>
+                  <strong>Name:</strong> ${userName}<br>
+                  <strong>Email:</strong> ${order?.user?.email || 'customer@thapamart.com'}<br>
+                  <strong>Billing Type:</strong> Personal Account Card
+                </p>
+              </div>
+              <div class="meta-block">
+                <h4>Invoice Details</h4>
+                <p>
+                  <strong>Reference No:</strong> <span style="font-family: monospace; font-size: 12px;">${finalOrderId}</span><br>
+                  <strong>Order Date:</strong> ${order?.createdAt ? new Date(order.createdAt).toLocaleDateString() : new Date().toLocaleDateString()}<br>
+                  <strong>Payment Status:</strong> Paid
+                </p>
+              </div>
+            </div>
+
+            <table class="details-table">
+              <thead>
+                <tr>
+                  <th>Product Details</th>
+                  <th class="price" style="width: 100px;">Price</th>
+                  <th class="price" style="width: 80px; text-align: center;">Qty</th>
+                  <th class="price" style="width: 120px;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(order?.products || []).map(p => `
+                  <tr>
+                    <td>
+                      <div style="font-weight: 700; color: #09090B;">${p.title || p.name || 'Curated Item'}</div>
+                    </td>
+                    <td class="price">Rs. ${(p.price || 0).toLocaleString()}</td>
+                    <td class="price" style="text-align: center; color: #71717A;">${p.quantity || p.qty || 1}</td>
+                    <td class="price">Rs. ${((p.price || 0) * (p.quantity || p.qty || 1)).toLocaleString()}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="summary-section">
+              <div class="summary-row">
+                <span>Subtotal</span>
+                <span style="color: #09090B; font-weight: 700;">Rs. ${subtotalVal.toLocaleString()}</span>
+              </div>
+              <div class="summary-row">
+                <span>Estimated Shipping</span>
+                <span style="color: #09090B; font-weight: 700;">${shippingVal === 0 ? 'Free' : `Rs. ${shippingVal.toLocaleString()}`}</span>
+              </div>
+              <div class="summary-row">
+                <span>Sales Tax</span>
+                <span style="color: #09090B; font-weight: 700;">Rs. ${taxVal.toLocaleString()}</span>
+              </div>
+              <div class="summary-row total">
+                <span>Total Amount</span>
+                <span>Rs. ${totalVal.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div class="footer-note">
+              <p>Thank you for choosing ThapaMart.</p>
+              <p style="font-size: 10px; color: #A1A1AA;">For support questions, please contact support@thapamart.com</p>
+            </div>
+          </div>
+
+          <script>
+            window.onload = function() {
+              window.print();
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const getDeliveryDate = () => {
