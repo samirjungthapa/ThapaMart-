@@ -20,6 +20,64 @@ const Cart = () => {
   const [showCouponsDrawer, setShowCouponsDrawer] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
 
+  // Simulated Multiplayer State
+  const [activeUsers, setActiveUsers] = useState([
+    { id: 1, name: 'Aarav K.', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80', status: 'viewing' },
+    { id: 2, name: 'Jessica S.', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80', status: 'typing' },
+    { id: 3, name: 'Rahul D.', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80', status: 'idle' }
+  ]);
+  const [liveLogs, setLiveLogs] = useState([
+    'Jessica S. joined the shared cart.',
+    'Aarav K. is reviewing the checkout page.'
+  ]);
+  const [notes, setNotes] = useState([
+    { user: 'Jessica S.', text: 'Guys, make sure we use THAPA10 for the discount!' },
+    { user: 'Aarav K.', text: 'Adding the wireless mouse, looks cool!' }
+  ]);
+  const [newNote, setNewNote] = useState('');
+  const [burstingEmojis, setBurstingEmojis] = useState([]);
+
+  useEffect(() => {
+    const logs = [
+      "Jessica changed quantity of Thapa Pro Laptop.",
+      "Aarav is typing a message...",
+      "Rahul reactivated their cart session.",
+      "Jessica triggered a 5% group discount code!",
+      "Aarav reacted with 🔥",
+      "Rahul added a note to the group board."
+    ];
+    const interval = setInterval(() => {
+      const randomLog = logs[Math.floor(Math.random() * logs.length)];
+      setLiveLogs(prev => [randomLog, ...prev.slice(0, 4)]);
+      
+      // Randomly cycle user statuses
+      setActiveUsers(prev => prev.map(u => {
+        if (Math.random() > 0.6) {
+          const statuses = ['viewing', 'typing', 'idle'];
+          return { ...u, status: statuses[Math.floor(Math.random() * statuses.length)] };
+        }
+        return u;
+      }));
+    }, 6500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const triggerEmojiBurst = (emoji) => {
+    const id = Date.now() + Math.random();
+    setBurstingEmojis(prev => [...prev, { id, emoji, left: Math.random() * 80 + 10 }]);
+    setTimeout(() => {
+      setBurstingEmojis(prev => prev.filter(item => item.id !== id));
+    }, 2000);
+  };
+
+  const handleAddNote = (e) => {
+    e.preventDefault();
+    if (!newNote.trim()) return;
+    setNotes(prev => [...prev, { user: userInfo?.name || 'You', text: newNote }]);
+    setNewNote('');
+  };
+
+
   // Handle importing shared cart
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -201,6 +259,110 @@ const Cart = () => {
                   ? "🎉 Excellent! Your order qualifies for free delivery." 
                   : `Add $${remainingForFreeShipping.toFixed(2)} more to your bag to enjoy free shipping.`}
               </p>
+            </div>
+
+            {/* Live Multiplayer Shopping Room Panel */}
+            <div className="bg-slate-50 border border-gray-200 rounded-2xl p-6 relative overflow-hidden flex flex-col md:flex-row gap-6 justify-between items-start" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)' }}>
+              
+              {/* Emojis floating container */}
+              <div className="absolute inset-0 pointer-events-none">
+                {burstingEmojis.map(item => (
+                  <span 
+                    key={item.id} 
+                    className="emoji-float" 
+                    style={{ left: `${item.left}%` }}
+                  >
+                    {item.emoji}
+                  </span>
+                ))}
+              </div>
+
+              {/* Column 1: Active Users & Reactions */}
+              <div className="flex-1 space-y-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+                    <h3 className="text-sm font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>
+                      Live Shopping Room
+                    </h3>
+                  </div>
+                  <p className="text-xs text-gray-500">You are shopping collaboratively in real-time!</p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-2.5">
+                    {activeUsers.map(user => (
+                      <div key={user.id} className="relative group">
+                        <img 
+                          src={user.avatar} 
+                          alt={user.name} 
+                          className={`w-9 h-9 rounded-full border-2 object-cover ${user.status === 'typing' ? 'border-emerald-500 animate-pulse' : 'border-white dark:border-gray-850'}`} 
+                        />
+                        <span className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border border-white ${user.status === 'typing' ? 'bg-emerald-500' : user.status === 'viewing' ? 'bg-blue-400' : 'bg-gray-400'}`} />
+                        <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1.5 hidden group-hover:block bg-black text-white text-[10px] py-1 px-2 rounded whitespace-nowrap z-30">
+                          {user.name} ({user.status})
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold text-gray-400">+{activeUsers.length} others active</span>
+                </div>
+
+                {/* Emoji Bar */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Send Reaction</span>
+                  <div className="flex gap-2">
+                    {['👍', '❤️', '🔥', '😮', '🎉', '💸'].map(emoji => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => triggerEmojiBurst(emoji)}
+                        className="p-1.5 rounded bg-gray-150 hover:bg-gray-200 transition-all text-lg hover:scale-110"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Column 2: Live Activity Feed */}
+              <div className="flex-1 w-full md:w-auto space-y-3">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Group Activity Feed</span>
+                <div className="bg-white/50 dark:bg-black/20 rounded-xl p-3 border border-gray-200 dark:border-gray-800 max-h-[110px] overflow-y-auto space-y-2 text-xs">
+                  {liveLogs.map((log, idx) => (
+                    <div key={idx} className="flex gap-2" style={{ color: 'var(--text-primary)' }}>
+                      <span className="text-gray-400">•</span>
+                      <span>{log}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Column 3: Group Sticky Notes */}
+              <div className="flex-1 w-full md:w-auto space-y-3">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Collaborative Notes</span>
+                <div className="bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/40 rounded-xl p-3 max-h-[110px] overflow-y-auto space-y-2 text-xs" style={{ color: 'var(--text-primary)' }}>
+                  {notes.map((n, idx) => (
+                    <div key={idx}>
+                      <span className="font-bold">{n.user}:</span> {n.text}
+                    </div>
+                  ))}
+                </div>
+                <form onSubmit={handleAddNote} className="flex gap-1.5">
+                  <input 
+                    type="text" 
+                    placeholder="Type team note..." 
+                    value={newNote}
+                    onChange={e => setNewNote(e.target.value)}
+                    className="w-full bg-white dark:bg-gray-800 text-xs px-2.5 py-1.5 border border-gray-200 dark:border-gray-700 rounded outline-none"
+                    style={{ color: 'var(--text-primary)' }}
+                  />
+                  <button type="submit" className="bg-black text-white dark:bg-white dark:text-black text-xs px-3 py-1.5 font-bold uppercase tracking-wider rounded">Post</button>
+                </form>
+              </div>
+
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
