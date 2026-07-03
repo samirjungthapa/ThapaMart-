@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, X, Send, Sparkles, Mic, Volume2, VolumeX, Image, Loader } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, Mic, Volume2, VolumeX, Image, Loader, Shirt, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCart } from '../store/slices/cartSlice.js';
 import api from '../store/api.js';
 import { playClick, playSuccess } from '../utils/audio.js';
 
 const MartAI = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { cartItems } = useSelector(s => s.cart);
+  
   const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'outfit'
   const [messages, setMessages] = useState([
     { sender: 'ai', text: "Hello! I am your ThapaMart Personal Stylist. What premium pieces can I help you find today?" },
   ]);
@@ -17,6 +23,7 @@ const MartAI = () => {
   const [isListening, setIsListening] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const messagesEndRef = useRef(null);
+
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -250,195 +257,323 @@ const MartAI = () => {
               </div>
             </div>
 
-            {/* Message Area with Drag and Drop Support */}
-            <div 
-              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={() => setIsDragging(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setIsDragging(false);
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                  handleVisualSearch(e.dataTransfer.files[0].name);
-                }
-              }}
-              style={{ 
-                flexGrow: 1, 
-                overflowY: 'auto', 
-                padding: '1rem', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                gap: '1rem', 
-                position: 'relative'
-              }}
-            >
-              {isDragging && (
-                <div style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: 'rgba(255, 255, 255, 0.9)',
-                  border: '2px dashed #000',
-                  borderRadius: '1rem',
+            {/* Tab Bar */}
+            <div style={{ display: 'flex', borderBottom: '1px solid #E5E7EB', background: '#FFFFFF' }}>
+              <button 
+                type="button"
+                onClick={() => { playClick(); setActiveTab('chat'); }}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: activeTab === 'chat' ? '2px solid #000' : '2px solid transparent',
+                  cursor: 'pointer',
+                  color: activeTab === 'chat' ? '#000' : '#71717A'
+                }}
+              >
+                Chat Assistant
+              </button>
+              <button 
+                type="button"
+                onClick={() => { playClick(); setActiveTab('outfit'); }}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  fontSize: '0.75rem',
+                  fontWeight: 'bold',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: activeTab === 'outfit' ? '2px solid #000' : '2px solid transparent',
+                  cursor: 'pointer',
+                  color: activeTab === 'outfit' ? '#000' : '#71717A',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  zIndex: 10,
-                  fontSize: '0.8rem',
-                  fontWeight: 'bold',
-                  color: '#000'
-                }}>
-                  <Image size={32} className="animate-bounce mb-2" />
-                  <span>Drop product image for Visual Search</span>
-                </div>
-              )}
-
-              {messages.map((msg, i) => (
-                <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
-                  <div
-                    style={{
-                      maxWidth: '85%',
-                      padding: '0.75rem 1rem',
-                      borderRadius: '0.75rem',
-                      fontSize: '0.8rem',
-                      lineHeight: 1.4,
-                      background: msg.sender === 'user' ? '#000000' : '#F3F4F6',
-                      color: msg.sender === 'user' ? '#FFFFFF' : '#09090B',
-                      borderBottomRightRadius: msg.sender === 'user' ? '0' : '0.75rem',
-                      borderBottomLeftRadius: msg.sender === 'ai' ? '0' : '0.75rem',
-                    }}
-                  >
-                    {msg.text}
-                  </div>
-
-                  {/* Recommended Products UI */}
-                  {msg.products && msg.products.length > 0 && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem', width: '100%' }}>
-                      {msg.products.map((prod) => (
-                        <div
-                          key={prod.id || prod._id}
-                          onClick={() => { playClick(); setIsOpen(false); navigate(`/products/${prod.id || prod._id}`); }}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.5rem',
-                            background: '#FFFFFF',
-                            border: '1px solid #E5E7EB',
-                            borderRadius: '0.5rem',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <img src={prod.images[0]} alt="" style={{ width: '40px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
-                          <div style={{ flexGrow: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '0.75rem', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prod.title}</p>
-                            <p style={{ fontSize: '0.7rem', color: '#71717A', margin: 0 }}>Rs. {Number(prod.price).toLocaleString()}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {isTyping && (
-                <div style={{ display: 'flex', gap: '0.25rem', padding: '0.5rem', background: '#F3F4F6', borderRadius: '0.5rem', width: '3rem', justifyContent: 'center' }}>
-                  <span className="animate-bounce" style={{ width: '4px', height: '4px', background: '#71717A', borderRadius: '50%' }}></span>
-                  <span className="animate-bounce" style={{ width: '4px', height: '4px', background: '#71717A', borderRadius: '50%', animationDelay: '0.2s' }}></span>
-                  <span className="animate-bounce" style={{ width: '4px', height: '4px', background: '#71717A', borderRadius: '50%', animationDelay: '0.4s' }}></span>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
+                  gap: '4px'
+                }}
+              >
+                <Shirt size={13} /> Outfit Planner
+              </button>
             </div>
 
-            {/* Input Footer with STT & Visual trigger options */}
-            <form onSubmit={handleSend} style={{ borderTop: '1px solid #E5E7EB', padding: '0.75rem', display: 'flex', gap: '0.5rem', background: '#FFFFFF', alignItems: 'center' }}>
-              
-              {/* Voice recognition / Mic trigger */}
-              <button
-                type="button"
-                onClick={handleStartListening}
-                style={{
-                  background: isListening ? '#EF4444' : '#F3F4F6',
-                  color: isListening ? '#FFFFFF' : '#09090B',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '2rem',
-                  height: '2rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  position: 'relative'
-                }}
-                title="Voice Search"
-              >
-                {isListening ? (
-                  <span style={{ display: 'flex', gap: '2px' }}>
-                    <span className="animate-pulse bg-white w-1.5 h-1.5 rounded-full" />
-                    <span className="animate-pulse bg-white w-1.5 h-1.5 rounded-full" style={{ animationDelay: '0.2s' }} />
-                  </span>
-                ) : (
-                  <Mic size={14} />
-                )}
-              </button>
+            {activeTab === 'outfit' ? (
+              <div style={{ flexGrow: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem', background: '#F9FAFB' }}>
+                <div style={{ background: '#FFFFFF', padding: '1rem', border: '1px solid #E5E7EB', borderRadius: '0.75rem' }}>
+                  <h5 style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#09090B', margin: '0 0 0.5rem 0' }}>
+                    👗 AI Styling Report
+                  </h5>
+                  <p style={{ fontSize: '0.72rem', color: '#52525B', margin: 0, lineHeight: 1.4 }}>
+                    {cartItems.length > 0 ? (
+                      `You have ${cartItems.length} item(s) in your bag. Our AI suggests matching these with coordinates from the Thapa Luxury Footwear & Accessories lines to elevate your styling profile.`
+                    ) : (
+                      "Your shopping bag is currently empty. Explore our pre-curated designer outfit combination to get a head start on elite Nepalese style!"
+                    )}
+                  </p>
+                </div>
 
-              {/* Visual search trigger button */}
-              <label
-                style={{
-                  background: '#F3F4F6',
-                  color: '#09090B',
-                  borderRadius: '50%',
-                  width: '2rem',
-                  height: '2rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
-                title="Visual Search File Upload"
-              >
-                <Image size={14} />
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleVisualSearch(e.target.files[0].name);
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#71717A', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    Recommended Combinations
+                  </span>
+
+                  {[
+                    {
+                      id: 'style-pair-1',
+                      title: 'Luxury Gold Chronograph Watch',
+                      price: 24999,
+                      image: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=300&q=80',
+                      styleWith: 'Best paired with formal blazers or casual linen shirts.'
+                    },
+                    {
+                      id: 'style-pair-2',
+                      title: 'Premium Leather Chelsea Boots',
+                      price: 18500,
+                      image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=300&q=80',
+                      styleWith: 'Complements tailored trousers or raw denim jeans.'
+                    }
+                  ].map(pair => (
+                    <div 
+                      key={pair.id}
+                      style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '0.75rem', padding: '0.75rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}
+                    >
+                      <img src={pair.image} alt="" style={{ width: '50px', height: '65px', objectFit: 'cover', borderRadius: '4px' }} />
+                      <div style={{ flexGrow: 1, minWidth: 0 }}>
+                        <h6 style={{ fontSize: '0.75rem', fontWeight: 850, color: '#09090B', margin: '0 0 2px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {pair.title}
+                        </h6>
+                        <p style={{ fontSize: '0.65rem', color: '#10B981', fontWeight: 600, margin: '0 0 4px 0' }}>
+                          Rs. {pair.price.toLocaleString()}
+                        </p>
+                        <p style={{ fontSize: '0.65rem', color: '#71717A', margin: 0, fontStyle: 'italic', lineHeight: 1.2 }}>
+                          {pair.styleWith}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          playSuccess();
+                          dispatch(addToCart({
+                            product: pair.id,
+                            title: pair.title,
+                            price: pair.price,
+                            image: pair.image,
+                            quantity: 1,
+                            stock: 5
+                          }));
+                          alert(`${pair.title} added to shopping bag!`);
+                        }}
+                        style={{
+                          background: '#000000',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          padding: '0.4rem 0.6rem',
+                          borderRadius: '4px',
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Message Area with Drag and Drop Support */}
+                <div 
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsDragging(false);
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                      handleVisualSearch(e.dataTransfer.files[0].name);
                     }
                   }}
-                  style={{ display: 'none' }} 
-                />
-              </label>
+                  style={{ 
+                    flexGrow: 1, 
+                    overflowY: 'auto', 
+                    padding: '1rem', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    gap: '1rem', 
+                    position: 'relative'
+                  }}
+                >
+                  {isDragging && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'rgba(255, 255, 255, 0.9)',
+                      border: '2px dashed #000',
+                      borderRadius: '1rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10,
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      color: '#000'
+                    }}>
+                      <Image size={32} className="animate-bounce mb-2" />
+                      <span>Drop product image for Visual Search</span>
+                    </div>
+                  )}
 
-              <input
-                type="text"
-                placeholder={isListening ? "Listening..." : "Ask about premium products..."}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                style={{ flexGrow: 1, background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '9999px', padding: '0.5rem 1rem', fontSize: '0.8rem', color: '#09090B', outline: 'none' }}
-              />
-              <button
-                type="submit"
-                style={{
-                  background: '#000000',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '50%',
-                  width: '2.2rem',
-                  height: '2.2rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                }}
-              >
-                <Send size={14} />
-              </button>
-            </form>
+                  {messages.map((msg, i) => (
+                    <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: msg.sender === 'user' ? 'flex-end' : 'flex-start' }}>
+                      <div
+                        style={{
+                          maxWidth: '85%',
+                          padding: '0.75rem 1rem',
+                          borderRadius: '0.75rem',
+                          fontSize: '0.8rem',
+                          lineHeight: 1.4,
+                          background: msg.sender === 'user' ? '#000000' : '#F3F4F6',
+                          color: msg.sender === 'user' ? '#FFFFFF' : '#09090B',
+                          borderBottomRightRadius: msg.sender === 'user' ? '0' : '0.75rem',
+                          borderBottomLeftRadius: msg.sender === 'ai' ? '0' : '0.75rem',
+                        }}
+                      >
+                        {msg.text}
+                      </div>
+
+                      {/* Recommended Products UI */}
+                      {msg.products && msg.products.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem', width: '100%' }}>
+                          {msg.products.map((prod) => (
+                            <div
+                              key={prod.id || prod._id}
+                              onClick={() => { playClick(); setIsOpen(false); navigate(`/products/${prod.id || prod._id}`); }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem',
+                                padding: '0.5rem',
+                                background: '#FFFFFF',
+                                border: '1px solid #E5E7EB',
+                                borderRadius: '0.5rem',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <img src={prod.images[0]} alt="" style={{ width: '40px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
+                              <div style={{ flexGrow: 1, minWidth: 0 }}>
+                                <p style={{ fontSize: '0.75rem', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prod.title}</p>
+                                <p style={{ fontSize: '0.7rem', color: '#71717A', margin: 0 }}>Rs. {Number(prod.price).toLocaleString()}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {isTyping && (
+                    <div style={{ display: 'flex', gap: '0.25rem', padding: '0.5rem', background: '#F3F4F6', borderRadius: '0.5rem', width: '3rem', justifyContent: 'center' }}>
+                      <span className="animate-bounce" style={{ width: '4px', height: '4px', background: '#71717A', borderRadius: '50%' }}></span>
+                      <span className="animate-bounce" style={{ width: '4px', height: '4px', background: '#71717A', borderRadius: '50%', animationDelay: '0.2s' }}></span>
+                      <span className="animate-bounce" style={{ width: '4px', height: '4px', background: '#71717A', borderRadius: '50%', animationDelay: '0.4s' }}></span>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                {/* Input Footer with STT & Visual trigger options */}
+                <form onSubmit={handleSend} style={{ borderTop: '1px solid #E5E7EB', padding: '0.75rem', display: 'flex', gap: '0.5rem', background: '#FFFFFF', alignItems: 'center' }}>
+                  
+                  {/* Voice recognition / Mic trigger */}
+                  <button
+                    type="button"
+                    onClick={handleStartListening}
+                    style={{
+                      background: isListening ? '#EF4444' : '#F3F4F6',
+                      color: isListening ? '#FFFFFF' : '#09090B',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '2rem',
+                      height: '2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      position: 'relative'
+                    }}
+                    title="Voice Search"
+                  >
+                    {isListening ? (
+                      <span style={{ display: 'flex', gap: '2px' }}>
+                        <span className="animate-pulse bg-white w-1.5 h-1.5 rounded-full" />
+                        <span className="animate-pulse bg-white w-1.5 h-1.5 rounded-full" style={{ animationDelay: '0.2s' }} />
+                      </span>
+                    ) : (
+                      <Mic size={14} />
+                    )}
+                  </button>
+
+                  {/* Visual search trigger button */}
+                  <label
+                    style={{
+                      background: '#F3F4F6',
+                      color: '#09090B',
+                      borderRadius: '50%',
+                      width: '2rem',
+                      height: '2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                    }}
+                    title="Visual Search File Upload"
+                  >
+                    <Image size={14} />
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleVisualSearch(e.target.files[0].name);
+                        }
+                      }}
+                      style={{ display: 'none' }} 
+                    />
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder={isListening ? "Listening..." : "Ask about premium products..."}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    style={{ flexGrow: 1, background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: '9999px', padding: '0.5rem 1rem', fontSize: '0.8rem', color: '#09090B', outline: 'none' }}
+                  />
+                  <button
+                    type="submit"
+                    style={{
+                      background: '#000000',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '2.2rem',
+                      height: '2.2rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Send size={14} />
+                  </button>
+                </form>
+              </>
           </motion.div>
         )}
       </AnimatePresence>
