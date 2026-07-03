@@ -8,20 +8,59 @@
    MIDNIGHT BLACK + EMERALD GREEN — Global Design System
    ================================================================ */
 
+:root {
+  --primary-accent: #10B981;
+  --primary-accent-glow: rgba(16, 185, 129, 0.25);
+  --bg-primary: #FFFFFF;
+  --text-primary: #09090B;
+  --bg-card: #F9FAFB;
+  --border-color: #E5E7EB;
+}
+
+.dark {
+  --primary-accent: #10B981;
+  --primary-accent-glow: rgba(16, 185, 129, 0.25);
+  --bg-primary: #030712;
+  --text-primary: #F3F4F6;
+  --bg-card: #0c1a14;
+  --border-color: rgba(16, 185, 129, 0.14);
+}
+
+.luxury-gold {
+  --primary-accent: #D4AF37;
+  --primary-accent-glow: rgba(212, 175, 55, 0.3);
+  --bg-primary: #0A0A06;
+  --text-primary: #F4F1EA;
+  --bg-card: #15130E;
+  --border-color: rgba(212, 175, 55, 0.22);
+}
+
+.cyberpunk {
+  --primary-accent: #EC4899;
+  --primary-accent-glow: rgba(236, 72, 153, 0.35);
+  --bg-primary: #080911;
+  --text-primary: #00FFC2;
+  --bg-card: #121424;
+  --border-color: rgba(236, 72, 153, 0.3);
+}
+
 @layer base {
   html { @apply scroll-smooth; }
   body {
-    @apply bg-[#FFFFFF] text-[#09090B] antialiased selection:bg-black selection:text-white;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    @apply antialiased transition-colors duration-500;
   }
   h1, h2, h3 {
     font-family: 'Cormorant Garamond', Georgia, serif;
     letter-spacing: -0.01em;
   }
   ::selection {
-    background: rgba(16, 185, 129, 0.25);
-    color: #fff;
+    background: var(--primary-accent-glow);
+    color: var(--text-primary);
   }
 }
+
 
 /* ── Scrollbar ──────────────────────────────────────────── */
 ::-webkit-scrollbar        { width: 5px; }
@@ -151,3 +190,17 @@
   50%       { transform: translateY(-12px); }
 }
 .animate-float { animation: float 6s ease-in-out infinite; }
+
+@keyframes emojiFloatUp {
+  0% { transform: translateY(0) scale(0.6); opacity: 1; }
+  100% { transform: translateY(-160px) scale(1.6); opacity: 0; }
+}
+.emoji-float {
+  position: absolute;
+  bottom: 10px;
+  animation: emojiFloatUp 2s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+  pointer-events: none;
+  font-size: 2.2rem;
+  z-index: 99;
+}
+
