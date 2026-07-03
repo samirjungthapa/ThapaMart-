@@ -36,6 +36,126 @@ const ProductDetails = () => {
   const [engravingColor, setEngravingColor] = useState('#000000');
   const [accentColor, setAccentColor] = useState('#FFFFFF');
 
+  const [is3DActive, setIs3DActive] = useState(false);
+  const [rotation, setRotation] = useState(45);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState(0);
+
+  useEffect(() => {
+    if (!is3DActive) return;
+    const canvas = document.getElementById('customizer-3d-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const size = 95;
+    const rad = (rotation * Math.PI) / 180;
+
+    // Ambient shadow
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + size + 20, size * 1.3, 16, 0, 0, 2 * Math.PI);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+    ctx.fill();
+
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    // 3D vertices of product box
+    const vertices = [
+      { x: -size, y: -size * 1.2, z: -size },
+      { x: size, y: -size * 1.2, z: -size },
+      { x: size, y: size * 1.2, z: -size },
+      { x: -size, y: size * 1.2, z: -size },
+      { x: -size, y: -size * 1.2, z: size },
+      { x: size, y: -size * 1.2, z: size },
+      { x: size, y: size * 1.2, z: size },
+      { x: -size, y: size * 1.2, z: size }
+    ];
+
+    const projected = vertices.map(v => {
+      // Y-axis rotation
+      const xRot = v.x * Math.cos(rad) - v.z * Math.sin(rad);
+      const zRot = v.x * Math.sin(rad) + v.z * Math.cos(rad);
+      const scale = 280 / (280 + zRot);
+      return {
+        x: xRot * scale,
+        y: v.y * scale,
+        z: zRot
+      };
+    });
+
+    const faces = [
+      { indices: [0, 1, 2, 3], label: 'Back', color: '#111827' },
+      { indices: [0, 1, 5, 4], label: 'Top', color: '#1F2937' },
+      { indices: [2, 3, 7, 6], label: 'Bottom', color: '#111827' },
+      { indices: [0, 3, 7, 4], label: 'Left', color: '#374151' },
+      { indices: [1, 2, 6, 5], label: 'Right', color: '#4B5563' },
+      { indices: [4, 5, 6, 7], label: 'Front', color: accentColor === '#FFFFFF' || accentColor === '#ffffff' ? '#10B981' : accentColor }
+    ];
+
+    const faceDepths = faces.map(f => {
+      const avgZ = f.indices.reduce((sum, idx) => sum + projected[idx].z, 0) / 4;
+      return { face: f, avgZ };
+    });
+    faceDepths.sort((a, b) => b.avgZ - a.avgZ);
+
+    faceDepths.forEach(({ face }) => {
+      ctx.beginPath();
+      ctx.moveTo(projected[face.indices[0]].x, projected[face.indices[0]].y);
+      for (let i = 1; i < 4; i++) {
+        ctx.lineTo(projected[face.indices[i]].x, projected[face.indices[i]].y);
+      }
+      ctx.closePath();
+
+      const grad = ctx.createLinearGradient(-size, -size, size, size);
+      grad.addColorStop(0, face.color);
+      grad.addColorStop(1, '#020617');
+
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Shiny overlay
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.fill();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      if (face.label === 'Front' && engravingText) {
+        ctx.save();
+        const fCenterX = (projected[4].x + projected[5].x + projected[6].x + projected[7].x) / 4;
+        const fCenterY = (projected[4].y + projected[5].y + projected[6].y + projected[7].y) / 4;
+
+        ctx.translate(fCenterX, fCenterY);
+        const dx = projected[5].x - projected[4].x;
+        const dy = projected[5].y - projected[4].y;
+        ctx.rotate(Math.atan2(dy, dx));
+
+        // Engraving Plate
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillRect(-55, -9, 110, 18);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = engravingColor || '#000000';
+        ctx.strokeRect(-55, -9, 110, 18);
+
+        ctx.font = 'bold 9px monospace';
+        ctx.fillStyle = engravingColor || '#000000';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(engravingText.toUpperCase(), 0, 0);
+        ctx.restore();
+      }
+    });
+
+    ctx.restore();
+  }, [is3DActive, rotation, accentColor, engravingText, engravingColor]);
+
+
   const fetchProductDetails = async () => {
     try {
       const { data } = await api.get(`/products/${id}`);
@@ -138,77 +258,150 @@ const ProductDetails = () => {
           
           {/* Images */}
           <div style={{ position:'sticky', top:'5rem', display:'flex', flexDirection:'column', gap:'1rem' }}>
-            <div 
-              onMouseMove={(e) => {
-                const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-                const x = ((e.clientX - left) / width) * 100;
-                const y = ((e.clientY - top) / height) * 100;
-                setZoomPos({ x, y });
-              }}
-              onMouseEnter={() => setIsZooming(true)}
-              onMouseLeave={() => setIsZooming(false)}
-              style={{ 
-                aspectRatio:'4/5', 
-                background:'#F9FAFB', 
-                overflow:'hidden', 
-                border:'1px solid #E5E7EB',
-                position:'relative',
-                cursor:'zoom-in'
-              }}
-            >
-              <img 
-                src={product.images[activeImg] || product.images[0]} 
-                alt={product.title} 
+            {is3DActive ? (
+              <div 
                 style={{ 
-                  width:'100%', 
-                  height:'100%', 
-                  objectFit:'cover',
-                  transform: isZooming ? 'scale(2.2)' : 'scale(1)',
-                  transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
-                  transition: isZooming ? 'none' : 'transform 0.2s ease-out'
-                }} 
-              />
-              {/* Color Accent Tint Overlay */}
-              {accentColor && accentColor !== '#ffffff' && accentColor !== '#FFFFFF' && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: accentColor,
-                    mixBlendMode: 'multiply',
-                    opacity: 0.15,
-                    pointerEvents: 'none'
-                  }}
-                />
-              )}
-              {/* Laser Engraving Preview Overlay */}
-              {engravingText && (
-                <div 
-                  style={{ 
-                    position: 'absolute', 
-                    bottom: '15%', 
-                    left: '50%', 
-                    transform: 'translateX(-50%)', 
-                    color: engravingColor,
-                    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-                    border: `1px dashed ${engravingColor}`,
-                    padding: '6px 16px',
-                    borderRadius: '6px',
-                    fontSize: '11px',
-                    fontWeight: '900',
-                    fontFamily: 'monospace',
-                    letterSpacing: '0.15em',
-                    pointerEvents: 'none',
-                    whiteSpace: 'nowrap',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                  }}
-                >
-                  {engravingText.toUpperCase()}
+                  aspectRatio:'4/5', 
+                  background:'#0B0F19', 
+                  overflow:'hidden', 
+                  border:'1px solid #E5E7EB',
+                  position:'relative',
+                  cursor:'grab',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column'
+                }}
+                onMouseDown={(e) => {
+                  setIsDragging(true);
+                  setDragStart(e.clientX);
+                }}
+                onMouseMove={(e) => {
+                  if (!isDragging) return;
+                  const delta = e.clientX - dragStart;
+                  setRotation(prev => prev + delta * 0.7);
+                  setDragStart(e.clientX);
+                }}
+                onMouseUp={() => setIsDragging(false)}
+                onMouseLeave={() => setIsDragging(false)}
+              >
+                <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(0,0,0,0.6)', color: '#FFF', fontSize: '10px', padding: '4px 8px', borderRadius: '4px', pointerEvents: 'none' }}>
+                  Drag to Rotate 🔄
                 </div>
-              )}
+                <canvas 
+                  id="customizer-3d-canvas" 
+                  width={400} 
+                  height={450} 
+                  style={{ width: '100%', height: '100%', maxHeight: '450px' }} 
+                />
+              </div>
+            ) : (
+              <div 
+                onMouseMove={(e) => {
+                  const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - left) / width) * 100;
+                  const y = ((e.clientY - top) / height) * 100;
+                  setZoomPos({ x, y });
+                }}
+                onMouseEnter={() => setIsZooming(true)}
+                onMouseLeave={() => setIsZooming(false)}
+                style={{ 
+                  aspectRatio:'4/5', 
+                  background:'#F9FAFB', 
+                  overflow:'hidden', 
+                  border:'1px solid #E5E7EB',
+                  position:'relative',
+                  cursor:'zoom-in'
+                }}
+              >
+                <img 
+                  src={product.images[activeImg] || product.images[0]} 
+                  alt={product.title} 
+                  style={{ 
+                    width:'100%', 
+                    height:'100%', 
+                    objectFit:'cover',
+                    transform: isZooming ? 'scale(2.2)' : 'scale(1)',
+                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                    transition: isZooming ? 'none' : 'transform 0.2s ease-out'
+                  }} 
+                />
+                {/* Color Accent Tint Overlay */}
+                {accentColor && accentColor !== '#ffffff' && accentColor !== '#FFFFFF' && (
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: accentColor,
+                      mixBlendMode: 'multiply',
+                      opacity: 0.15,
+                      pointerEvents: 'none'
+                    }}
+                  />
+                )}
+                {/* Laser Engraving Preview Overlay */}
+                {engravingText && (
+                  <div 
+                    style={{ 
+                      position: 'absolute', 
+                      bottom: '15%', 
+                      left: '50%', 
+                      transform: 'translateX(-50%)', 
+                      color: engravingColor,
+                      backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                      border: `1px dashed ${engravingColor}`,
+                      padding: '6px 16px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: '900',
+                      fontFamily: 'monospace',
+                      letterSpacing: '0.15em',
+                      pointerEvents: 'none',
+                      whiteSpace: 'nowrap',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                  >
+                    {engravingText.toUpperCase()}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Toggle 3D Mode vs Gallery */}
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                onClick={() => setIs3DActive(false)}
+                style={{ 
+                  flex: 1, 
+                  padding: '0.5rem', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 700, 
+                  background: !is3DActive ? '#000' : '#FFF', 
+                  color: !is3DActive ? '#FFF' : '#000',
+                  border: '1px solid #000',
+                  cursor: 'pointer' 
+                }}
+              >
+                🖼️ PHOTO GALLERY
+              </button>
+              <button 
+                onClick={() => setIs3DActive(true)}
+                style={{ 
+                  flex: 1, 
+                  padding: '0.5rem', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 700, 
+                  background: is3DActive ? '#000' : '#FFF', 
+                  color: is3DActive ? '#FFF' : '#000',
+                  border: '1px solid #000',
+                  cursor: 'pointer' 
+                }}
+              >
+                🌐 3D STUDIO MODE
+              </button>
             </div>
 
             {/* Thumbnail Gallery Selector */}
