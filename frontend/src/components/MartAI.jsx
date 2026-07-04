@@ -574,6 +574,7 @@ const MartAI = () => {
                   </button>
                 </form>
               </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

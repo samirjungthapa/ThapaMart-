@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Package, Heart, Clock, ArrowRight } from 'lucide-react';
+import { Package, Heart, Clock, ArrowRight, LayoutDashboard } from 'lucide-react';
 import ProductCard from './ProductCard.jsx';
 import api from '../store/api.js';
 
@@ -53,6 +53,11 @@ const Storefront = () => {
             </h1>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
+            {userInfo?.role === 'admin' && (
+              <Link to="/admin" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', background: '#000000', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', textDecoration: 'none' }}>
+                <LayoutDashboard size={14} /> Admin Panel
+              </Link>
+            )}
             <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', background: '#F9FAFB', border: '1px solid #E5E7EB', color: '#09090B', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', textDecoration: 'none' }}>
               <Package size={14} /> Orders
             </Link>

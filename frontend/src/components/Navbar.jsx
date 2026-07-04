@@ -181,8 +181,8 @@ const Navbar = () => {
                         <p style={{ fontSize: '0.8rem', fontWeight: 700, color: TEXT }}>{userInfo.name}</p>
                         <p style={{ fontSize: '0.7rem', color: MUTED }}>{userInfo.email}</p>
                       </div>
-                      {userInfo.isAdmin && (
-                        <Link to="/admin/dashboard" onClick={() => setProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} onMouseEnter={e=>e.currentTarget.style.background='#F9FAFB'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
+                      {userInfo.role === 'admin' && (
+                        <Link to="/admin" onClick={() => setProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} onMouseEnter={e=>e.currentTarget.style.background='#F9FAFB'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
                           <LayoutDashboard size={16} /> Admin Dashboard
                         </Link>
                       )}
