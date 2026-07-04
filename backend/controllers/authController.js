@@ -128,7 +128,37 @@ export const getUserProfile = async (req, res) => {
       role: req.user.role,
       avatar: req.user.avatar,
     });
-  } else {
-    res.status(404).json({ message: 'User not found' });
   }
+};
+
+// @desc    Update user role (Admin)
+// @route   PUT /api/auth/users/:id/role
+// @access  Private/Admin
+export const updateUserRole = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+
+  if (process.env.MONGODB_URI) {
+    try {
+      const user = await User.findById(id);
+      if (user) {
+        user.role = role;
+        const updatedUser = await user.save();
+        return res.json(updatedUser);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // Fallback to JSON DB
+  const db = readDb();
+  const index = db.users.findIndex(u => u.id === id || (u._id && u._id.toString() === id));
+  if (index !== -1) {
+    db.users[index].role = role;
+    writeDb(db);
+    return res.json(db.users[index]);
+  }
+
+  res.status(404).json({ message: 'User not found' });
 };

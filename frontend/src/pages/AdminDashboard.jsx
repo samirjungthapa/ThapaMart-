@@ -9,6 +9,7 @@ const AdminDashboard = () => {
   const { userInfo } = useSelector((state) => state.auth);
 
   const [activeSubTab, setActiveSubTab] = useState('products'); // 'products', 'orders', 'users'
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   // Datasets
   const [products, setProducts] = useState([]);
@@ -69,6 +70,40 @@ const AdminDashboard = () => {
     }
     fetchData();
   }, [userInfo, navigate]);
+
+  // Live order processing simulation interval
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setOrders(prevOrders => {
+        let changed = false;
+        const nextOrders = prevOrders.map(o => {
+          if (o.paymentStatus === 'Paid') {
+            if (o.orderStatus === 'Pending' || o.orderStatus === 'Processing') {
+              changed = true;
+              return { ...o, orderStatus: 'Shipped' };
+            } else if (o.orderStatus === 'Shipped') {
+              changed = true;
+              return { ...o, orderStatus: 'Delivered' };
+            }
+          }
+          return o;
+        });
+        return nextOrders;
+      });
+    }, 8000); // Auto-advance every 8 seconds
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const handleToggleUserRole = async (userId, currentRole) => {
+    const nextRole = currentRole === 'admin' ? 'customer' : 'admin';
+    try {
+      await api.put(`/auth/users/${userId}/role`, { role: nextRole });
+      fetchData();
+    } catch (err) {
+      setUsers(users.map(u => (u.id === userId || u._id === userId) ? { ...u, role: nextRole } : u));
+    }
+  };
 
   const handleProductSubmit = async (e) => {
     e.preventDefault();
@@ -142,107 +177,203 @@ const AdminDashboard = () => {
   const productsCount = products.length;
   const ordersCount = orders.length;
 
+  const categoryCounts = products.reduce((acc, p) => {
+    acc[p.category] = (acc[p.category] || 0) + 1;
+    return acc;
+  }, {});
+
   return (
-    <div className="premium-mesh-bg min-h-screen py-12">
+    <div style={{ padding: '4rem 0', minHeight: '100vh', background: '#FFFFFF' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Title Banner */}
-        <div className="mb-10 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem', paddingBottom: '2rem', borderBottom: '1px solid #E5E7EB', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Admin Console</h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Manage ThapaMart system databases and analytics.</p>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 900, color: '#09090B', lineHeight: 1.1 }}>
+              Admin Console
+            </h1>
+            <p style={{ fontSize: '0.875rem', color: '#71717A', margin: '0.5rem 0 0 0' }}>
+              Manage ThapaMart system databases, products, and customer orders.
+            </p>
           </div>
           <button
             onClick={fetchData}
-            className="flex items-center px-4.5 py-2 text-xs font-bold rounded-full bg-slate-800 hover:bg-slate-950 text-white shadow-premium transition-all"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.75rem 1.25rem',
+              background: '#000000',
+              color: '#FFFFFF',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+              border: 'none',
+              cursor: 'pointer'
+            }}
           >
-            <FiRefreshCw className="mr-1.5 w-3.5 h-3.5" /> Refresh Data
+            <FiRefreshCw /> <span>Refresh Data</span>
           </button>
         </div>
 
         {/* Analytics metrics grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-12">
           
-          <div className="glass-panel rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-premium flex items-center space-x-4">
-            <div className="p-3 bg-emerald-500/10 text-emerald-600 rounded-xl"><FiTrendingUp className="w-6 h-6" /></div>
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Total Sales Revenue</span>
-              <p className="text-xl font-extrabold text-slate-800 dark:text-white mt-0.5">${totalSales}</p>
-            </div>
+          <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#71717A', letterSpacing: '0.05em' }}>
+              Total Revenue
+            </span>
+            <p style={{ fontSize: '2.25rem', fontWeight: 900, color: '#09090B', margin: '0.5rem 0 0 0', fontFamily: "'Cormorant Garamond', serif" }}>
+              Rs. {Number(totalSales * 133).toLocaleString('en-NP')}
+            </p>
           </div>
 
-          <div className="glass-panel rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-premium flex items-center space-x-4">
-            <div className="p-3 bg-primary/10 text-primary rounded-xl"><FiShoppingBag className="w-6 h-6" /></div>
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Total Orders</span>
-              <p className="text-xl font-extrabold text-slate-800 dark:text-white mt-0.5">{ordersCount}</p>
-            </div>
+          <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#71717A', letterSpacing: '0.05em' }}>
+              Total Orders
+            </span>
+            <p style={{ fontSize: '2.25rem', fontWeight: 900, color: '#09090B', margin: '0.5rem 0 0 0', fontFamily: "'Cormorant Garamond', serif" }}>
+              {ordersCount}
+            </p>
           </div>
 
-          <div className="glass-panel rounded-2xl p-5 border border-slate-100 dark:border-slate-800 shadow-premium flex items-center space-x-4">
-            <div className="p-3 bg-accent/10 text-accent rounded-xl"><FiBox className="w-6 h-6" /></div>
-            <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Available Catalog items</span>
-              <p className="text-xl font-extrabold text-slate-800 dark:text-white mt-0.5">{productsCount}</p>
-            </div>
+          <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#71717A', letterSpacing: '0.05em' }}>
+              Catalog Items
+            </span>
+            <p style={{ fontSize: '2.25rem', fontWeight: 900, color: '#09090B', margin: '0.5rem 0 0 0', fontFamily: "'Cormorant Garamond', serif" }}>
+              {productsCount}
+            </p>
           </div>
 
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-start">
           
           {/* Sub Navigation */}
-          <div className="lg:col-span-1">
-            <div className="glass-panel rounded-2xl p-4 border border-slate-100 dark:border-slate-850 shadow-premium flex flex-row lg:flex-col gap-2 overflow-x-auto">
-              <button
-                onClick={() => setActiveSubTab('products')}
-                className={`w-full text-left px-4.5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors flex items-center ${activeSubTab === 'products' ? 'bg-primary text-white' : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'}`}
-              >
-                <FiBox className="mr-2 w-4 h-4" /> Products CRUD
-              </button>
-              <button
-                onClick={() => setActiveSubTab('orders')}
-                className={`w-full text-left px-4.5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors flex items-center ${activeSubTab === 'orders' ? 'bg-primary text-white' : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'}`}
-              >
-                <FiShoppingBag className="mr-2 w-4 h-4" /> Orders Management
-              </button>
-              <button
-                onClick={() => setActiveSubTab('users')}
-                className={`w-full text-left px-4.5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-colors flex items-center ${activeSubTab === 'users' ? 'bg-primary text-white' : 'hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200'}`}
-              >
-                <FiUsers className="mr-2 w-4 h-4" /> Users Directory
-              </button>
-            </div>
+          <div className="lg:col-span-1" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <button
+              onClick={() => setActiveSubTab('products')}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '1rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                background: activeSubTab === 'products' ? '#000000' : '#FFFFFF',
+                color: activeSubTab === 'products' ? '#FFFFFF' : '#09090B',
+                border: '1px solid #E5E7EB',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}
+            >
+              <FiBox size={16} /> Products Catalog
+            </button>
+            <button
+              onClick={() => setActiveSubTab('orders')}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '1rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                background: activeSubTab === 'orders' ? '#000000' : '#FFFFFF',
+                color: activeSubTab === 'orders' ? '#FFFFFF' : '#09090B',
+                border: '1px solid #E5E7EB',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}
+            >
+              <FiShoppingBag size={16} /> Orders Management
+            </button>
+            <button
+              onClick={() => setActiveSubTab('users')}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '1rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                background: activeSubTab === 'users' ? '#000000' : '#FFFFFF',
+                color: activeSubTab === 'users' ? '#FFFFFF' : '#09090B',
+                border: '1px solid #E5E7EB',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}
+            >
+              <FiUsers size={16} /> Users Directory
+            </button>
           </div>
 
           {/* Sub Content Area */}
-          <div className="lg:col-span-3 space-y-6">
+          <div className="lg:col-span-3">
             
             {/* Products CRUD sub tab view */}
             {activeSubTab === 'products' && (
-              <div className="space-y-6">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
                 
+                {/* Visual Category Distribution Progress Bars */}
+                {products.length > 0 && (
+                  <div style={{ border: '1px solid #E5E7EB', padding: '1.5rem', background: '#F9FAFB' }}>
+                    <h4 style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 1.25rem 0', color: '#09090B' }}>
+                      Category Distribution
+                    </h4>
+                    <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
+                      {Object.entries(categoryCounts).map(([cat, count]) => {
+                        const pct = ((count / products.length) * 100).toFixed(0);
+                        return (
+                          <div key={cat} style={{ flexGrow: 1, minWidth: '130px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', color: '#71717A', marginBottom: '0.35rem' }}>
+                              <span>{cat}</span>
+                              <span>{count} items ({pct}%)</span>
+                            </div>
+                            <div style={{ width: '100%', height: '4px', background: '#E5E7EB' }}>
+                              <div style={{ width: `${pct}%`, height: '100%', background: '#000000' }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Form to Create/Update */}
-                <div className="glass-panel rounded-3xl p-6 border border-slate-100 dark:border-slate-800 shadow-premium">
-                  <h3 className="font-bold text-sm text-slate-800 dark:text-white uppercase mb-4 flex items-center">
-                    <FiPlus className="mr-1.5 w-4 h-4" /> {editingId ? 'Edit Product' : 'Add New Product'}
+                <div style={{ border: '1px solid #E5E7EB', padding: '2.5rem', background: '#F9FAFB' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#09090B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2rem', borderBottom: '1px solid #09090B', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <FiPlus /> {editingId ? 'Edit Product' : 'Add New Product'}
                   </h3>
 
-                  <form onSubmit={handleProductSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <form onSubmit={handleProductSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Product Title</label>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#71717A', marginBottom: '0.5rem' }}>Product Title</label>
                       <input
                         type="text"
                         required
-                        className="p-2.5 w-full text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none"
+                        style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.875rem 1rem', color: '#09090B', fontSize: '0.875rem', outline: 'none' }}
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Category</label>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#71717A', marginBottom: '0.5rem' }}>Category</label>
                       <select
-                        className="p-2.5 w-full text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none"
+                        style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.875rem 1rem', color: '#09090B', fontSize: '0.875rem', outline: 'none' }}
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
                       >
@@ -254,48 +385,66 @@ const AdminDashboard = () => {
                       </select>
                     </div>
                     <div className="sm:col-span-2">
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Description</label>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#71717A', marginBottom: '0.5rem' }}>Description</label>
                       <textarea
                         required
-                        rows="2"
-                        className="p-2.5 w-full text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none"
+                        rows="3"
+                        style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.875rem 1rem', color: '#09090B', fontSize: '0.875rem', outline: 'none' }}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Price ($)</label>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#71717A', marginBottom: '0.5rem' }}>Price (Rs.)</label>
                       <input
                         type="number"
                         required
-                        className="p-2.5 w-full text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none"
+                        style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.875rem 1rem', color: '#09090B', fontSize: '0.875rem', outline: 'none' }}
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Stock Level</label>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#71717A', marginBottom: '0.5rem' }}>Stock Level</label>
                       <input
                         type="number"
                         required
-                        className="p-2.5 w-full text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none"
+                        style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.875rem 1rem', color: '#09090B', fontSize: '0.875rem', outline: 'none' }}
                         value={stock}
                         onChange={(e) => setStock(e.target.value)}
                       />
                     </div>
-                    <div className="sm:col-span-2 flex justify-end space-x-2 pt-2">
+                    <div className="sm:col-span-2 flex justify-end gap-3 pt-2">
                       {editingId && (
                         <button
                           type="button"
                           onClick={resetForm}
-                          className="px-4.5 py-2 rounded-full border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold"
+                          style={{
+                            padding: '0.75rem 1.5rem',
+                            background: '#FFFFFF',
+                            border: '1px solid #E5E7EB',
+                            color: '#09090B',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            cursor: 'pointer'
+                          }}
                         >
                           Cancel
                         </button>
                       )}
                       <button
                         type="submit"
-                        className="px-6 py-2 rounded-full bg-primary hover:bg-primary-dark text-white text-xs font-semibold shadow-premium"
+                        style={{
+                          padding: '0.75rem 2rem',
+                          background: '#000000',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          cursor: 'pointer'
+                        }}
                       >
                         {editingId ? 'Update Product' : 'Add Product'}
                       </button>
@@ -304,36 +453,42 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Table list of products */}
-                <div className="glass-panel rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-premium">
-                  <table className="w-full text-left border-collapse text-xs">
+                <div style={{ border: '1px solid #E5E7EB' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
                     <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-900/40 text-slate-400 font-bold uppercase border-b border-slate-100 dark:border-slate-800">
-                        <th className="p-4">Title</th>
-                        <th className="p-4">Category</th>
-                        <th className="p-4">Price</th>
-                        <th className="p-4">Stock</th>
-                        <th className="p-4 text-center">Actions</th>
+                      <tr style={{ background: '#09090B', color: '#FFFFFF' }}>
+                        <th style={{ padding: '1rem' }}>Title</th>
+                        <th style={{ padding: '1rem' }}>Category</th>
+                        <th style={{ padding: '1rem' }}>Price</th>
+                        <th style={{ padding: '1rem' }}>Stock</th>
+                        <th style={{ padding: '1rem', textAlign: 'center' }}>Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
+                    <tbody>
                       {products.map((p) => (
-                        <tr key={p.id || p._id} className="text-slate-700 dark:text-slate-200">
-                          <td className="p-4 font-semibold">{p.title}</td>
-                          <td className="p-4 uppercase text-[10px] font-bold text-primary dark:text-accent">{p.category}</td>
-                          <td className="p-4">${p.price}</td>
-                          <td className="p-4">{p.stock} units</td>
-                          <td className="p-4 flex justify-center space-x-1">
+                        <tr key={p.id || p._id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                          <td style={{ padding: '1rem', fontWeight: 700 }}>{p.title}</td>
+                          <td style={{ padding: '1rem', textTransform: 'uppercase', fontSize: '0.7rem', fontWeight: 800, color: '#71717A' }}>{p.category}</td>
+                          <td style={{ padding: '1rem', fontWeight: 900 }}>Rs. {Number(p.price).toLocaleString()}</td>
+                          <td style={{ 
+                            padding: '1rem', 
+                            color: p.stock <= 5 ? '#EF4444' : 'inherit', 
+                            fontWeight: p.stock <= 5 ? 700 : 'normal' 
+                          }}>
+                            {p.stock} units {p.stock <= 5 && '⚠️ (Low)'}
+                          </td>
+                          <td style={{ padding: '1rem', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                             <button
                               onClick={() => handleEditProductClick(p)}
-                              className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              style={{ background: 'transparent', border: 'none', color: '#09090B', cursor: 'pointer', padding: '0.25rem' }}
                             >
-                              <FiEdit2 className="w-3.5 h-3.5" />
+                              <FiEdit2 size={14} />
                             </button>
                             <button
                               onClick={() => handleDeleteProduct(p.id || p._id)}
-                              className="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
+                              style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', padding: '0.25rem' }}
                             >
-                              <FiTrash2 className="w-3.5 h-3.5" />
+                              <FiTrash2 size={14} />
                             </button>
                           </td>
                         </tr>
@@ -347,34 +502,59 @@ const AdminDashboard = () => {
 
             {/* Orders list view */}
             {activeSubTab === 'orders' && (
-              <div className="glass-panel rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-premium">
-                <table className="w-full text-left border-collapse text-xs">
+              <div style={{ border: '1px solid #E5E7EB' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900/40 text-slate-400 font-bold uppercase border-b border-slate-100 dark:border-slate-800">
-                      <th className="p-4">Reference</th>
-                      <th className="p-4">User</th>
-                      <th className="p-4">Total</th>
-                      <th className="p-4">Payment</th>
-                      <th className="p-4">Status</th>
-                      <th className="p-4 text-center">Update</th>
+                    <tr style={{ background: '#09090B', color: '#FFFFFF' }}>
+                      <th style={{ padding: '1rem' }}>Reference</th>
+                      <th style={{ padding: '1rem' }}>User</th>
+                      <th style={{ padding: '1rem' }}>Total</th>
+                      <th style={{ padding: '1rem' }}>Payment</th>
+                      <th style={{ padding: '1rem' }}>Status</th>
+                      <th style={{ padding: '1rem', textAlign: 'center' }}>Update</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
+                  <tbody>
                     {orders.map((o) => (
-                      <tr key={o.id || o._id} className="text-slate-700 dark:text-slate-200">
-                        <td className="p-4 font-mono font-bold text-slate-500">{o.id || o._id}</td>
-                        <td className="p-4">{o.user?.name || 'Anonymous'}</td>
-                        <td className="p-4">${o.totalPrice}</td>
-                        <td className="p-4">
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${o.paymentStatus === 'Paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}`}>
+                      <tr key={o.id || o._id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                        <td 
+                          onClick={() => setSelectedOrder(o)}
+                          style={{ padding: '1rem', fontFamily: 'monospace', fontWeight: 750, color: '#09090B', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          {o.id || o._id}
+                        </td>
+                        <td style={{ padding: '1rem' }}>{o.user?.name || 'Anonymous'}</td>
+                        <td style={{ padding: '1rem', fontWeight: 900 }}>Rs. {Number(o.totalPrice).toLocaleString()}</td>
+                        <td style={{ padding: '1rem' }}>
+                          <span style={{
+                            padding: '0.2rem 0.5rem',
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            textTransform: 'uppercase',
+                            background: o.paymentStatus === 'Paid' ? '#ECFDF5' : '#FEF2F2',
+                            color: o.paymentStatus === 'Paid' ? '#065F46' : '#991B1B',
+                            borderRadius: '2px'
+                          }}>
                             {o.paymentStatus}
                           </span>
                         </td>
-                        <td className="p-4 font-bold text-[10px] uppercase text-primary dark:text-accent">{o.orderStatus}</td>
-                        <td className="p-4 flex justify-center">
+                        <td style={{ padding: '1rem', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase' }}>{o.orderStatus}</td>
+                        <td style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
                           <button
                             onClick={() => handleUpdateOrderStatus(o.id || o._id, o.orderStatus)}
-                            className="flex items-center space-x-1.5 px-3 py-1 bg-slate-850 hover:bg-slate-950 text-white rounded-lg transition-colors text-[10px] font-bold"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              padding: '0.4rem 0.75rem',
+                              background: '#000000',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              cursor: 'pointer'
+                            }}
                           >
                             <FiCheck /> <span>Advance</span>
                           </button>
@@ -388,26 +568,42 @@ const AdminDashboard = () => {
 
             {/* Users view */}
             {activeSubTab === 'users' && (
-              <div className="glass-panel rounded-3xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-premium">
-                <table className="w-full text-left border-collapse text-xs">
+              <div style={{ border: '1px solid #E5E7EB' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-slate-900/40 text-slate-400 font-bold uppercase border-b border-slate-100 dark:border-slate-800">
-                      <th className="p-4">ID</th>
-                      <th className="p-4">Name</th>
-                      <th className="p-4">Email</th>
-                      <th className="p-4">Role</th>
+                    <tr style={{ background: '#09090B', color: '#FFFFFF' }}>
+                      <th style={{ padding: '1rem' }}>ID</th>
+                      <th style={{ padding: '1rem' }}>Name</th>
+                      <th style={{ padding: '1rem' }}>Email</th>
+                      <th style={{ padding: '1rem' }}>Role</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-850">
+                  <tbody>
                     {users.map((u) => (
-                      <tr key={u.id} className="text-slate-700 dark:text-slate-200">
-                        <td className="p-4 font-mono text-slate-500">{u.id}</td>
-                        <td className="p-4 font-semibold">{u.name}</td>
-                        <td className="p-4">{u.email}</td>
-                        <td className="p-4">
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${u.role === 'admin' ? 'bg-primary/10 text-primary' : 'bg-slate-100 dark:bg-slate-800 text-slate-500'}`}>
-                            {u.role}
-                          </span>
+                      <tr key={u.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                        <td style={{ padding: '1rem', fontFamily: 'monospace', color: '#71717A' }}>{u.id}</td>
+                        <td style={{ padding: '1rem', fontWeight: 700 }}>{u.name}</td>
+                        <td style={{ padding: '1rem' }}>{u.email}</td>
+                        <td style={{ padding: '1rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            <span style={{
+                              padding: '0.2rem 0.5rem',
+                              fontSize: '0.65rem',
+                              fontWeight: 800,
+                              textTransform: 'uppercase',
+                              background: u.role === 'admin' ? '#000000' : '#F3F4F6',
+                              color: u.role === 'admin' ? '#FFFFFF' : '#09090B',
+                              borderRadius: '2px'
+                            }}>
+                              {u.role}
+                            </span>
+                            <button
+                              onClick={() => handleToggleUserRole(u.id || u._id, u.role)}
+                              style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.25rem 0.5rem', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}
+                            >
+                              Toggle Role
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -421,6 +617,73 @@ const AdminDashboard = () => {
         </div>
 
       </div>
+
+      {/* Order Details Modal */}
+      {selectedOrder && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#FFFFFF', border: '1px solid #000000', padding: '2.5rem', width: '100%', maxWidth: '550px', position: 'relative' }}>
+            <button onClick={() => setSelectedOrder(null)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'transparent', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '2.25rem', fontWeight: 900, marginBottom: '1.5rem', color: '#09090B' }}>Order Details</h3>
+            
+            <div style={{ fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', color: '#374151' }}>
+              <div>
+                <strong>Order Reference:</strong> <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>{selectedOrder.id || selectedOrder._id}</span>
+              </div>
+              <div>
+                <strong>Customer Profile:</strong> {selectedOrder.user?.name || 'Anonymous'}
+              </div>
+              <div>
+                <strong>Shipping Destination:</strong><br/>
+                {selectedOrder.shippingAddress?.address}, {selectedOrder.shippingAddress?.city}, {selectedOrder.shippingAddress?.postalCode}, {selectedOrder.shippingAddress?.country}
+              </div>
+              <div>
+                <strong>Items Summary:</strong>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem', maxHeight: '180px', overflowY: 'auto', border: '1px solid #E5E7EB', padding: '0.75rem', background: '#F9FAFB' }}>
+                  {selectedOrder.products?.map((item, idx) => (
+                    <div key={idx} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                      {item.image && <img src={item.image} style={{ width: '30px', height: '40px', objectFit: 'cover' }} />}
+                      <div style={{ flexGrow: 1 }}>
+                        <span style={{ fontWeight: 700, color: '#09090B' }}>{item.title}</span><br/>
+                        <span style={{ fontSize: '0.7rem', color: '#71717A' }}>Qty: {item.quantity} &bull; Rs. {Number(item.price).toLocaleString()}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #E5E7EB', paddingTop: '1rem', borderBottom: '1px solid #E5E7EB', paddingBottom: '1rem' }}>
+                <span><strong>Payment Status:</strong> {selectedOrder.paymentStatus}</span>
+                <span><strong>Order Fulfillment:</strong> {selectedOrder.orderStatus}</span>
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                {selectedOrder.paymentStatus !== 'Paid' && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await api.put(`/orders/${selectedOrder.id || selectedOrder._id}/pay`, { id: 'manual_override', status: 'Succeeded' });
+                        setSelectedOrder(null);
+                        fetchData();
+                      } catch (err) {
+                        setOrders(orders.map(o => (o.id === selectedOrder.id || o._id === selectedOrder._id) ? { ...o, paymentStatus: 'Paid', orderStatus: 'Processing' } : o));
+                        setSelectedOrder(null);
+                      }
+                    }}
+                    style={{ padding: '0.6rem 1.25rem', background: '#000000', color: '#FFFFFF', border: 'none', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}
+                  >
+                    Mark as Paid (Override)
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  style={{ padding: '0.6rem 1.25rem', background: '#FFFFFF', border: '1px solid #E5E7EB', color: '#09090B', fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
