@@ -18,28 +18,31 @@ const CONFETTI_PARTICLES = Array.from({ length: 80 }).map((_, i) => ({
   drift: Math.random() * 40 - 20 // random sway drift px
 }));
 
-const LiveDeliveryTracker = () => {
+const LiveDeliveryTracker = ({ orderStatus }) => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('Preparing shipment...');
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) {
-          setStatus('Delivered! Thank you for choosing ThapaMart. 🎉');
-          clearInterval(interval);
-          return 100;
-        }
-        const next = p + 2;
-        if (next < 20) setStatus('Preparing shipment at ThapaMart Warehouse...');
-        else if (next < 50) setStatus('Package picked up & dispatched via express delivery... 🛵');
-        else if (next < 80) setStatus('On the way to your local hub... 📍');
-        else setStatus('Out for delivery! Arriving at your doorstep shortly... 🛵');
-        return next;
-      });
-    }, 300);
-    return () => clearInterval(interval);
-  }, []);
+    let targetProgress = 10;
+    let initialStatus = 'Preparing shipment...';
+
+    if (orderStatus === 'Processing') {
+      targetProgress = 35;
+      initialStatus = 'Preparing shipment at ThapaMart Warehouse...';
+    } else if (orderStatus === 'Shipped') {
+      targetProgress = 75;
+      initialStatus = 'Package picked up & dispatched via express delivery... 🛵';
+    } else if (orderStatus === 'Delivered') {
+      targetProgress = 100;
+      initialStatus = 'Delivered! Thank you for choosing ThapaMart. 🎉';
+    } else if (orderStatus === 'Pending') {
+      targetProgress = 10;
+      initialStatus = 'Awaiting payment confirmation... ⏳';
+    }
+
+    setProgress(targetProgress);
+    setStatus(initialStatus);
+  }, [orderStatus]);
 
   const pathLength = 500;
   const strokeDashoffset = pathLength - (progress / 100) * pathLength;
@@ -352,10 +355,30 @@ const OrderSuccess = () => {
 
   // Stepper steps configuration
   const trackingSteps = [
-    { label: 'Order Confirmed', description: 'Payment verified', active: true, date: order?.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Today' },
-    { label: 'Preparing', description: 'Item packaging', active: true, date: 'Pending' },
-    { label: 'In Transit', description: 'On the way', active: false, date: 'Expected soon' },
-    { label: 'Delivered', description: 'At your doorstep', active: false, date: 'Expected 3 days' }
+    { 
+      label: 'Order Confirmed', 
+      description: 'Order received', 
+      active: true, 
+      date: order?.createdAt ? new Date(order.createdAt).toLocaleDateString() : 'Today' 
+    },
+    { 
+      label: 'Preparing', 
+      description: 'Item packaging', 
+      active: order?.orderStatus === 'Processing' || order?.orderStatus === 'Shipped' || order?.orderStatus === 'Delivered', 
+      date: order?.orderStatus === 'Processing' || order?.orderStatus === 'Shipped' || order?.orderStatus === 'Delivered' ? 'Completed' : 'Pending' 
+    },
+    { 
+      label: 'In Transit', 
+      description: 'On the way', 
+      active: order?.orderStatus === 'Shipped' || order?.orderStatus === 'Delivered', 
+      date: order?.orderStatus === 'Shipped' || order?.orderStatus === 'Delivered' ? 'Shipped' : 'Expected soon' 
+    },
+    { 
+      label: 'Delivered', 
+      description: 'At your doorstep', 
+      active: order?.orderStatus === 'Delivered', 
+      date: order?.orderStatus === 'Delivered' ? 'Delivered' : 'Expected 3 days' 
+    }
   ];
 
   return (
@@ -507,7 +530,7 @@ const OrderSuccess = () => {
         </motion.div>
 
         {/* Live Map Delivery Tracker */}
-        <LiveDeliveryTracker />
+        <LiveDeliveryTracker orderStatus={order?.orderStatus} />
 
         {/* Two-Column Invoice & Details Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start print-grid">

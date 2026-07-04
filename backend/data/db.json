@@ -23,6 +23,22 @@
       "password": "$2a$10$mcZfTig2xJJHGokRR2D0KOg4aPcPnLvZrO4f5JWnRQtPlVpsuWKAi",
       "role": "customer",
       "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "user-1783178148818",
+      "name": "Samir Jung Thapa",
+      "email": "Samirjungthapa7@gmail.com",
+      "password": "$2a$10$DG5WkJ5lHSl/Tye2fRAE3O9KboUVQ8Qplbco2wOc48p3Z7ulujuT6",
+      "role": "customer",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "user-1783178316887",
+      "name": "Admin",
+      "email": "admin@thapamart.com",
+      "password": "$2a$10$SJ/udgT5ulWcxCOnvxrQD.y9o9jvCKsE3pecr.6Hxn4AVbxQkG9tq",
+      "role": "admin",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
     }
   ],
   "products": [
@@ -1257,9 +1273,10 @@
       "taxPrice": 173160,
       "shippingPrice": 0,
       "totalPrice": 1505160,
-      "paymentStatus": "Pending",
-      "orderStatus": "Pending",
-      "createdAt": "2026-06-22T07:13:49.255Z"
+      "paymentStatus": "Paid",
+      "orderStatus": "Delivered",
+      "createdAt": "2026-06-22T07:13:49.255Z",
+      "stripePaymentIntentId": "manual_override"
     },
     {
       "id": "ord-1782112485584",
@@ -1281,9 +1298,10 @@
       "taxPrice": 156000,
       "shippingPrice": 0,
       "totalPrice": 1356000,
-      "paymentStatus": "Pending",
-      "orderStatus": "Pending",
-      "createdAt": "2026-06-22T07:14:45.584Z"
+      "paymentStatus": "Paid",
+      "orderStatus": "Processing",
+      "createdAt": "2026-06-22T07:14:45.584Z",
+      "stripePaymentIntentId": "manual_override"
     },
     {
       "id": "ord-1782112677730",
@@ -1305,9 +1323,10 @@
       "taxPrice": 318500,
       "shippingPrice": 0,
       "totalPrice": 2768500,
-      "paymentStatus": "Pending",
-      "orderStatus": "Pending",
-      "createdAt": "2026-06-22T07:17:57.730Z"
+      "paymentStatus": "Paid",
+      "orderStatus": "Processing",
+      "createdAt": "2026-06-22T07:17:57.730Z",
+      "stripePaymentIntentId": "manual_override"
     },
     {
       "id": "ord-1782112787730",
@@ -1329,9 +1348,10 @@
       "taxPrice": 318500,
       "shippingPrice": 0,
       "totalPrice": 2768500,
-      "paymentStatus": "Pending",
-      "orderStatus": "Pending",
-      "createdAt": "2026-06-22T07:19:47.730Z"
+      "paymentStatus": "Paid",
+      "orderStatus": "Processing",
+      "createdAt": "2026-06-22T07:19:47.730Z",
+      "stripePaymentIntentId": "manual_override"
     },
     {
       "id": "ord-1782113352382",
@@ -1353,9 +1373,10 @@
       "taxPrice": 318500,
       "shippingPrice": 0,
       "totalPrice": 2768500,
-      "paymentStatus": "Pending",
-      "orderStatus": "Pending",
-      "createdAt": "2026-06-22T07:29:12.382Z"
+      "paymentStatus": "Paid",
+      "orderStatus": "Processing",
+      "createdAt": "2026-06-22T07:29:12.382Z",
+      "stripePaymentIntentId": "manual_override"
     },
     {
       "id": "ord-1782732583442",
@@ -1380,9 +1401,10 @@
       "taxPrice": 110500,
       "shippingPrice": 0,
       "totalPrice": 960500,
-      "paymentStatus": "Pending",
-      "orderStatus": "Pending",
-      "createdAt": "2026-06-29T11:29:43.442Z"
+      "paymentStatus": "Paid",
+      "orderStatus": "Processing",
+      "createdAt": "2026-06-29T11:29:43.442Z",
+      "stripePaymentIntentId": "manual_override"
     },
     {
       "id": "ord-1782921265338",
@@ -1407,9 +1429,65 @@
       "taxPrice": 36400,
       "shippingPrice": 0,
       "totalPrice": 316400,
+      "paymentStatus": "Paid",
+      "orderStatus": "Processing",
+      "createdAt": "2026-07-01T15:54:25.339Z",
+      "stripePaymentIntentId": "manual_override"
+    },
+    {
+      "id": "ord-1783177722542",
+      "user": "user-1781547885533",
+      "products": [
+        {
+          "product": "prod-amazon-20",
+          "title": "Yeti Rambler 30 oz Insulated Tumbler",
+          "price": 9500,
+          "quantity": 1,
+          "image": "https://images.unsplash.com/photo-1577937927133-66ef06acdf18?w=600&auto=format&fit=crop&q=80"
+        }
+      ],
+      "shippingAddress": {
+        "address": "Jorpati",
+        "city": "Kathamandu",
+        "postalCode": "4500",
+        "country": "Nepal",
+        "fullName": "ASHMIT"
+      },
+      "paymentMethod": "Cash On Delivery",
+      "taxPrice": 1235,
+      "shippingPrice": 0,
+      "totalPrice": 10735,
+      "paymentStatus": "Paid",
+      "orderStatus": "Processing",
+      "createdAt": "2026-07-04T15:08:42.542Z",
+      "stripePaymentIntentId": "manual_override"
+    },
+    {
+      "id": "ord-1783179572193",
+      "user": "user-1783178148818",
+      "products": [
+        {
+          "product": "prod-amazon-20",
+          "title": "Yeti Rambler 30 oz Insulated Tumbler",
+          "price": 9500,
+          "quantity": 1,
+          "image": "https://images.unsplash.com/photo-1577937927133-66ef06acdf18?w=600&auto=format&fit=crop&q=80"
+        }
+      ],
+      "shippingAddress": {
+        "address": "Jorpati",
+        "city": "KTM",
+        "postalCode": "123",
+        "country": "Nepal",
+        "fullName": "Samir Jung Thapa"
+      },
+      "paymentMethod": "eSewa",
+      "taxPrice": 1235,
+      "shippingPrice": 0,
+      "totalPrice": 10735,
       "paymentStatus": "Pending",
       "orderStatus": "Pending",
-      "createdAt": "2026-07-01T15:54:25.339Z"
+      "createdAt": "2026-07-04T15:39:32.193Z"
     }
   ],
   "carts": {},
