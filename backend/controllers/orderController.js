@@ -1,6 +1,109 @@
 import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { readDb, writeDb } from '../utils/jsonDb.js';
+import { sendEmail } from '../utils/sendEmail.js';
+
+const triggerOrderEmail = async (order, user, type = 'Created') => {
+  if (!user || !user.email) return;
+
+  const itemsListText = order.products
+    .map(p => `- ${p.title} x ${p.quantity} (Rs. ${p.price.toLocaleString()})`)
+    .join('\n');
+
+  const itemsListHtml = order.products
+    .map(
+      p => `
+      <tr style="border-bottom: 1px solid #E5E7EB;">
+        <td style="padding: 12px; font-size: 14px; color: #374151;">${p.title}</td>
+        <td style="padding: 12px; font-size: 14px; color: #374151; text-align: center;">${p.quantity}</td>
+        <td style="padding: 12px; font-size: 14px; color: #374151; text-align: right;">Rs. ${Number(p.price).toLocaleString()}</td>
+      </tr>
+    `
+    )
+    .join('');
+
+  const subject = type === 'Created' 
+    ? `ThapaMart Order Confirmation - Order #${order.id || order._id}`
+    : `ThapaMart Payment Confirmed - Order #${order.id || order._id}`;
+
+  const text = `
+Dear ${user.name || 'Valued Customer'},
+
+Thank you for shopping at ThapaMart!
+
+Your order details:
+Order Reference: ${order.id || order._id}
+Payment Status: ${order.paymentStatus}
+Order Status: ${order.orderStatus}
+
+Items Ordered:
+${itemsListText}
+
+Total Price: Rs. ${Number(order.totalPrice).toLocaleString()}
+
+Shipping Address:
+${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}
+
+We will notify you once your order is processed and shipped.
+
+Warm regards,
+ThapaMart Customer Support
+  `;
+
+  const html = `
+    <div style="font-family: 'Inter', sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #E5E7EB; border-radius: 12px; background-color: #FFFFFF;">
+      <div style="text-align: center; border-bottom: 2px solid #000000; padding-bottom: 20px;">
+        <h2 style="margin: 0; color: #000000; letter-spacing: 1px;">THAPAMART</h2>
+        <span style="font-size: 12px; color: #6B7280; text-transform: uppercase;">Premium E-Commerce Platform</span>
+      </div>
+      
+      <div style="padding: 20px 0;">
+        <h3 style="color: #111827; margin-top: 0;">Order Receipt Confirmation</h3>
+        <p style="font-size: 14px; color: #4B5563; line-height: 1.5;">
+          Dear <strong>${user.name || 'Valued Customer'}</strong>,<br/><br/>
+          Thank you for choosing ThapaMart. Your order has been registered successfully.
+        </p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+          <thead>
+            <tr style="background-color: #F9FAFB; border-bottom: 2px solid #E5E7EB;">
+              <th style="padding: 12px; text-align: left; font-size: 12px; font-weight: bold; color: #374151; text-transform: uppercase;">Item</th>
+              <th style="padding: 12px; text-align: center; font-size: 12px; font-weight: bold; color: #374151; text-transform: uppercase;">Qty</th>
+              <th style="padding: 12px; text-align: right; font-size: 12px; font-weight: bold; color: #374151; text-transform: uppercase;">Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsListHtml}
+          </tbody>
+        </table>
+        
+        <div style="margin-top: 20px; padding: 15px; background-color: #F9FAFB; border-radius: 8px; font-size: 14px; color: #374151;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span><strong>Payment Method:</strong> ${order.paymentMethod}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span><strong>Total Amount:</strong> Rs. ${Number(order.totalPrice).toLocaleString()}</span>
+          </div>
+          <div style="margin-top: 8px;">
+            <strong>Shipping Address:</strong><br/>
+            ${order.shippingAddress.address}, ${order.shippingAddress.city}, ${order.shippingAddress.postalCode}, ${order.shippingAddress.country}
+          </div>
+        </div>
+      </div>
+      
+      <div style="text-align: center; border-top: 1px solid #E5E7EB; padding-top: 20px; font-size: 12px; color: #9CA3AF;">
+        <p>This is an automated transactional email from ThapaMart. Please do not reply directly.</p>
+        <p>&copy; 2026 ThapaMart Inc. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  try {
+    await sendEmail({ to: user.email, subject, html, text });
+  } catch (err) {
+    console.error('⚠️ Failed to trigger email notification:', err.message);
+  }
+};
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -41,6 +144,7 @@ export const addOrderItems = async (req, res) => {
       });
 
       const createdOrder = await order.save();
+      triggerOrderEmail(createdOrder, req.user, 'Created');
       return res.status(201).json(createdOrder);
     } catch (error) {
       console.error(error);
@@ -72,6 +176,7 @@ export const addOrderItems = async (req, res) => {
 
   db.orders.push(newOrder);
   writeDb(db);
+  triggerOrderEmail(newOrder, req.user, 'Created');
   res.status(201).json(newOrder);
 };
 
@@ -113,12 +218,13 @@ export const updateOrderToPaid = async (req, res) => {
 
   if (process.env.MONGODB_URI) {
     try {
-      const order = await Order.findById(id);
+      const order = await Order.findById(id).populate('user');
       if (order) {
         order.paymentStatus = 'Paid';
         order.orderStatus = 'Processing';
         order.stripePaymentIntentId = stripeId;
         const updatedOrder = await order.save();
+        triggerOrderEmail(updatedOrder, order.user, 'Paid');
         return res.json(updatedOrder);
       }
     } catch (error) {
@@ -134,6 +240,8 @@ export const updateOrderToPaid = async (req, res) => {
     db.orders[index].orderStatus = 'Processing';
     db.orders[index].stripePaymentIntentId = stripeId;
     writeDb(db);
+    const user = db.users.find(u => u.id === db.orders[index].user || (u._id && u._id.toString() === db.orders[index].user));
+    triggerOrderEmail(db.orders[index], user || req.user, 'Paid');
     return res.json(db.orders[index]);
   }
 
