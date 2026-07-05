@@ -27,11 +27,29 @@ app.use((req, res, next) => {
   next();
 });
 
+import { protect, admin } from './middleware/authMiddleware.js';
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
+
+app.get('/api/diagnostics', protect, admin, (req, res) => {
+  res.json({
+    status: 'Healthy',
+    databaseMode: process.env.MONGODB_URI ? 'MongoDB Connected' : 'High-Performance JSON Fallback Mode',
+    uptime: process.uptime(),
+    memoryUsage: process.memoryUsage(),
+    platform: process.platform,
+    nodeVersion: process.version,
+    env: {
+      port: process.env.PORT || 5000,
+      cloudinaryName: process.env.CLOUDINARY_CLOUD_NAME ? 'Configured' : 'Missing',
+      stripeKey: process.env.STRIPE_SECRET_KEY ? 'Configured' : 'Missing'
+    }
+  });
+});
 
 // Base route
 app.get('/', (req, res) => {

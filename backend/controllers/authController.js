@@ -56,6 +56,14 @@ export const loginUser = async (req, res) => {
 export const registerUser = async (req, res) => {
   const { name, email, password } = req.body;
 
+  // Password complexity check
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).{8,}$/;
+  if (!password || !passwordRegex.test(password)) {
+    return res.status(400).json({
+      message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number or special character.'
+    });
+  }
+
   if (process.env.MONGODB_URI) {
     try {
       const userExists = await User.findOne({ email });
