@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { clearCart, calcPrices } from '../store/slices/cartSlice.js';
+import { clearCart, calcPrices, applyCoupon, removeCoupon } from '../store/slices/cartSlice.js';
 import api from '../store/api.js';
 
 const Checkout = () => {
@@ -18,6 +18,27 @@ const Checkout = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [couponCode, setCouponCode] = useState(coupon ? coupon.code : '');
+
+  const handleApplyCoupon = (e) => {
+    e.preventDefault();
+    const code = couponCode.trim().toUpperCase();
+    if (code === 'SAVE20') {
+      dispatch(applyCoupon({ code: 'SAVE20', percent: 20 }));
+      alert('Coupon SAVE20 applied successfully! (20% off)');
+    } else if (code === 'WELCOME10') {
+      dispatch(applyCoupon({ code: 'WELCOME10', percent: 10 }));
+      alert('Coupon WELCOME10 applied successfully! (10% off)');
+    } else {
+      alert('Invalid coupon code! Try SAVE20 or WELCOME10.');
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    dispatch(removeCoupon());
+    setCouponCode('');
+    alert('Coupon removed.');
+  };
 
   useEffect(() => {
     if (!userInfo) navigate('/login?redirect=/checkout');
@@ -149,11 +170,50 @@ const Checkout = () => {
               ))}
             </div>
 
-            <div style={{ display:'flex', flexDirection:'column', gap:'1rem', fontSize:'0.875rem', color:'#52525B', borderTop:'1px solid #E5E7EB', paddingTop:'2rem' }}>
+            {/* Promo Code Input */}
+            <div style={{ borderTop:'1px solid #E5E7EB', borderBottom:'1px solid #E5E7EB', padding:'1.5rem 0', margin:'1.5rem 0' }}>
+              <span style={{ display:'block', fontSize:'0.75rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'0.75rem' }}>
+                Have a Promo Code?
+              </span>
+              <form onSubmit={handleApplyCoupon} style={{ display:'flex', gap:'0.5rem' }}>
+                <input
+                  type="text"
+                  placeholder="e.g. SAVE20, WELCOME10"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value)}
+                  disabled={!!coupon}
+                  style={{ flexGrow:1, background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.5rem 1rem', fontSize:'0.8rem', outline:'none' }}
+                />
+                {coupon ? (
+                  <button
+                    type="button"
+                    onClick={handleRemoveCoupon}
+                    style={{ padding:'0.5rem 1rem', background:'#EF4444', color:'#FFFFFF', border:'none', fontSize:'0.75rem', fontWeight:700, textTransform:'uppercase', cursor:'pointer' }}
+                  >
+                    Remove
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    style={{ padding:'0.5rem 1.25rem', background:'#000000', color:'#FFFFFF', border:'none', fontSize:'0.75rem', fontWeight:700, textTransform:'uppercase', cursor:'pointer' }}
+                  >
+                    Apply
+                  </button>
+                )}
+              </form>
+            </div>
+
+            <div style={{ display:'flex', flexDirection:'column', gap:'1rem', fontSize:'0.875rem', color:'#52525B' }}>
               <div style={{ display:'flex', justifyContent:'space-between' }}>
                 <span>Subtotal</span>
                 <span style={{ color:'#09090B', fontWeight:700 }}>Rs. {prices.itemsPrice}</span>
               </div>
+              {prices.discount > 0 && (
+                <div style={{ display:'flex', justifyContent:'space-between', color:'#DC2626', fontWeight:700 }}>
+                  <span>Promo Discount ({coupon.code})</span>
+                  <span>- Rs. {prices.discount}</span>
+                </div>
+              )}
               <div style={{ display:'flex', justifyContent:'space-between' }}>
                 <span>Estimated Shipping</span>
                 <span style={{ color:'#09090B', fontWeight:700 }}>{prices.shippingPrice === 0 ? 'Free' : `Rs. ${prices.shippingPrice}`}</span>

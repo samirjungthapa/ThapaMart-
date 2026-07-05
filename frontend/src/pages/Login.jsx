@@ -26,6 +26,14 @@ const Login = () => {
     try {
       const { data } = await api.post('/auth/login', { email, password });
       dispatch(authSuccess(data));
+      
+      const guestCart = localStorage.getItem('cartItems');
+      if (guestCart) {
+        const parsed = JSON.parse(guestCart);
+        parsed.forEach(item => {
+          dispatch({ type: 'cart/addToCart', payload: item });
+        });
+      }
     } catch (err) {
       dispatch(authFail(err.response?.data?.message || 'Invalid email or password'));
     }

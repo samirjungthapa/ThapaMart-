@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Heart, ArrowRight, Trash2, ShoppingBag } from 'lucide-react';
-import { removeFromWishlist } from '../store/slices/wishlistSlice.js';
+import { Heart, ArrowRight, Trash2, ShoppingBag, Share2 } from 'lucide-react';
+import { removeFromWishlist, addToWishlist } from '../store/slices/wishlistSlice.js';
 import { addToCart } from '../store/slices/cartSlice.js';
+import api from '../store/api.js';
 
 const Wishlist = () => {
   const dispatch = useDispatch();
@@ -11,6 +12,30 @@ const Wishlist = () => {
   const location = useLocation();
   const { wishlistItems } = useSelector((state) => state.wishlist);
   const { userInfo } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const sharedItemsStr = params.get('items');
+    if (sharedItemsStr) {
+      const sharedIds = sharedItemsStr.split(',');
+      const loadShared = async () => {
+        for (const id of sharedIds) {
+          if (id.trim()) {
+            try {
+              const { data } = await api.get(`/products/${id}`);
+              if (data) {
+                dispatch(addToWishlist(data));
+              }
+            } catch (err) {
+              console.warn(`Failed to import shared product ${id}`);
+            }
+          }
+        }
+        navigate('/wishlist', { replace: true });
+      };
+      loadShared();
+    }
+  }, [location, dispatch, navigate]);
 
   const handleRemove = (id) => { dispatch(removeFromWishlist(id)); };
 
@@ -23,6 +48,14 @@ const Wishlist = () => {
     dispatch(removeFromWishlist(product.id || product._id));
   };
 
+  const handleShareWishlist = () => {
+    const ids = wishlistItems.map(item => item.id || item._id).join(',');
+    const shareUrl = `${window.location.origin}/wishlist?items=${ids}`;
+    navigator.clipboard.writeText(shareUrl)
+      .then(() => alert('Wishlist shareable link copied to clipboard! 📋'))
+      .catch(() => alert('Failed to copy link.'));
+  };
+
   return (
     <div style={{ padding:'3rem 0', minHeight:'100vh', background:'#FFFFFF' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,6 +65,27 @@ const Wishlist = () => {
             Your Wishlist
           </h1>
           <div style={{ width:'2rem', height:'1px', background:'#09090B', margin:'0 auto' }} />
+          {wishlistItems.length > 0 && (
+            <button
+              onClick={handleShareWishlist}
+              style={{
+                marginTop: '1.25rem',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                background: 'transparent',
+                border: '1px solid #E5E7EB',
+                padding: '0.5rem 1rem',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                cursor: 'pointer'
+              }}
+            >
+              <Share2 size={12} /> Share Wishlist
+            </button>
+          )}
         </div>
 
         {wishlistItems.length === 0 ? (
