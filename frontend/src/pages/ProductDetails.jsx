@@ -232,8 +232,35 @@ const ProductDetails = () => {
 
   if (loading) {
     return (
-      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'60vh', background:'#FFFFFF' }}>
-        <div style={{ width:'3rem', height:'3rem', borderRadius:'50%', border:'2px solid #E5E7EB', borderTopColor:'#09090B', animation:'spin 1s linear infinite' }} />
+      <div style={{ padding:'3rem 0', minHeight:'100vh', background:'#FFFFFF' }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start mb-16">
+            {/* Images Skeleton */}
+            <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
+              <div style={{ aspectRatio:'4/5', background:'#F3F4F6', animation:'pulse 2s infinite', border:'1px solid #E5E7EB' }} />
+              <div style={{ display:'flex', gap:'0.5rem' }}>
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} style={{ width:'70px', height:'85px', background:'#F3F4F6', animation:'pulse 2s infinite', border:'1px solid #E5E7EB' }} />
+                ))}
+              </div>
+            </div>
+            {/* Details Skeleton */}
+            <div style={{ display:'flex', flexDirection:'column', gap:'1.5rem', paddingTop:'2rem' }}>
+              <div>
+                <div style={{ height:'0.75rem', width:'20%', background:'#F3F4F6', animation:'pulse 2s infinite', marginBottom:'0.5rem' }} />
+                <div style={{ height:'3rem', width:'80%', background:'#F3F4F6', animation:'pulse 2s infinite', marginBottom:'0.5rem' }} />
+              </div>
+              <div style={{ height:'1.5rem', width:'30%', background:'#F3F4F6', animation:'pulse 2s infinite' }} />
+              <hr style={{ border:'none', borderTop:'1px solid #E5E7EB' }} />
+              <div style={{ height:'5rem', width:'100%', background:'#F3F4F6', animation:'pulse 2s infinite' }} />
+              <div style={{ height:'3rem', width:'40%', background:'#F3F4F6', animation:'pulse 2s infinite', marginTop:'1rem' }} />
+              <div style={{ display:'flex', gap:'1rem', marginTop:'2rem' }}>
+                <div style={{ height:'3rem', flex:1, background:'#F3F4F6', animation:'pulse 2s infinite' }} />
+                <div style={{ height:'3rem', width:'3rem', background:'#F3F4F6', animation:'pulse 2s infinite' }} />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
