@@ -311,3 +311,42 @@ export const createProductReview = async (req, res) => {
 
   res.status(404).json({ message: 'Product not found' });
 };
+
+// @desc    Delete product review (Admin)
+// @route   DELETE /api/products/:id/reviews/:reviewId
+// @access  Private/Admin
+export const deleteProductReview = async (req, res) => {
+  const { id, reviewId } = req.params;
+
+  if (process.env.MONGODB_URI) {
+    try {
+      const product = await Product.findById(id);
+      if (product) {
+        product.reviews = product.reviews.filter(r => r._id.toString() !== reviewId);
+        product.ratings = product.reviews.length > 0
+          ? product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length
+          : 0;
+        await product.save();
+        return res.json({ message: 'Review deleted successfully' });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // Fallback to JSON DB
+  const db = readDb();
+  const index = db.products.findIndex(p => p.id === id || (p._id && p._id.toString() === id));
+  if (index !== -1) {
+    const product = db.products[index];
+    product.reviews = product.reviews.filter(r => r.id !== reviewId && (r._id ? r._id.toString() !== reviewId : true));
+    product.ratings = product.reviews.length > 0
+      ? Number((product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length).toFixed(1))
+      : 0;
+    db.products[index] = product;
+    writeDb(db);
+    return res.json({ message: 'Review deleted successfully' });
+  }
+
+  res.status(404).json({ message: 'Product not found' });
+};
