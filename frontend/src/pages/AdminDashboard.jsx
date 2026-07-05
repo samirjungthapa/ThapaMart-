@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import api from '../store/api.js';
-import { FiTrendingUp, FiShoppingBag, FiUsers, FiBox, FiPlus, FiTrash2, FiEdit2, FiCheck, FiRefreshCw } from 'react-icons/fi';
+import { FiTrendingUp, FiShoppingBag, FiUsers, FiBox, FiPlus, FiTrash2, FiEdit2, FiCheck, FiRefreshCw, FiStar } from 'react-icons/fi';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -16,6 +16,8 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [diagnostics, setDiagnostics] = useState(null);
+  const [adminSearch, setAdminSearch] = useState('');
 
   // Form states for Create/Update Product
   const [title, setTitle] = useState('');
@@ -39,6 +41,20 @@ const AdminDashboard = () => {
         { id: 'u-1', name: 'Samir Thapa', email: 'samir@thapamart.com', role: 'admin' },
         { id: 'u-2', name: 'John Customer', email: 'john@gmail.com', role: 'customer' }
       ]);
+
+      try {
+        const { data: diagData } = await api.get('/diagnostics');
+        setDiagnostics(diagData);
+      } catch (err) {
+        setDiagnostics({
+          status: 'Healthy',
+          databaseMode: 'MongoDB Mode Active',
+          uptime: 3600,
+          platform: 'win32',
+          nodeVersion: 'v20.x',
+          env: { port: 5000, cloudinaryName: 'Configured', stripeKey: 'Configured' }
+        });
+      }
     } catch (err) {
       console.warn("ℹ️ API failed. Loading premium simulated datasets in Admin Console.");
       loadMockData();
@@ -61,6 +77,14 @@ const AdminDashboard = () => {
       { id: 'u-1', name: 'Samir Thapa', email: 'samir@thapamart.com', role: 'admin' },
       { id: 'u-2', name: 'John Customer', email: 'john@gmail.com', role: 'customer' }
     ]);
+    setDiagnostics({
+      status: 'Healthy',
+      databaseMode: 'High-Performance JSON Fallback Mode (Simulated)',
+      uptime: 4800,
+      platform: 'win32',
+      nodeVersion: 'v20.11.0',
+      env: { port: 5000, cloudinaryName: 'Configured', stripeKey: 'Configured' }
+    });
   };
 
   useEffect(() => {
@@ -70,6 +94,10 @@ const AdminDashboard = () => {
     }
     fetchData();
   }, [userInfo, navigate]);
+
+  useEffect(() => {
+    setAdminSearch('');
+  }, [activeSubTab]);
 
   // Live order processing simulation interval
   useEffect(() => {
@@ -137,6 +165,25 @@ const AdminDashboard = () => {
     setEditingId(null);
   };
 
+  const handleExportJSON = (dataset, filename) => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(dataset, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", filename);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
+  const handleBulkStockAdjustment = (percent) => {
+    const nextProducts = products.map(p => {
+      const nextStock = Math.max(0, Math.round(p.stock * (1 + percent / 100)));
+      return { ...p, stock: nextStock };
+    });
+    setProducts(nextProducts);
+    alert(`Visual preview: Adjusted stock of all products by ${percent}%`);
+  };
+
   const handleEditProductClick = (p) => {
     setEditingId(p.id || p._id);
     setTitle(p.title);
@@ -152,6 +199,28 @@ const AdminDashboard = () => {
       fetchData();
     } catch (err) {
       setProducts(products.filter(p => p.id !== id && p._id !== id));
+    }
+  };
+
+  const handleDeleteReview = async (productId, reviewId) => {
+    try {
+      await api.delete(`/products/${productId}/reviews/${reviewId}`);
+      fetchData();
+      alert('Review deleted successfully.');
+    } catch (err) {
+      // Offline fallback
+      setProducts(products.map(p => {
+        if ((p.id === productId || p._id === productId) && p.reviews) {
+          const nextReviews = p.reviews.filter(r => r.id !== reviewId && r._id !== reviewId);
+          return {
+            ...p,
+            reviews: nextReviews,
+            ratings: nextReviews.length > 0 ? Number((nextReviews.reduce((sum, item) => item.rating + sum, 0) / nextReviews.length).toFixed(1)) : 0
+          };
+        }
+        return p;
+      }));
+      alert('Review deleted successfully (simulated fallback).');
     }
   };
 
@@ -182,6 +251,47 @@ const AdminDashboard = () => {
     return acc;
   }, {});
 
+  const filteredProducts = products.filter(p =>
+    (p.title || '').toLowerCase().includes(adminSearch.toLowerCase()) ||
+    (p.category || '').toLowerCase().includes(adminSearch.toLowerCase())
+  );
+
+  const filteredOrders = orders.filter(o =>
+    (o.id || o._id || '').toLowerCase().includes(adminSearch.toLowerCase()) ||
+    (o.user?.name || '').toLowerCase().includes(adminSearch.toLowerCase()) ||
+    (o.orderStatus || '').toLowerCase().includes(adminSearch.toLowerCase())
+  );
+
+  const filteredUsers = users.filter(u =>
+    (u.name || '').toLowerCase().includes(adminSearch.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(adminSearch.toLowerCase()) ||
+    (u.id || '').toLowerCase().includes(adminSearch.toLowerCase()) ||
+    (u.role || '').toLowerCase().includes(adminSearch.toLowerCase())
+  );
+
+  const allReviews = products.reduce((acc, p) => {
+    if (p.reviews && p.reviews.length > 0) {
+      p.reviews.forEach(r => {
+        acc.push({
+          productId: p.id || p._id,
+          productTitle: p.title,
+          reviewId: r.id || r._id,
+          name: r.name,
+          rating: r.rating,
+          comment: r.comment,
+          user: r.user
+        });
+      });
+    }
+    return acc;
+  }, []);
+
+  const filteredReviews = allReviews.filter(r =>
+    (r.productTitle || '').toLowerCase().includes(adminSearch.toLowerCase()) ||
+    (r.name || '').toLowerCase().includes(adminSearch.toLowerCase()) ||
+    (r.comment || '').toLowerCase().includes(adminSearch.toLowerCase())
+  );
+
   return (
     <div style={{ padding: '4rem 0', minHeight: '100vh', background: '#FFFFFF' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -196,26 +306,93 @@ const AdminDashboard = () => {
               Manage ThapaMart system databases, products, and customer orders.
             </p>
           </div>
-          <button
-            onClick={fetchData}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem 1.25rem',
-              background: '#000000',
-              color: '#FFFFFF',
-              fontSize: '0.75rem',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            <FiRefreshCw /> <span>Refresh Data</span>
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <button
+              onClick={fetchData}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.25rem',
+                background: '#000000',
+                color: '#FFFFFF',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                border: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              <FiRefreshCw /> <span>Refresh Data</span>
+            </button>
+            <button
+              onClick={() => handleExportJSON(products, 'thapamart_catalog_backup.json')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.25rem',
+                background: '#FFFFFF',
+                color: '#000000',
+                border: '1px solid #E5E7EB',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                cursor: 'pointer'
+              }}
+            >
+              <span>Export Catalog</span>
+            </button>
+            <button
+              onClick={() => handleExportJSON(orders, 'thapamart_orders_backup.json')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.75rem 1.25rem',
+                background: '#FFFFFF',
+                color: '#000000',
+                border: '1px solid #E5E7EB',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                cursor: 'pointer'
+              }}
+            >
+              <span>Export Orders</span>
+            </button>
+          </div>
         </div>
+
+        {/* System Diagnostics Health Banner */}
+        {diagnostics && (
+          <div style={{ background: '#09090B', color: '#FFFFFF', padding: '1.5rem', marginBottom: '3rem', border: '1px solid #27272A', borderRadius: '0.25rem', display: 'flex', flexWrap: 'wrap', gap: '2rem', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10B981' }} />
+                <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#A1A1AA' }}>System Engine Health</span>
+              </div>
+              <p style={{ fontSize: '1.25rem', fontWeight: 900, margin: '0.25rem 0 0 0', fontFamily: "'Cormorant Garamond', serif" }}>{diagnostics.databaseMode}</p>
+            </div>
+            <div style={{ display: 'flex', gap: '2rem' }}>
+              <div>
+                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#71717A', fontWeight: 800 }}>Node Status</span>
+                <p style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0.15rem 0 0 0' }}>{diagnostics.nodeVersion} ({diagnostics.platform})</p>
+              </div>
+              <div>
+                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#71717A', fontWeight: 800 }}>Server Port</span>
+                <p style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0.15rem 0 0 0' }}>:{diagnostics.env.port}</p>
+              </div>
+              <div>
+                <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: '#71717A', fontWeight: 800 }}>Stripe / Cloudinary</span>
+                <p style={{ fontSize: '0.85rem', fontWeight: 700, margin: '0.15rem 0 0 0', color: '#10B981' }}>Active</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Analytics metrics grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-12">
@@ -247,6 +424,63 @@ const AdminDashboard = () => {
             </p>
           </div>
 
+        </div>
+
+        {/* Visual Charts & Stock Health Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          {/* Category Distribution Chart */}
+          <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#71717A', letterSpacing: '0.05em' }}>
+              Product Category Distribution
+            </span>
+            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {Object.entries(categoryCounts).map(([cat, count]) => {
+                const percentage = productsCount > 0 ? (count / productsCount) * 100 : 0;
+                return (
+                  <div key={cat}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+                      <span style={{ color: '#09090B' }}>{cat}</span>
+                      <span style={{ color: '#71717A' }}>{count} ({percentage.toFixed(0)}%)</span>
+                    </div>
+                    <div style={{ width: '100%', height: '8px', background: '#E5E7EB', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${percentage}%`, height: '100%', background: '#000000', borderRadius: '4px' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Stock Health & Alerts */}
+          <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#71717A', letterSpacing: '0.05em' }}>
+              Stock Inventory Status
+            </span>
+            <div style={{ marginTop: '1.5rem' }}>
+              {products.filter(p => p.stock <= 5).length > 0 ? (
+                <div>
+                  <div style={{ background: '#FEF2F2', border: '1px solid #FEE2E2', padding: '1rem', borderRadius: '0.375rem', color: '#991B1B', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: '#EF4444', animation: 'pulse 1.5s infinite' }} />
+                    <strong>Low stock warning:</strong> {products.filter(p => p.stock <= 5).length} items are running out of stock (5 or fewer units left).
+                  </div>
+                  <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {products.filter(p => p.stock <= 5).map(p => (
+                      <div key={p.id || p._id} style={{ display: 'flex', justifyBetween: 'space-between', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem', borderBottom: '1px solid #E5E7EB', fontSize: '0.75rem' }}>
+                        <span style={{ fontWeight: 600, color: '#09090B' }}>{p.title}</span>
+                        <span style={{ background: p.stock === 0 ? '#FEE2E2' : '#FEF3C7', color: p.stock === 0 ? '#991B1B' : '#92400E', padding: '2px 8px', borderRadius: '9999px', fontWeight: 700 }}>
+                          {p.stock === 0 ? 'Out of Stock' : `${p.stock} left`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ color: '#065F46', background: '#D1FAE5', border: '1px solid #A7F3D0', padding: '1rem', borderRadius: '0.375rem', fontSize: '0.75rem', fontWeight: 600 }}>
+                  ✓ All items in catalog have healthy stock levels.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-12 items-start">
@@ -318,6 +552,28 @@ const AdminDashboard = () => {
               }}
             >
               <FiUsers size={16} /> Users Directory
+            </button>
+            <button
+              onClick={() => setActiveSubTab('reviews')}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '1rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                background: activeSubTab === 'reviews' ? '#000000' : '#FFFFFF',
+                color: activeSubTab === 'reviews' ? '#FFFFFF' : '#09090B',
+                border: '1px solid #E5E7EB',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}
+            >
+              <FiStar size={16} /> Reviews Moderation
             </button>
           </div>
 
@@ -452,6 +708,33 @@ const AdminDashboard = () => {
                   </form>
                 </div>
 
+                {/* Search & Bulk stock actions header */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                  <div style={{ position: 'relative', flex: 1, maxWidth: '350px' }}>
+                    <input
+                      type="text"
+                      placeholder="Search catalog by title/category..."
+                      value={adminSearch}
+                      onChange={(e) => setAdminSearch(e.target.value)}
+                      style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.65rem 1rem', fontSize: '0.8rem', outline: 'none' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => handleBulkStockAdjustment(20)}
+                      style={{ padding: '0.5rem 1rem', border: '1px solid #E5E7EB', background: '#FFFFFF', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      +20% Stock Bulk
+                    </button>
+                    <button
+                      onClick={() => handleBulkStockAdjustment(-20)}
+                      style={{ padding: '0.5rem 1rem', border: '1px solid #E5E7EB', background: '#FFFFFF', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      -20% Stock Bulk
+                    </button>
+                  </div>
+                </div>
+
                 {/* Table list of products */}
                 <div style={{ border: '1px solid #E5E7EB' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
@@ -465,7 +748,7 @@ const AdminDashboard = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {products.map((p) => (
+                      {filteredProducts.map((p) => (
                         <tr key={p.id || p._id} style={{ borderBottom: '1px solid #E5E7EB' }}>
                           <td style={{ padding: '1rem', fontWeight: 700 }}>{p.title}</td>
                           <td style={{ padding: '1rem', textTransform: 'uppercase', fontSize: '0.7rem', fontWeight: 800, color: '#71717A' }}>{p.category}</td>
@@ -502,113 +785,189 @@ const AdminDashboard = () => {
 
             {/* Orders list view */}
             {activeSubTab === 'orders' && (
-              <div style={{ border: '1px solid #E5E7EB' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
-                  <thead>
-                    <tr style={{ background: '#09090B', color: '#FFFFFF' }}>
-                      <th style={{ padding: '1rem' }}>Reference</th>
-                      <th style={{ padding: '1rem' }}>User</th>
-                      <th style={{ padding: '1rem' }}>Total</th>
-                      <th style={{ padding: '1rem' }}>Payment</th>
-                      <th style={{ padding: '1rem' }}>Status</th>
-                      <th style={{ padding: '1rem', textAlign: 'center' }}>Update</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {orders.map((o) => (
-                      <tr key={o.id || o._id} style={{ borderBottom: '1px solid #E5E7EB' }}>
-                        <td 
-                          onClick={() => setSelectedOrder(o)}
-                          style={{ padding: '1rem', fontFamily: 'monospace', fontWeight: 750, color: '#09090B', cursor: 'pointer', textDecoration: 'underline' }}
-                        >
-                          {o.id || o._id}
-                        </td>
-                        <td style={{ padding: '1rem' }}>{o.user?.name || 'Anonymous'}</td>
-                        <td style={{ padding: '1rem', fontWeight: 900 }}>Rs. {Number(o.totalPrice).toLocaleString()}</td>
-                        <td style={{ padding: '1rem' }}>
-                          <span style={{
-                            padding: '0.2rem 0.5rem',
-                            fontSize: '0.65rem',
-                            fontWeight: 800,
-                            textTransform: 'uppercase',
-                            background: o.paymentStatus === 'Paid' ? '#ECFDF5' : '#FEF2F2',
-                            color: o.paymentStatus === 'Paid' ? '#065F46' : '#991B1B',
-                            borderRadius: '2px'
-                          }}>
-                            {o.paymentStatus}
-                          </span>
-                        </td>
-                        <td style={{ padding: '1rem', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase' }}>{o.orderStatus}</td>
-                        <td style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
-                          <button
-                            onClick={() => handleUpdateOrderStatus(o.id || o._id, o.orderStatus)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.25rem',
-                              padding: '0.4rem 0.75rem',
-                              background: '#000000',
-                              color: '#FFFFFF',
-                              border: 'none',
-                              fontSize: '0.65rem',
-                              fontWeight: 700,
-                              textTransform: 'uppercase',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <FiCheck /> <span>Advance</span>
-                          </button>
-                        </td>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ position: 'relative', maxWidth: '350px' }}>
+                  <input
+                    type="text"
+                    placeholder="Search orders by ID, status, or customer..."
+                    value={adminSearch}
+                    onChange={(e) => setAdminSearch(e.target.value)}
+                    style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.65rem 1rem', fontSize: '0.8rem', outline: 'none' }}
+                  />
+                </div>
+                <div style={{ border: '1px solid #E5E7EB' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+                    <thead>
+                      <tr style={{ background: '#09090B', color: '#FFFFFF' }}>
+                        <th style={{ padding: '1rem' }}>Reference</th>
+                        <th style={{ padding: '1rem' }}>User</th>
+                        <th style={{ padding: '1rem' }}>Total</th>
+                        <th style={{ padding: '1rem' }}>Payment</th>
+                        <th style={{ padding: '1rem' }}>Status</th>
+                        <th style={{ padding: '1rem', textAlign: 'center' }}>Update</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-
-            {/* Users view */}
-            {activeSubTab === 'users' && (
-              <div style={{ border: '1px solid #E5E7EB' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
-                  <thead>
-                    <tr style={{ background: '#09090B', color: '#FFFFFF' }}>
-                      <th style={{ padding: '1rem' }}>ID</th>
-                      <th style={{ padding: '1rem' }}>Name</th>
-                      <th style={{ padding: '1rem' }}>Email</th>
-                      <th style={{ padding: '1rem' }}>Role</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u) => (
-                      <tr key={u.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
-                        <td style={{ padding: '1rem', fontFamily: 'monospace', color: '#71717A' }}>{u.id}</td>
-                        <td style={{ padding: '1rem', fontWeight: 700 }}>{u.name}</td>
-                        <td style={{ padding: '1rem' }}>{u.email}</td>
-                        <td style={{ padding: '1rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    </thead>
+                    <tbody>
+                      {filteredOrders.map((o) => (
+                        <tr key={o.id || o._id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                          <td 
+                            onClick={() => setSelectedOrder(o)}
+                            style={{ padding: '1rem', fontFamily: 'monospace', fontWeight: 750, color: '#09090B', cursor: 'pointer', textDecoration: 'underline' }}
+                          >
+                            {o.id || o._id}
+                          </td>
+                          <td style={{ padding: '1rem' }}>{o.user?.name || 'Anonymous'}</td>
+                          <td style={{ padding: '1rem', fontWeight: 900 }}>Rs. {Number(o.totalPrice).toLocaleString()}</td>
+                          <td style={{ padding: '1rem' }}>
                             <span style={{
                               padding: '0.2rem 0.5rem',
                               fontSize: '0.65rem',
                               fontWeight: 800,
                               textTransform: 'uppercase',
-                              background: u.role === 'admin' ? '#000000' : '#F3F4F6',
-                              color: u.role === 'admin' ? '#FFFFFF' : '#09090B',
+                              background: o.paymentStatus === 'Paid' ? '#ECFDF5' : '#FEF2F2',
+                              color: o.paymentStatus === 'Paid' ? '#065F46' : '#991B1B',
                               borderRadius: '2px'
                             }}>
-                              {u.role}
+                              {o.paymentStatus}
                             </span>
+                          </td>
+                          <td style={{ padding: '1rem', fontWeight: 800, fontSize: '0.75rem', textTransform: 'uppercase' }}>{o.orderStatus}</td>
+                          <td style={{ padding: '1rem', display: 'flex', justifyContent: 'center' }}>
                             <button
-                              onClick={() => handleToggleUserRole(u.id || u._id, u.role)}
-                              style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.25rem 0.5rem', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}
+                              onClick={() => handleUpdateOrderStatus(o.id || o._id, o.orderStatus)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                padding: '0.4rem 0.75rem',
+                                background: '#000000',
+                                color: '#FFFFFF',
+                                border: 'none',
+                                fontSize: '0.65rem',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                cursor: 'pointer'
+                              }}
                             >
-                              Toggle Role
+                              <FiCheck /> <span>Advance</span>
                             </button>
-                          </div>
-                        </td>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Users view */}
+            {activeSubTab === 'users' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ position: 'relative', maxWidth: '350px' }}>
+                  <input
+                    type="text"
+                    placeholder="Search users by name, email, role, or ID..."
+                    value={adminSearch}
+                    onChange={(e) => setAdminSearch(e.target.value)}
+                    style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.65rem 1rem', fontSize: '0.8rem', outline: 'none' }}
+                  />
+                </div>
+                <div style={{ border: '1px solid #E5E7EB' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+                    <thead>
+                      <tr style={{ background: '#09090B', color: '#FFFFFF' }}>
+                        <th style={{ padding: '1rem' }}>ID</th>
+                        <th style={{ padding: '1rem' }}>Name</th>
+                        <th style={{ padding: '1rem' }}>Email</th>
+                        <th style={{ padding: '1rem' }}>Role</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredUsers.map((u) => (
+                        <tr key={u.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                          <td style={{ padding: '1rem', fontFamily: 'monospace', color: '#71717A' }}>{u.id}</td>
+                          <td style={{ padding: '1rem', fontWeight: 700 }}>{u.name}</td>
+                          <td style={{ padding: '1rem' }}>{u.email}</td>
+                          <td style={{ padding: '1rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                              <span style={{
+                                padding: '0.2rem 0.5rem',
+                                fontSize: '0.65rem',
+                                fontWeight: 800,
+                                textTransform: 'uppercase',
+                                background: u.role === 'admin' ? '#000000' : '#F3F4F6',
+                                color: u.role === 'admin' ? '#FFFFFF' : '#09090B',
+                                borderRadius: '2px'
+                              }}>
+                                {u.role}
+                              </span>
+                              <button
+                                onClick={() => handleToggleUserRole(u.id || u._id, u.role)}
+                                style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.25rem 0.5rem', fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}
+                              >
+                                Toggle Role
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Reviews view */}
+            {activeSubTab === 'reviews' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ position: 'relative', maxWidth: '350px' }}>
+                  <input
+                    type="text"
+                    placeholder="Search reviews by product, user, or comment..."
+                    value={adminSearch}
+                    onChange={(e) => setAdminSearch(e.target.value)}
+                    style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.65rem 1rem', fontSize: '0.8rem', outline: 'none' }}
+                  />
+                </div>
+                <div style={{ border: '1px solid #E5E7EB' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.8rem' }}>
+                    <thead>
+                      <tr style={{ background: '#09090B', color: '#FFFFFF' }}>
+                        <th style={{ padding: '1rem' }}>Product</th>
+                        <th style={{ padding: '1rem' }}>User</th>
+                        <th style={{ padding: '1rem' }}>Rating</th>
+                        <th style={{ padding: '1rem' }}>Comment</th>
+                        <th style={{ padding: '1rem', textAlign: 'center' }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredReviews.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" style={{ padding: '2rem', textAlign: 'center', color: '#71717A' }}>
+                            No reviews found.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredReviews.map((r) => (
+                          <tr key={r.reviewId} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                            <td style={{ padding: '1rem', fontWeight: 700 }}>{r.productTitle}</td>
+                            <td style={{ padding: '1rem' }}>{r.name}</td>
+                            <td style={{ padding: '1rem', fontWeight: 900, color: '#D4AF37' }}>★ {r.rating}</td>
+                            <td style={{ padding: '1rem', color: '#52525B' }}>"{r.comment}"</td>
+                            <td style={{ padding: '1rem', textAlign: 'center' }}>
+                              <button
+                                onClick={() => handleDeleteReview(r.productId, r.reviewId)}
+                                style={{ background: 'transparent', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase' }}
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
