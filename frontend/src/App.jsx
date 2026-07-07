@@ -12,6 +12,9 @@ import SpinWheel from './components/SpinWheel.jsx';
 import MartAI from './components/MartAI.jsx';
 
 
+import ProtectedRoute from './components/ProtectedRoute.jsx';
+import AdminRoute from './components/AdminRoute.jsx';
+
 // Pages
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
@@ -54,12 +57,12 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
             <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
             <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
             <Route path="/wishlist" element={<PageTransition><Wishlist /></PageTransition>} />
-            <Route path="/checkout" element={<PageTransition><Checkout /></PageTransition>} />
-            <Route path="/order-success" element={<PageTransition><OrderSuccess /></PageTransition>} />
-            <Route path="/order-failed" element={<PageTransition><OrderFailed /></PageTransition>} />
-            <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
-            <Route path="/profile" element={<PageTransition><Dashboard /></PageTransition>} />
-            <Route path="/admin" element={<PageTransition><AdminDashboard /></PageTransition>} />
+            <Route path="/checkout" element={<PageTransition><ProtectedRoute><Checkout /></ProtectedRoute></PageTransition>} />
+            <Route path="/order-success" element={<PageTransition><ProtectedRoute><OrderSuccess /></ProtectedRoute></PageTransition>} />
+            <Route path="/order-failed" element={<PageTransition><ProtectedRoute><OrderFailed /></ProtectedRoute></PageTransition>} />
+            <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
+            <Route path="/profile" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
+            <Route path="/admin" element={<PageTransition><AdminRoute><AdminDashboard /></AdminRoute></PageTransition>} />
           </Routes>
         </AnimatePresence>
       </main>
