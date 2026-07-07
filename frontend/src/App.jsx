@@ -14,6 +14,9 @@ import MartAI from './components/MartAI.jsx';
 
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AdminRoute from './components/AdminRoute.jsx';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCartItems } from './store/slices/cartSlice.js';
+import api from './store/api.js';
 
 // Pages
 import Home from './pages/Home.jsx';
@@ -36,6 +39,18 @@ export const CompareContext = createContext();
 
 function AppContent({ compareList, removeFromCompare, clearCompare }) {
   const location = useLocation();
+  const dispatch = useDispatch();
+  const { userInfo } = useSelector((state) => state.auth);
+
+  useEffect(() => {
+    if (userInfo) {
+      api.get('/auth/cart')
+        .then(({ data }) => {
+          if (data) dispatch(setCartItems(data));
+        })
+        .catch((err) => console.error('Error fetching user cart:', err));
+    }
+  }, [userInfo, dispatch]);
 
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor:'#FFFFFF', color:'#09090B' }}>
