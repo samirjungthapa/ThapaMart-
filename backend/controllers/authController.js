@@ -170,3 +170,61 @@ export const updateUserRole = async (req, res) => {
 
   res.status(404).json({ message: 'User not found' });
 };
+
+// @desc    Get user cart
+// @route   GET /api/auth/cart
+// @access  Private
+export const getUserCart = async (req, res) => {
+  if (process.env.MONGODB_URI) {
+    try {
+      const user = await User.findById(req.user._id);
+      if (user) {
+        return res.json(user.cartItems || []);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // Fallback to JSON DB
+  const db = readDb();
+  const userId = req.user.id || req.user._id.toString();
+  const user = db.users.find(u => u.id === userId || (u._id && u._id.toString() === userId));
+  if (user) {
+    return res.json(user.cartItems || []);
+  }
+
+  res.status(404).json({ message: 'User not found' });
+};
+
+// @desc    Save/Sync user cart
+// @route   PUT /api/auth/cart
+// @access  Private
+export const saveUserCart = async (req, res) => {
+  const { cartItems } = req.body;
+
+  if (process.env.MONGODB_URI) {
+    try {
+      const user = await User.findById(req.user._id);
+      if (user) {
+        user.cartItems = cartItems;
+        await user.save();
+        return res.json({ message: 'Cart synced successfully', cartItems: user.cartItems });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // Fallback to JSON DB
+  const db = readDb();
+  const userId = req.user.id || req.user._id.toString();
+  const index = db.users.findIndex(u => u.id === userId || (u._id && u._id.toString() === userId));
+  if (index !== -1) {
+    db.users[index].cartItems = cartItems;
+    writeDb(db);
+    return res.json({ message: 'Cart synced successfully', cartItems: db.users[index].cartItems });
+  }
+
+  res.status(404).json({ message: 'User not found' });
+};

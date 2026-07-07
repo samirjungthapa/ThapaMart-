@@ -6,7 +6,18 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, default: 'customer' }, // 'customer' or 'admin'
-  avatar: { type: String, default: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80' }
+  avatar: { type: String, default: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80' },
+  cartItems: [
+    {
+      product: { type: String, required: true },
+      title: { type: String, required: true },
+      price: { type: Number, required: true },
+      image: { type: String },
+      quantity: { type: Number, required: true },
+      stock: { type: Number },
+      subscribed: { type: Boolean, default: false }
+    }
+  ]
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {
