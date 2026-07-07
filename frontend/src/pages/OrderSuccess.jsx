@@ -179,6 +179,13 @@ const OrderSuccess = () => {
   };
 
   const handlePrint = () => {
+    const finalOrderId = order?.id || order?._id || orderId;
+    const userName = order?.user?.name || 'Thapa Customer';
+    const subtotalVal = order?.products?.reduce((acc, p) => acc + (p.price || 0) * (p.quantity || 1), 0) || 0;
+    const shippingVal = subtotalVal > 15000 ? 0 : 150; // free above 15000 NPR
+    const taxVal = Math.round(subtotalVal * 0.13);
+    const totalVal = subtotalVal + shippingVal + taxVal;
+
     const printWindow = window.open("", "_blank");
     printWindow.document.write(`
       <html>

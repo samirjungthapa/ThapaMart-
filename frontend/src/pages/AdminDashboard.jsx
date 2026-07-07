@@ -427,27 +427,106 @@ const AdminDashboard = () => {
         </div>
 
         {/* Visual Charts & Stock Health Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
           {/* Category Distribution Chart */}
-          <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#71717A', letterSpacing: '0.05em' }}>
+          <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem', display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#71717A', letterSpacing: '0.05em', marginBottom: '1.5rem' }}>
               Product Category Distribution
             </span>
-            <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {Object.entries(categoryCounts).map(([cat, count]) => {
-                const percentage = productsCount > 0 ? (count / productsCount) * 100 : 0;
-                return (
-                  <div key={cat}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.25rem' }}>
-                      <span style={{ color: '#09090B' }}>{cat}</span>
-                      <span style={{ color: '#71717A' }}>{count} ({percentage.toFixed(0)}%)</span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexGrow: 1, gap: '1.5rem', flexWrap: 'wrap' }}>
+              {/* Donut Chart SVG */}
+              <svg width="140" height="140" viewBox="0 0 140 140">
+                <circle cx="70" cy="70" r="50" fill="transparent" stroke="#E5E7EB" strokeWidth="16" />
+                {Object.entries(categoryCounts).reduce((acc, [cat, count], idx, arr) => {
+                  const percentage = productsCount > 0 ? (count / productsCount) : 0;
+                  const strokeDasharray = `${percentage * 314} 314`;
+                  const strokeDashoffset = -acc.accumulatedPercentage * 314;
+                  const colors = ['#09090B', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+                  const color = colors[idx % colors.length];
+
+                  acc.elements.push(
+                    <circle
+                      key={cat}
+                      cx="70"
+                      cy="70"
+                      r="50"
+                      fill="transparent"
+                      stroke={color}
+                      strokeWidth="16"
+                      strokeDasharray={strokeDasharray}
+                      strokeDashoffset={strokeDashoffset}
+                      transform="rotate(-90 70 70)"
+                    />
+                  );
+                  acc.accumulatedPercentage += percentage;
+                  return acc;
+                }, { elements: [], accumulatedPercentage: 0 }).elements}
+                <circle cx="70" cy="70" r="35" fill="#F9FAFB" />
+              </svg>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', minWidth: '110px' }}>
+                {Object.entries(categoryCounts).map(([cat, count], idx) => {
+                  const percentage = productsCount > 0 ? (count / productsCount) * 100 : 0;
+                  const colors = ['#09090B', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+                  const color = colors[idx % colors.length];
+                  return (
+                    <div key={cat} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.7rem' }}>
+                      <span style={{ width: '8px', height: '8px', background: color, display: 'inline-block', borderRadius: '50%' }} />
+                      <span style={{ fontWeight: 700, color: '#09090B', textTransform: 'capitalize' }}>{cat} ({percentage.toFixed(0)}%)</span>
                     </div>
-                    <div style={{ width: '100%', height: '8px', background: '#E5E7EB', borderRadius: '4px', overflow: 'hidden' }}>
-                      <div style={{ width: `${percentage}%`, height: '100%', background: '#000000', borderRadius: '4px' }} />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Sales Revenue Trends Chart */}
+          <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem', display: 'flex', flexDirection: 'column' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase', color: '#71717A', letterSpacing: '0.05em', marginBottom: '1.5rem' }}>
+              Sales Revenue Trends (Recent)
+            </span>
+            <div style={{ position: 'relative', flexGrow: 1, display: 'flex', alignItems: 'flex-end', height: '140px' }}>
+              {/* SVG Area & Sparkline for recent order sales */}
+              <svg width="100%" height="120" style={{ overflow: 'visible' }}>
+                <defs>
+                  <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#09090B" stopOpacity="0.2"/>
+                    <stop offset="100%" stopColor="#09090B" stopOpacity="0.0"/>
+                  </linearGradient>
+                </defs>
+                {/* Horizontal Grid lines */}
+                <line x1="0" y1="0" x2="100%" y2="0" stroke="#E5E7EB" strokeDasharray="3 3" />
+                <line x1="0" y1="40" x2="100%" y2="40" stroke="#E5E7EB" strokeDasharray="3 3" />
+                <line x1="0" y1="80" x2="100%" y2="80" stroke="#E5E7EB" strokeDasharray="3 3" />
+                <line x1="0" y1="120" x2="100%" y2="120" stroke="#E5E7EB" />
+
+                {/* Draw line path */}
+                {orders.length > 1 ? (() => {
+                  const maxVal = Math.max(...orders.map(o => o.totalPrice), 100);
+                  const points = orders.map((o, idx) => {
+                    const x = (idx / (orders.length - 1)) * 260; // scale to fit
+                    const y = 120 - (o.totalPrice / maxVal) * 100;
+                    return { x, y };
+                  });
+                  const pathD = `M ${points.map(p => `${p.x},${p.y}`).join(' L ')}`;
+                  const areaD = `${pathD} L ${points[points.length-1].x},120 L ${points[0].x},120 Z`;
+                  return (
+                    <>
+                      <path d={areaD} fill="url(#salesGrad)" />
+                      <path d={pathD} fill="transparent" stroke="#09090B" strokeWidth="2" />
+                      {points.map((p, idx) => (
+                        <circle key={idx} cx={p.x} cy={p.y} r="4" fill="#09090B" stroke="#FFFFFF" strokeWidth="1" />
+                      ))}
+                    </>
+                  );
+                })() : (
+                  <text x="50%" y="50%" dominantBaseline="middle" textAnchor="middle" fill="#71717A" fontSize="0.75rem">Awaiting orders data...</text>
+                )}
+              </svg>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.65rem', color: '#71717A', marginTop: '0.5rem', fontWeight: 800 }}>
+              <span>START PERIOD</span>
+              <span>LATEST</span>
             </div>
           </div>
 
