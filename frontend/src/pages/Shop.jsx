@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { SlidersHorizontal, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { SlidersHorizontal, Search, ChevronLeft, ChevronRight, LayoutGrid, List } from 'lucide-react';
 import api from '../store/api.js';
 import ProductCard from '../components/ProductCard.jsx';
 
@@ -51,6 +51,7 @@ const Shop = () => {
   const [pages, setPages] = useState(1);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [layoutMode, setLayoutMode] = useState('grid');
 
   useEffect(() => {
     setKeyword(queryParams.get('search') || '');
@@ -208,6 +209,39 @@ const Shop = () => {
 
           {/* Catalog */}
           <div className="lg:col-span-3">
+            {/* Results Toolbar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid #E5E7EB', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', color: '#565959' }}>
+                {products.length > 0 ? `1-${products.length} of over ${products.length * pages} results` : '0 results'}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '0.75rem', color: '#565959' }}>Sort by:</span>
+                <select value={sort} onChange={e=>setSort(e.target.value)}
+                  style={{ background:'#FFFFFF', border:'1px solid #D5D9D9', borderRadius: '4px', padding:'0.25rem 0.5rem', color:'#0F1111', fontSize:'0.75rem', outline:'none', cursor:'pointer', boxShadow: '0 2px 5px rgba(213,217,217,.5)' }}>
+                  <option value="newest">Newest Arrival</option>
+                  <option value="priceAsc">Price: Low to High</option>
+                  <option value="priceDesc">Price: High to Low</option>
+                  <option value="rating">Top Rated</option>
+                </select>
+                <div style={{ display: 'flex', border: '1px solid #D5D9D9', borderRadius: '4px', overflow: 'hidden', marginLeft: '0.5rem', boxShadow: '0 2px 5px rgba(213,217,217,.5)' }}>
+                  <button 
+                    onClick={() => setLayoutMode('grid')}
+                    style={{ background: layoutMode === 'grid' ? '#F0F2F2' : '#FFFFFF', border: 'none', borderRight: '1px solid #D5D9D9', padding: '0.35rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    title="Grid view"
+                  >
+                    <LayoutGrid size={14} style={{ color: layoutMode === 'grid' ? '#0F1111' : '#565959' }} />
+                  </button>
+                  <button 
+                    onClick={() => setLayoutMode('list')}
+                    style={{ background: layoutMode === 'list' ? '#F0F2F2' : '#FFFFFF', border: 'none', padding: '0.35rem', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                    title="List view"
+                  >
+                    <List size={14} style={{ color: layoutMode === 'list' ? '#0F1111' : '#565959' }} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
             {loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[...Array(6)].map((_, i) => (
@@ -225,8 +259,15 @@ const Shop = () => {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {products.map((product, i) => <ProductCard key={product.id || product._id} product={product} index={i} />)}
+                <div className={layoutMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "grid grid-cols-1 gap-4"}>
+                  {products.map((product, i) => (
+                    <ProductCard 
+                      key={product.id || product._id} 
+                      product={product} 
+                      index={i} 
+                      layoutMode={layoutMode} 
+                    />
+                  ))}
                 </div>
 
                 {/* Pagination */}
