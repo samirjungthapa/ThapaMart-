@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Heart, Star, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
-import { addToCart } from '../store/slices/cartSlice.js';
+import { addToCart, removeFromCart } from '../store/slices/cartSlice.js';
 import { addToWishlist, removeFromWishlist } from '../store/slices/wishlistSlice.js';
 import QuickViewModal from './QuickViewModal.jsx';
 import { playClick, playSuccess } from '../utils/audio.js';
@@ -14,7 +14,11 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
   const location = useLocation();
   const { wishlistItems } = useSelector((state) => state.wishlist);
   const { userInfo } = useSelector((state) => state.auth);
+  const { cartItems } = useSelector((state) => state.cart);
+
   const isWishlisted = wishlistItems.find((i) => (i.id || i._id) === (product.id || product._id));
+  const cartItem = cartItems.find((i) => i.product === (product.id || product._id));
+  const qtyInCart = cartItem ? cartItem.quantity : 0;
 
   const [isHovered, setIsHovered] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
@@ -38,17 +42,28 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
     }));
   };
 
-  const toggleWishlist = (e) => {
+  const handleIncrement = (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    playSuccess();
+    if (qtyInCart >= product.stock) return;
+    dispatch(addToCart({
+      ...cartItem,
+      quantity: qtyInCart + 1
+    }));
+  };
+
+  const handleDecrement = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     playClick();
-    if (!userInfo) {
-      navigate(`/login?redirect=${location.pathname}`);
-      return;
-    }
-    if (isWishlisted) {
-      dispatch(removeFromWishlist(product.id || product._id));
+    if (qtyInCart === 1) {
+      dispatch(removeFromCart(product.id || product._id));
     } else {
-      dispatch(addToWishlist(product));
+      dispatch(addToCart({
+        ...cartItem,
+        quantity: qtyInCart - 1
+      }));
     }
   };
 
@@ -62,6 +77,20 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
     e.preventDefault();
     e.stopPropagation();
     setActiveImgIdx(prev => (prev === product.images.length - 1 ? 0 : prev + 1));
+  };
+
+  const toggleWishlist = (e) => {
+    e.preventDefault();
+    playClick();
+    if (!userInfo) {
+      navigate(`/login?redirect=${location.pathname}`);
+      return;
+    }
+    if (isWishlisted) {
+      dispatch(removeFromWishlist(product.id || product._id));
+    } else {
+      dispatch(addToWishlist(product));
+    }
   };
 
   const renderStars = (rating = 4.5) => {
@@ -268,28 +297,36 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
             </div>
 
             {/* Action buttons */}
-            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', minWidth: '220px' }}>
-              <button 
-                onClick={handleAddToCart} 
-                disabled={product.stock === 0}
-                style={{ 
-                  flexGrow: 1,
-                  padding: '0.5rem 1rem', 
-                  background: product.stock === 0 ? '#F0F2F2' : '#FFD814', 
-                  color: '#0F1111', 
-                  fontSize: '0.75rem', 
-                  fontWeight: 500, 
-                  borderRadius: '100px',
-                  border: product.stock === 0 ? '1px solid #E0E2E2' : '1px solid #FCD200', 
-                  cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 2px 5px 0 rgba(213,217,217,.5)',
-                  transition: 'background 0.15s ease'
-                }}
-                onMouseEnter={e => { if (product.stock > 0) e.currentTarget.style.background = '#F7CA00'; }}
-                onMouseLeave={e => { if (product.stock > 0) e.currentTarget.style.background = '#FFD814'; }}
-              >
-                {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-              </button>
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', minWidth: '240px' }}>
+              {qtyInCart > 0 ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #D5D9D9', borderRadius: '100px', background: '#F0F2F2', padding: '0.2rem', flexGrow: 1, boxShadow: '0 2px 5px 0 rgba(213,217,217,.3)' }}>
+                  <button onClick={handleDecrement} style={{ border: 'none', background: 'transparent', width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: 'bold', color: '#0F1111', cursor: 'pointer' }}>-</button>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0F1111' }}>{qtyInCart} in Cart</span>
+                  <button onClick={handleIncrement} disabled={qtyInCart >= product.stock} style={{ border: 'none', background: 'transparent', width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', fontWeight: 'bold', color: qtyInCart >= product.stock ? '#D5D9D9' : '#0F1111', cursor: qtyInCart >= product.stock ? 'not-allowed' : 'pointer' }}>+</button>
+                </div>
+              ) : (
+                <button 
+                  onClick={handleAddToCart} 
+                  disabled={product.stock === 0}
+                  style={{ 
+                    flexGrow: 1,
+                    padding: '0.5rem 1rem', 
+                    background: product.stock === 0 ? '#F0F2F2' : '#FFD814', 
+                    color: '#0F1111', 
+                    fontSize: '0.75rem', 
+                    fontWeight: 500, 
+                    borderRadius: '100px',
+                    border: product.stock === 0 ? '1px solid #E0E2E2' : '1px solid #FCD200', 
+                    cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 5px 0 rgba(213,217,217,.5)',
+                    transition: 'background 0.15s ease'
+                  }}
+                  onMouseEnter={e => { if (product.stock > 0) e.currentTarget.style.background = '#F7CA00'; }}
+                  onMouseLeave={e => { if (product.stock > 0) e.currentTarget.style.background = '#FFD814'; }}
+                >
+                  {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+                </button>
+              )}
               
               <button onClick={toggleWishlist} style={{ background: '#FFFFFF', border: '1px solid #D5D9D9', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
                 <Heart size={13} style={{ fill: isWishlisted ? '#CC0C39' : 'transparent', color: isWishlisted ? '#CC0C39' : '#0F1111' }} />
@@ -433,32 +470,40 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
           <span>Save 10% with Subscribe & Save</span>
         </div>
 
-        {/* Add to Cart Yellow Button */}
-        <button 
-          onClick={handleAddToCart} 
-          disabled={product.stock === 0}
-          style={{ 
-            width: '100%', 
-            padding: '0.5rem', 
-            background: product.stock === 0 ? '#F0F2F2' : '#FFD814', 
-            color: '#0F1111', 
-            fontSize: '0.75rem', 
-            fontWeight: 500, 
-            borderRadius: '100px',
-            border: product.stock === 0 ? '1px solid #E0E2E2' : '1px solid #FCD200', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
-            boxShadow: '0 2px 5px 0 rgba(213,217,217,.5)',
-            marginTop: '0.5rem',
-            transition: 'background 0.15s ease'
-          }}
-          onMouseEnter={e => { if (product.stock > 0) e.currentTarget.style.background = '#F7CA00'; }}
-          onMouseLeave={e => { if (product.stock > 0) e.currentTarget.style.background = '#FFD814'; }}
-        >
-          {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-        </button>
+        {/* Add to Cart / Qty Manager Button */}
+        {qtyInCart > 0 ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #D5D9D9', borderRadius: '100px', background: '#F0F2F2', padding: '0.2rem', marginTop: '0.5rem', width: '100%', boxShadow: '0 2px 5px 0 rgba(213,217,217,.3)' }}>
+            <button onClick={handleDecrement} style={{ border: 'none', background: 'transparent', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 'bold', color: '#0F1111', cursor: 'pointer' }}>-</button>
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#0F1111' }}>{qtyInCart} in Cart</span>
+            <button onClick={handleIncrement} disabled={qtyInCart >= product.stock} style={{ border: 'none', background: 'transparent', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', fontWeight: 'bold', color: qtyInCart >= product.stock ? '#D5D9D9' : '#0F1111', cursor: qtyInCart >= product.stock ? 'not-allowed' : 'pointer' }}>+</button>
+          </div>
+        ) : (
+          <button 
+            onClick={handleAddToCart} 
+            disabled={product.stock === 0}
+            style={{ 
+              width: '100%', 
+              padding: '0.5rem', 
+              background: product.stock === 0 ? '#F0F2F2' : '#FFD814', 
+              color: '#0F1111', 
+              fontSize: '0.75rem', 
+              fontWeight: 500, 
+              borderRadius: '100px',
+              border: product.stock === 0 ? '1px solid #E0E2E2' : '1px solid #FCD200', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              cursor: product.stock === 0 ? 'not-allowed' : 'pointer',
+              boxShadow: '0 2px 5px 0 rgba(213,217,217,.5)',
+              marginTop: '0.5rem',
+              transition: 'background 0.15s ease'
+            }}
+            onMouseEnter={e => { if (product.stock > 0) e.currentTarget.style.background = '#F7CA00'; }}
+            onMouseLeave={e => { if (product.stock > 0) e.currentTarget.style.background = '#FFD814'; }}
+          >
+            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
+          </button>
+        )}
 
       </div>
 
