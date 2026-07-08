@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -7,6 +7,7 @@ import { addToCart, removeFromCart } from '../store/slices/cartSlice.js';
 import { addToWishlist, removeFromWishlist } from '../store/slices/wishlistSlice.js';
 import QuickViewModal from './QuickViewModal.jsx';
 import { playClick, playSuccess } from '../utils/audio.js';
+import { CompareContext } from '../App.jsx';
 
 const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
   const dispatch = useDispatch();
@@ -20,10 +21,17 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
   const cartItem = cartItems.find((i) => i.product === (product.id || product._id));
   const qtyInCart = cartItem ? cartItem.quantity : 0;
 
+  // Comparison context
+  const compareContext = useContext(CompareContext);
+  const compareList = compareContext ? compareContext.compareList : [];
+  const addToCompare = compareContext ? compareContext.addToCompare : () => {};
+  const removeFromCompare = compareContext ? compareContext.removeFromCompare : () => {};
+  const isCompared = compareList.some((item) => (item.id || item._id) === (product.id || product._id));
+
   const [isHovered, setIsHovered] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
   const [activeImgIdx, setActiveImgIdx] = useState(0);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -67,16 +75,12 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
     }
   };
 
-  const handlePrevImage = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setActiveImgIdx(prev => (prev === 0 ? product.images.length - 1 : prev - 1));
-  };
-
-  const handleNextImage = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setActiveImgIdx(prev => (prev === product.images.length - 1 ? 0 : prev + 1));
+  const handleCompareChange = (e) => {
+    if (e.target.checked) {
+      addToCompare(product);
+    } else {
+      removeFromCompare(product.id || product._id);
+    }
   };
 
   const toggleWishlist = (e) => {
@@ -91,6 +95,18 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
     } else {
       dispatch(addToWishlist(product));
     }
+  };
+
+  const handlePrevImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImgIdx(prev => (prev === 0 ? product.images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImgIdx(prev => (prev === product.images.length - 1 ? 0 : prev + 1));
   };
 
   const renderStars = (rating = 4.5) => {
@@ -290,9 +306,18 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
               <div style={{ fontSize: '0.7rem', color: '#565959', marginTop: '0.1rem' }}>
                 Typical: <span style={{ textDecoration: 'line-through' }}>Rs. {Math.round(listPrice).toLocaleString('en-NP')}</span>
               </div>
-              {/* Subscribe & Save Offer */}
-              <div style={{ fontSize: '0.7rem', color: '#007185', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.1rem' }}>
-                <span>Save 10% with Subscribe & Save</span>
+              
+              {/* Compare Toggle */}
+              <div style={{ marginTop: '0.25rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontSize: '0.75rem', color: '#565959' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={isCompared} 
+                    onChange={handleCompareChange} 
+                    style={{ accentColor: '#E47911', width: '0.9rem', height: '0.9rem' }} 
+                  />
+                  <span>Compare</span>
+                </label>
               </div>
             </div>
 
@@ -383,10 +408,10 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
 
       {/* Floating Action Buttons */}
       <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', zIndex: 10, opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s ease' }}>
-        <button onClick={toggleWishlist} style={{ background: '#FFFFFF', border: '1px solid #D5D9D9', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', transition: 'transform 0.1s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
+        <button onClick={toggleWishlist} style={{ background: '#FFFFFF', border: '1px solid #D5D9D9', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', transition: 'transform 0.1s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
           <Heart size={13} style={{ fill: isWishlisted ? '#CC0C39' : 'transparent', color: isWishlisted ? '#CC0C39' : '#0F1111' }} />
         </button>
-        <button onClick={(e) => { e.preventDefault(); playClick(); setQuickViewOpen(true); }} style={{ background: '#FFFFFF', border: '1px solid #D5D9D9', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', transition: 'transform 0.1s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'} title="Quick View">
+        <button onClick={(e) => { e.preventDefault(); playClick(); setQuickViewOpen(true); }} style={{ background: '#FFFFFF', border: '1px solid #D5D9D9', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', transition: 'transform 0.1s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'} title="Quick View">
           <Eye size={13} style={{ color: '#0F1111' }} />
         </button>
       </div>
@@ -465,9 +490,18 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
           </div>
         </div>
 
-        {/* Subscribe & Save Offer */}
-        <div style={{ fontSize: '0.7rem', color: '#007185', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.1rem' }}>
-          <span>Save 10% with Subscribe & Save</span>
+        {/* Compare & Subscribe block */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', fontSize: '0.7rem', color: '#565959' }}>
+            <input 
+              type="checkbox" 
+              checked={isCompared} 
+              onChange={handleCompareChange} 
+              style={{ accentColor: '#E47911', width: '0.8rem', height: '0.8rem' }} 
+            />
+            <span>Compare</span>
+          </label>
+          <span style={{ fontSize: '0.7rem', color: '#007185' }}>Save 10% with Subscribe</span>
         </div>
 
         {/* Add to Cart / Qty Manager Button */}
