@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { Heart, Star, Eye } from 'lucide-react';
+import { Heart, Star, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { addToCart } from '../store/slices/cartSlice.js';
 import { addToWishlist, removeFromWishlist } from '../store/slices/wishlistSlice.js';
 import QuickViewModal from './QuickViewModal.jsx';
@@ -19,6 +19,7 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -49,6 +50,18 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
     } else {
       dispatch(addToWishlist(product));
     }
+  };
+
+  const handlePrevImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImgIdx(prev => (prev === 0 ? product.images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveImgIdx(prev => (prev === product.images.length - 1 ? 0 : prev + 1));
   };
 
   const renderStars = (rating = 4.5) => {
@@ -163,10 +176,34 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
           width: '100%'
         }}
       >
-        {/* Left: Product Image */}
-        <Link to={`/products/${product.id || product._id}`} onClick={playClick} style={{ display: 'block', position: 'relative', width: '220px', minWidth: '150px', aspectRatio: '1/1', overflow: 'hidden', background: '#F7F7F7', padding: '1rem', flexShrink: 0 }}>
-          <img src={product.images[0]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }} />
-        </Link>
+        {/* Left: Product Image Slider */}
+        <div style={{ position: 'relative', width: '220px', minWidth: '150px', aspectRatio: '1/1', overflow: 'hidden', background: '#F7F7F7', flexShrink: 0, borderRadius: '8px 0 0 8px' }}>
+          <Link to={`/products/${product.id || product._id}`} onClick={playClick} style={{ display: 'block', width: '100%', height: '100%', padding: '1rem' }}>
+            <img src={product.images[activeImgIdx] || product.images[0]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }} />
+          </Link>
+          
+          {product.images && product.images.length > 1 && isHovered && (
+            <>
+              <button 
+                onClick={handlePrevImage} 
+                style={{ position: 'absolute', top: '50%', left: '0.5rem', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: '1px solid #D5D9D9', borderRadius: '50%', width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 11, boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+              >
+                <ChevronLeft size={14} style={{ color: '#0F1111' }} />
+              </button>
+              <button 
+                onClick={handleNextImage} 
+                style={{ position: 'absolute', top: '50%', right: '0.5rem', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: '1px solid #D5D9D9', borderRadius: '50%', width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 11, boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+              >
+                <ChevronRight size={14} style={{ color: '#0F1111' }} />
+              </button>
+              <div style={{ position: 'absolute', bottom: '0.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '0.25rem', zIndex: 11 }}>
+                {product.images.map((_, idx) => (
+                  <div key={idx} style={{ width: '5px', height: '5px', borderRadius: '50%', background: idx === activeImgIdx ? '#E47911' : 'rgba(0,0,0,0.3)' }} />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
 
         {/* Right: Product Details */}
         <div style={{ padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', flexGrow: 1, gap: '0.35rem', justifyContent: 'space-between' }}>
@@ -317,10 +354,34 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
         </button>
       </div>
 
-      {/* Product Image */}
-      <Link to={`/products/${product.id || product._id}`} onClick={playClick} style={{ display: 'block', position: 'relative', aspectRatio: '1/1', overflow: 'hidden', background: '#F7F7F7', padding: '1rem' }}>
-        <img src={product.images[0]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }} />
-      </Link>
+      {/* Product Image Slider */}
+      <div style={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', background: '#F7F7F7', borderRadius: '8px 8px 0 0' }}>
+        <Link to={`/products/${product.id || product._id}`} onClick={playClick} style={{ display: 'block', width: '100%', height: '100%', padding: '1rem' }}>
+          <img src={product.images[activeImgIdx] || product.images[0]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }} />
+        </Link>
+        
+        {product.images && product.images.length > 1 && isHovered && (
+          <>
+            <button 
+              onClick={handlePrevImage} 
+              style={{ position: 'absolute', top: '50%', left: '0.5rem', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: '1px solid #D5D9D9', borderRadius: '50%', width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 11, boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+            >
+              <ChevronLeft size={14} style={{ color: '#0F1111' }} />
+            </button>
+            <button 
+              onClick={handleNextImage} 
+              style={{ position: 'absolute', top: '50%', right: '0.5rem', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.8)', border: '1px solid #D5D9D9', borderRadius: '50%', width: '1.75rem', height: '1.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 11, boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}
+            >
+              <ChevronRight size={14} style={{ color: '#0F1111' }} />
+            </button>
+            <div style={{ position: 'absolute', bottom: '0.5rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '0.25rem', zIndex: 11 }}>
+              {product.images.map((_, idx) => (
+                <div key={idx} style={{ width: '5px', height: '5px', borderRadius: '50%', background: idx === activeImgIdx ? '#E47911' : 'rgba(0,0,0,0.3)' }} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Product Content (Amazon Listing Aesthetic) */}
       <div style={{ padding: '0.75rem 1rem 1rem 1rem', display: 'flex', flexDirection: 'column', flexGrow: 1, gap: '0.4rem' }}>
