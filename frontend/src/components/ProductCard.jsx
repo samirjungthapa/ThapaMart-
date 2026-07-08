@@ -18,6 +18,7 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
 
   const [isHovered, setIsHovered] = useState(false);
   const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -72,6 +73,76 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
   // Mock sales volume for Amazon context
   const mockSalesCount = (index * 100 + 50) % 800 + 100;
 
+  const renderRatingsBlock = () => {
+    return (
+      <div 
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap', cursor: 'pointer', zIndex: 30 }}
+      >
+        <div style={{ display: 'flex', gap: '0.05rem' }}>{renderStars(product.ratings)}</div>
+        <span style={{ fontSize: '0.75rem', color: '#007185' }} className="hover:underline">
+          {mockSalesCount}
+        </span>
+        <span style={{ fontSize: '0.7rem', color: '#565959', marginLeft: '0.25rem' }}>
+          {mockSalesCount}+ bought in past month
+        </span>
+
+        {/* Ratings Popover Tooltip */}
+        {showTooltip && (
+          <div style={{
+            position: 'absolute',
+            top: '1.25rem',
+            left: '0',
+            width: '240px',
+            background: '#FFFFFF',
+            border: '1px solid #D5D9D9',
+            borderRadius: '8px',
+            padding: '1rem',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            zIndex: 90,
+            cursor: 'default'
+          }}
+          onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.05rem' }}>{renderStars(product.ratings)}</div>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F1111' }}>{product.ratings || 4.5} out of 5</span>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#565959', marginBottom: '0.75rem' }}>
+              {mockSalesCount} global ratings
+            </div>
+            
+            {/* Histogram Bars */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {[
+                { stars: 5, pct: 70 },
+                { stars: 4, pct: 18 },
+                { stars: 3, pct: 7 },
+                { stars: 2, pct: 3 },
+                { stars: 1, pct: 2 }
+              ].map(item => (
+                <div key={item.stars} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
+                  <span style={{ width: '35px', color: '#007185', whiteSpace: 'nowrap' }} className="hover:underline">{item.stars} star</span>
+                  <div style={{ flexGrow: 1, height: '16px', background: '#F0F2F2', borderRadius: '4px', overflow: 'hidden', border: '1px solid #D5D9D9' }}>
+                    <div style={{ width: `${item.pct}%`, height: '100%', background: '#DE7921' }} />
+                  </div>
+                  <span style={{ width: '25px', textAlign: 'right', color: '#007185' }} className="hover:underline">{item.pct}%</span>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ borderTop: '1px solid #E5E7EB', marginTop: '0.75rem', paddingTop: '0.75rem', textAlign: 'center' }}>
+              <span style={{ fontSize: '0.75rem', color: '#007185', fontWeight: 500 }} className="hover:underline">
+                See all customer reviews
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (layoutMode === 'list') {
     return (
       <motion.div 
@@ -86,7 +157,7 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
           background: '#FFFFFF', 
           border: '1px solid #E5E7EB', 
           borderRadius: '8px',
-          overflow: 'hidden',
+          overflow: 'visible',
           boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.08)' : 'none',
           transition: 'all 0.25s ease',
           width: '100%'
@@ -130,15 +201,7 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
             </Link>
 
             {/* Ratings block */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-              <div style={{ display: 'flex', gap: '0.05rem' }}>{renderStars(product.ratings)}</div>
-              <span style={{ fontSize: '0.75rem', color: '#007185', cursor: 'pointer' }} className="hover:underline">
-                {mockSalesCount}
-              </span>
-              <span style={{ fontSize: '0.7rem', color: '#565959', marginLeft: '0.25rem' }}>
-                {mockSalesCount}+ bought in past month
-              </span>
-            </div>
+            <div style={{ marginTop: '0.25rem' }}>{renderRatingsBlock()}</div>
 
             {/* Prime Badge & Shipping Details */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.25rem' }}>
@@ -222,7 +285,7 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
         background: '#FFFFFF', 
         border: '1px solid #E5E7EB', 
         borderRadius: '8px',
-        overflow: 'hidden',
+        overflow: 'visible',
         boxShadow: isHovered ? '0 4px 12px rgba(0,0,0,0.08)' : 'none',
         transition: 'all 0.25s ease' 
       }}
@@ -246,10 +309,10 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
 
       {/* Floating Action Buttons */}
       <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', zIndex: 10, opacity: isHovered ? 1 : 0, transition: 'opacity 0.2s ease' }}>
-        <button onClick={toggleWishlist} style={{ background: '#FFFFFF', border: '1px solid #D5D9D9', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', transition: 'transform 0.1s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
+        <button onClick={toggleWishlist} style={{ background: '#FFFFFF', border: '1px solid #D5D9D9', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', transition: 'transform 0.1s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'}>
           <Heart size={13} style={{ fill: isWishlisted ? '#CC0C39' : 'transparent', color: isWishlisted ? '#CC0C39' : '#0F1111' }} />
         </button>
-        <button onClick={(e) => { e.preventDefault(); playClick(); setQuickViewOpen(true); }} style={{ background: '#FFFFFF', border: '1px solid #D5D9D9', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', transition: 'transform 0.1s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'} title="Quick View">
+        <button onClick={(e) => { e.preventDefault(); playClick(); setQuickViewOpen(true); }} style={{ background: '#FFFFFF', border: '1px solid #D5D9D9', borderRadius: '50%', width: '2rem', height: '2rem', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', transition: 'transform 0.1s' }} onMouseEnter={e=>e.currentTarget.style.transform='scale(1.05)'} onMouseLeave={e=>e.currentTarget.style.transform='scale(1)'} title="Quick View">
           <Eye size={13} style={{ color: '#0F1111' }} />
         </button>
       </div>
@@ -281,15 +344,7 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
         </Link>
 
         {/* Ratings block */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', gap: '0.05rem' }}>{renderStars(product.ratings)}</div>
-          <span style={{ fontSize: '0.75rem', color: '#007185', cursor: 'pointer' }} className="hover:underline">
-            {mockSalesCount}
-          </span>
-          <span style={{ fontSize: '0.7rem', color: '#565959', marginLeft: '0.25rem' }}>
-            {mockSalesCount}+ bought in past month
-          </span>
-        </div>
+        <div>{renderRatingsBlock()}</div>
 
         {/* Prime Badge & Shipping Details */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
