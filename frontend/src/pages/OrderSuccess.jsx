@@ -136,33 +136,46 @@ const OrderSuccess = () => {
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
 
   useEffect(() => {
-    const fetchOrderAndRecs = async () => {
+    let intervalId;
+
+    const fetchOrderAndRecs = async (isInitial = true) => {
       if (orderId === 'unknown') {
-        setLoading(false);
+        if (isInitial) setLoading(false);
         return;
       }
       try {
-        // Fetch order details
         const { data } = await api.get(`/orders/${orderId}`);
         setOrder(data);
 
-        // Fetch recommended products
-        const recsRes = await api.get('/products', { params: { limit: 3 } });
-        setRecommendedProducts(recsRes.data?.products || []);
-      } catch (err) {
-        console.error('Failed to fetch details:', err);
-        setError(err.response?.data?.message || 'Could not fetch order details');
-        
-        // Fallback fetch recommendations anyway
-        try {
+        if (isInitial) {
+          // Fetch recommended products only on initial load
           const recsRes = await api.get('/products', { params: { limit: 3 } });
           setRecommendedProducts(recsRes.data?.products || []);
-        } catch (_) {}
+        }
+      } catch (err) {
+        console.error('Failed to fetch details:', err);
+        if (isInitial) {
+          setError(err.response?.data?.message || 'Could not fetch order details');
+          try {
+            const recsRes = await api.get('/products', { params: { limit: 3 } });
+            setRecommendedProducts(recsRes.data?.products || []);
+          } catch (_) {}
+        }
       } finally {
-        setLoading(false);
+        if (isInitial) setLoading(false);
       }
     };
-    fetchOrderAndRecs();
+
+    fetchOrderAndRecs(true);
+
+    // Set up polling interval to get order updates every 5 seconds
+    intervalId = setInterval(() => {
+      fetchOrderAndRecs(false);
+    }, 5000);
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [orderId]);
 
   const handleCopyCode = () => {

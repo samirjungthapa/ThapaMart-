@@ -38,7 +38,8 @@
       "email": "admin@thapamart.com",
       "password": "$2a$10$SJ/udgT5ulWcxCOnvxrQD.y9o9jvCKsE3pecr.6Hxn4AVbxQkG9tq",
       "role": "admin",
-      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
+      "cartItems": []
     }
   ],
   "products": [
@@ -1517,6 +1518,34 @@
       "orderStatus": "Processing",
       "createdAt": "2026-07-05T15:06:32.221Z",
       "stripePaymentIntentId": "manual_override"
+    },
+    {
+      "id": "ord-1783607920986",
+      "user": "user-1783178316887",
+      "products": [
+        {
+          "product": "prod-amazon-20",
+          "title": "Yeti Rambler 30 oz Insulated Tumbler",
+          "price": 9500,
+          "quantity": 1,
+          "image": "https://images.unsplash.com/photo-1577937927133-66ef06acdf18?w=600&auto=format&fit=crop&q=80"
+        }
+      ],
+      "shippingAddress": {
+        "address": "asdfghjk",
+        "city": "sdfghm",
+        "postalCode": "456",
+        "country": "Nepal",
+        "fullName": "Admin"
+      },
+      "paymentMethod": "eSewa",
+      "taxPrice": 1235,
+      "shippingPrice": 0,
+      "totalPrice": 10735,
+      "paymentStatus": "Paid",
+      "orderStatus": "Processing",
+      "createdAt": "2026-07-09T14:38:40.986Z",
+      "stripePaymentIntentId": "ESEWA-926645"
     }
   ],
   "carts": {},
