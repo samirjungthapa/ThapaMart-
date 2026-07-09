@@ -27,6 +27,7 @@ const ProductDetails = () => {
 
   
   const [rating, setRating] = useState(5);
+  const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
   const [reviewSuccess, setReviewSuccess] = useState(false);
   const [reviewError, setReviewError] = useState('');
@@ -636,51 +637,131 @@ const ProductDetails = () => {
           <h2 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'2.5rem', fontWeight:900, color:'#09090B', marginBottom:'3rem', textAlign:'center' }}>Customer Reviews</h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2 space-y-6">
+            
+            {/* Reviews Summary Stats */}
+            <div className="lg:col-span-1">
+              <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem', borderRadius: '0.75rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#09090B', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rating Overview</h3>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '3rem', fontWeight: 900, color: '#09090B' }}>{product.ratings || 0}</span>
+                  <span style={{ fontSize: '1rem', color: '#71717A' }}>/ 5</span>
+                </div>
+                <div style={{ display: 'flex', color: '#D4AF37', gap: '0.125rem', marginBottom: '0.5rem' }}>
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      size={18} 
+                      style={{ 
+                        fill: i < Math.round(product.ratings || 0) ? '#D4AF37' : 'none', 
+                        stroke: '#D4AF37' 
+                      }} 
+                    />
+                  ))}
+                </div>
+                <p style={{ fontSize: '0.8rem', color: '#71717A', marginBottom: '2rem' }}>
+                  Based on {(product.reviews || []).length} customer reviews
+                </p>
+
+                {/* Star Progress Bars */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {[5, 4, 3, 2, 1].map(stars => {
+                    const reviews = product.reviews || [];
+                    const count = reviews.filter(r => Math.round(r.rating) === stars).length;
+                    const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                    return (
+                      <div key={stars} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.75rem' }}>
+                        <span style={{ width: '2.5rem', color: '#09090B', fontWeight: 700 }}>{stars} Star</span>
+                        <div style={{ flexGrow: 1, height: '6px', background: '#E5E7EB', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ width: `${percentage}%`, height: '100%', background: '#000000', borderRadius: '3px' }} />
+                        </div>
+                        <span style={{ width: '1.5rem', textAlign: 'right', color: '#71717A' }}>{count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Reviews List */}
+            <div className="lg:col-span-1 space-y-6">
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#09090B', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reviews List</h3>
               {!product.reviews || product.reviews.length === 0 ? (
-                <div style={{ padding:'3rem', textAlign:'center', color:'#71717A', border:'1px solid #E5E7EB', background:'#F9FAFB' }}>
+                <div style={{ padding:'3rem', textAlign:'center', color:'#71717A', border:'1px solid #E5E7EB', borderRadius: '0.75rem', background:'#F9FAFB' }}>
                   No reviews yet. Share your experience.
                 </div>
               ) : (
                 product.reviews.map((rev, idx) => (
-                  <div key={idx} style={{ borderBottom:'1px solid #E5E7EB', paddingBottom:'1.5rem' }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'0.5rem' }}>
+                  <div key={idx} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.25rem', borderRadius: '0.75rem', marginBottom: '1rem' }}>
+                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'0.5rem', alignItems: 'center' }}>
                       <h4 style={{ fontSize:'0.875rem', fontWeight:700, color:'#09090B' }}>{rev.name}</h4>
-                      <div style={{ display:'flex', color:'#D4AF37' }}>
-                        {[...Array(Math.floor(rev.rating))].map((_, i) => <Star key={i} size={12} style={{ fill:'#D4AF37' }} />)}
+                      <div style={{ display:'flex', color:'#D4AF37', gap: '1px' }}>
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            size={12} 
+                            style={{ 
+                              fill: i < Math.floor(rev.rating) ? '#D4AF37' : 'none', 
+                              stroke: '#D4AF37' 
+                            }} 
+                          />
+                        ))}
                       </div>
                     </div>
-                    <p style={{ fontSize:'0.875rem', color:'#52525B', lineHeight:1.6 }}>{rev.comment}</p>
+                    <p style={{ fontSize:'0.8rem', color:'#52525B', lineHeight:1.6, margin: 0 }}>{rev.comment}</p>
+                    {rev.createdAt && (
+                      <span style={{ fontSize: '0.65rem', color: '#A1A1AA', display: 'block', marginTop: '0.5rem' }}>
+                        {new Date(rev.createdAt).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                 ))
               )}
             </div>
 
+            {/* Write a Review Panel */}
             <div className="lg:col-span-1">
-              <div style={{ background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'2rem' }}>
+              <div style={{ background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'2rem', borderRadius: '0.75rem' }}>
                 <h3 style={{ fontSize:'1rem', fontWeight:800, color:'#09090B', marginBottom:'1.5rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>Write a Review</h3>
                 {userInfo ? (
-                  <form onSubmit={handleReviewSubmit} style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-                    {reviewSuccess && <div style={{ padding:'0.75rem', background:'#ECFDF5', color:'#059669', fontSize:'0.75rem', border:'1px solid #A7F3D0' }}>Review submitted.</div>}
-                    {reviewError && <div style={{ padding:'0.75rem', background:'#FEF2F2', color:'#DC2626', fontSize:'0.75rem', border:'1px solid #FECACA' }}>{reviewError}</div>}
+                  <form onSubmit={handleReviewSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }}>
+                    {reviewSuccess && <div style={{ padding:'0.75rem', background:'#ECFDF5', color:'#059669', fontSize:'0.75rem', border:'1px solid #A7F3D0', borderRadius: '4px' }}>Review submitted.</div>}
+                    {reviewError && <div style={{ padding:'0.75rem', background:'#FEF2F2', color:'#DC2626', fontSize:'0.75rem', border:'1px solid #FECACA', borderRadius: '4px' }}>{reviewError}</div>}
                     
                     <div>
-                      <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', marginBottom:'0.5rem' }}>Rating</label>
-                      <select value={rating} onChange={e=>setRating(Number(e.target.value))} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }}>
-                        <option value="5">5 - Excellent</option>
-                        <option value="4">4 - Good</option>
-                        <option value="3">3 - Average</option>
-                        <option value="2">2 - Poor</option>
-                        <option value="1">1 - Terrible</option>
-                      </select>
+                      <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', marginBottom:'0.5rem' }}>Your Rating</label>
+                      <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRating(star)}
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
+                          >
+                            <Star 
+                              size={24} 
+                              style={{ 
+                                fill: star <= (hoverRating || rating) ? '#D4AF37' : 'none', 
+                                stroke: '#D4AF37',
+                                transition: 'transform 0.1s ease',
+                                transform: star <= (hoverRating || rating) ? 'scale(1.1)' : 'scale(1)'
+                              }} 
+                            />
+                          </button>
+                        ))}
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#52525B', marginLeft: '0.5rem' }}>
+                          {rating === 5 ? 'Excellent' : rating === 4 ? 'Good' : rating === 3 ? 'Average' : rating === 2 ? 'Poor' : 'Terrible'}
+                        </span>
+                      </div>
                     </div>
 
                     <div>
-                      <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', marginBottom:'0.5rem' }}>Review</label>
-                      <textarea required rows="4" value={comment} onChange={e=>setComment(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }} />
+                      <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', marginBottom:'0.5rem' }}>Comments</label>
+                      <textarea required rows="4" value={comment} onChange={e=>setComment(e.target.value)} placeholder="Tell us what you liked or disliked about this product..." style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none', borderRadius: '4px' }} />
                     </div>
 
-                    <button type="submit" style={{ width:'100%', padding:'1rem', background:'#000000', color:'#FFFFFF', fontSize:'0.75rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer' }}>Submit</button>
+                    <button type="submit" style={{ width:'100%', padding:'1rem', background:'#000000', color:'#FFFFFF', fontSize:'0.75rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer', borderRadius: '4px', transition: 'background 0.2s' }} onMouseEnter={e=>e.currentTarget.style.background='#27272A'} onMouseLeave={e=>e.currentTarget.style.background='#000000'}>Submit Review</button>
                   </form>
                 ) : (
                   <p style={{ fontSize:'0.8rem', color:'#71717A' }}>Please <Link to="/login" style={{ color:'#09090B', fontWeight:700, borderBottom:'1px solid #09090B' }}>login</Link> to review.</p>
