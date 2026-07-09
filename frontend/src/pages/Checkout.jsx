@@ -77,8 +77,7 @@ const Checkout = () => {
       if (paymentMethod === 'Cash On Delivery') {
         navigate('/order-success?id=' + orderId);
       } else {
-        alert(`Proceeding to ${paymentMethod} payment gateway...`);
-        navigate('/order-success?id=' + orderId);
+        navigate(`/payment-gateway?method=${encodeURIComponent(paymentMethod)}&orderId=${orderId}&amount=${prices.totalPrice}`);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Order creation failed');
