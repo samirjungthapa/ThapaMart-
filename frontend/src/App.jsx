@@ -42,6 +42,7 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   const location = useLocation();
   const dispatch = useDispatch();
   const { userInfo } = useSelector((state) => state.auth);
+  const [toast, setToast] = useState(null);
 
   useEffect(() => {
     if (userInfo) {
@@ -52,6 +53,34 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
         .catch((err) => console.error('Error fetching user cart:', err));
     }
   }, [userInfo, dispatch]);
+
+  useEffect(() => {
+    const eventSource = new EventSource('/api/live-updates');
+
+    eventSource.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+        if (payload.type === 'PRODUCT_CREATED') {
+          setToast(`🎉 New Product: ${payload.data.title}`);
+        } else if (payload.type === 'PRODUCT_UPDATED') {
+          setToast(`🔄 Updated: ${payload.data.title}`);
+        }
+      } catch (e) {
+        console.error('SSE Error:', e);
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
 
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor:'#FFFFFF', color:'#09090B' }}>
@@ -99,6 +128,31 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
 
       {/* Footer */}
       <Footer />
+
+      {/* Real-time SSE Notification Toast */}
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          background: '#09090B',
+          color: '#FFFFFF',
+          padding: '1rem 1.5rem',
+          border: '1px solid #3b82f6',
+          borderRadius: '8px',
+          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.5)',
+          zIndex: 9999,
+          fontSize: '0.85rem',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          animation: 'slideUp 0.3s ease-out'
+        }}>
+          <span style={{ width: '8px', height: '8px', background: '#3b82f6', borderRadius: '50%', display: 'inline-block' }} />
+          {toast}
+        </div>
+      )}
 
     </div>
   );

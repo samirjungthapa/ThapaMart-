@@ -5,13 +5,17 @@ import { readDb, writeDb } from '../utils/jsonDb.js';
 // @route   GET /api/products
 // @access  Public
 export const getProducts = async (req, res) => {
-  const { keyword, category, minPrice, maxPrice, sort, page = 1, limit = 8 } = req.query;
+  const { keyword, category, minPrice, maxPrice, sort, page = 1, limit = 8, minRating, minDiscount } = req.query;
 
   if (process.env.MONGODB_URI) {
     try {
       const query = {};
       if (keyword) {
-        query.title = { $regex: keyword, $options: 'i' };
+        query.$or = [
+          { title: { $regex: keyword, $options: 'i' } },
+          { description: { $regex: keyword, $options: 'i' } },
+          { category: { $regex: keyword, $options: 'i' } }
+        ];
       }
       if (category && category !== 'all') {
         const categoriesArray = category.split(',').map(c => c.trim().toLowerCase());
@@ -21,6 +25,12 @@ export const getProducts = async (req, res) => {
         query.price = {};
         if (minPrice) query.price.$gte = Number(minPrice);
         if (maxPrice) query.price.$lte = Number(maxPrice);
+      }
+      if (minRating) {
+        query.ratings = { $gte: Number(minRating) };
+      }
+      if (minDiscount) {
+        query.discount = { $gte: Number(minDiscount) };
       }
 
       let apiQuery = Product.find(query);
@@ -54,15 +64,17 @@ export const getProducts = async (req, res) => {
   let filteredProducts = [...db.products];
 
   if (keyword) {
+    const lKey = keyword.toLowerCase();
     filteredProducts = filteredProducts.filter(p =>
-      p.title.toLowerCase().includes(keyword.toLowerCase()) ||
-      p.description.toLowerCase().includes(keyword.toLowerCase())
+      (p.title && p.title.toLowerCase().includes(lKey)) ||
+      (p.description && p.description.toLowerCase().includes(lKey)) ||
+      (p.category && p.category.toLowerCase().includes(lKey))
     );
   }
 
   if (category && category !== 'all') {
     const categoriesArray = category.split(',').map(c => c.trim().toLowerCase());
-    filteredProducts = filteredProducts.filter(p => categoriesArray.includes(p.category.toLowerCase()));
+    filteredProducts = filteredProducts.filter(p => p.category && categoriesArray.includes(p.category.toLowerCase()));
   }
 
   if (minPrice) {
@@ -71,15 +83,20 @@ export const getProducts = async (req, res) => {
   if (maxPrice) {
     filteredProducts = filteredProducts.filter(p => p.price <= Number(maxPrice));
   }
+  if (minRating) {
+    filteredProducts = filteredProducts.filter(p => (p.ratings || 0) >= Number(minRating));
+  }
+  if (minDiscount) {
+    filteredProducts = filteredProducts.filter(p => (p.discount || 0) >= Number(minDiscount));
+  }
 
   if (sort === 'priceAsc') {
     filteredProducts.sort((a, b) => a.price - b.price);
   } else if (sort === 'priceDesc') {
     filteredProducts.sort((a, b) => b.price - a.price);
   } else if (sort === 'rating') {
-    filteredProducts.sort((a, b) => b.ratings - a.ratings);
+    filteredProducts.sort((a, b) => (b.ratings || 0) - (a.ratings || 0));
   } else {
-    // Default newest (none for mock unless it has created timestamp, or just keep original order/reverse)
     filteredProducts.reverse();
   }
 
@@ -137,6 +154,10 @@ export const createProduct = async (req, res) => {
         images: images || ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'],
       });
       const createdProduct = await product.save();
+      const broadcast = req.app.get('broadcastEvent');
+      if (broadcast) {
+        broadcast('PRODUCT_CREATED', createdProduct);
+      }
       return res.status(201).json(createdProduct);
     } catch (error) {
       console.error(error);
@@ -159,6 +180,12 @@ export const createProduct = async (req, res) => {
 
   db.products.push(newProduct);
   writeDb(db);
+
+  const broadcast = req.app.get('broadcastEvent');
+  if (broadcast) {
+    broadcast('PRODUCT_CREATED', newProduct);
+  }
+
   res.status(201).json(newProduct);
 };
 
@@ -181,6 +208,10 @@ export const updateProduct = async (req, res) => {
         product.images = images || product.images;
 
         const updatedProduct = await product.save();
+        const broadcast = req.app.get('broadcastEvent');
+        if (broadcast) {
+          broadcast('PRODUCT_UPDATED', updatedProduct);
+        }
         return res.json(updatedProduct);
       }
     } catch (error) {
@@ -203,6 +234,12 @@ export const updateProduct = async (req, res) => {
       images: images || product.images
     };
     writeDb(db);
+
+    const broadcast = req.app.get('broadcastEvent');
+    if (broadcast) {
+      broadcast('PRODUCT_UPDATED', db.products[index]);
+    }
+
     return res.json(db.products[index]);
   }
 

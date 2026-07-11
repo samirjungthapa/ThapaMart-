@@ -54,7 +54,7 @@ export const loginUser = async (req, res) => {
 // @route   POST /api/auth/register
 // @access  Public
 export const registerUser = async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, phone } = req.body;
 
   // Password complexity check
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).{8,}$/;
@@ -63,6 +63,12 @@ export const registerUser = async (req, res) => {
       message: 'Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number or special character.'
     });
   }
+
+  // Generate 6-digit random OTP code
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+  console.log(`\n🔑 [OTP Verification] Code for ${email} (${phone}): ${otp}\n`);
 
   if (process.env.MONGODB_URI) {
     try {
@@ -75,7 +81,11 @@ export const registerUser = async (req, res) => {
         name,
         email,
         password,
-        role: email.includes('admin') ? 'admin' : 'customer' // Auto admin if email contains admin for easy testing
+        phone,
+        otp,
+        otpExpires,
+        isVerified: false,
+        role: email.includes('admin') ? 'admin' : 'customer'
       });
 
       if (user) {
@@ -83,8 +93,11 @@ export const registerUser = async (req, res) => {
           _id: user._id,
           name: user.name,
           email: user.email,
+          phone: user.phone,
+          isVerified: user.isVerified,
           role: user.role,
           avatar: user.avatar,
+          otp, // Exposed for easy verification demo
           token: generateToken(user._id.toString()),
         });
       }
@@ -105,7 +118,11 @@ export const registerUser = async (req, res) => {
     id: `user-${Date.now()}`,
     name,
     email,
+    phone,
     password: hashedPassword,
+    otp,
+    otpExpires: otpExpires.getTime(),
+    isVerified: false,
     role: email.toLowerCase().includes('admin') ? 'admin' : 'customer',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
   };
@@ -117,8 +134,11 @@ export const registerUser = async (req, res) => {
     _id: newUser.id,
     name: newUser.name,
     email: newUser.email,
+    phone: newUser.phone,
+    isVerified: newUser.isVerified,
     role: newUser.role,
     avatar: newUser.avatar,
+    otp, // Exposed for easy verification demo
     token: generateToken(newUser.id),
   });
 };
@@ -224,6 +244,82 @@ export const saveUserCart = async (req, res) => {
     db.users[index].cartItems = cartItems;
     writeDb(db);
     return res.json({ message: 'Cart synced successfully', cartItems: db.users[index].cartItems });
+  }
+
+  res.status(404).json({ message: 'User not found' });
+};
+
+// @desc    Verify registration OTP code
+// @route   POST /api/auth/verify-otp
+// @access  Public
+export const verifyOtp = async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({ message: 'Email and OTP code are required' });
+  }
+
+  if (process.env.MONGODB_URI) {
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      if (user.otp !== otp || Date.now() > user.otpExpires) {
+        return res.status(400).json({ message: 'Invalid or expired OTP code' });
+      }
+
+      user.isVerified = true;
+      user.otp = undefined;
+      user.otpExpires = undefined;
+      await user.save();
+
+      return res.json({
+        message: 'Account verified successfully!',
+        token: generateToken(user._id.toString()),
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          isVerified: true,
+          role: user.role,
+          avatar: user.avatar
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Server error' });
+    }
+  }
+
+  // Fallback JSON DB
+  const db = readDb();
+  const index = db.users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+  if (index !== -1) {
+    const user = db.users[index];
+    if (user.otp !== otp || Date.now() > user.otpExpires) {
+      return res.status(400).json({ message: 'Invalid or expired OTP code' });
+    }
+
+    user.isVerified = true;
+    delete user.otp;
+    delete user.otpExpires;
+    writeDb(db);
+
+    return res.json({
+      message: 'Account verified successfully!',
+      token: generateToken(user.id),
+      user: {
+        _id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        isVerified: true,
+        role: user.role,
+        avatar: user.avatar
+      }
+    });
   }
 
   res.status(404).json({ message: 'User not found' });

@@ -27,9 +27,38 @@ app.use((req, res, next) => {
   next();
 });
 
+// Native Security Headers Middleware (Helmet Alternative)
+app.use((req, res, next) => {
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Content-Security-Policy', "default-src 'self' *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com *; font-src 'self' data: https://fonts.gstatic.com *; img-src 'self' data: https: *; connect-src 'self' https: *;");
+  next();
+});
+
 import { protect, admin } from './middleware/authMiddleware.js';
 
 // API Routes
+let sseClients = [];
+app.get('/api/live-updates', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  sseClients.push(res);
+
+  req.on('close', () => {
+    sseClients = sseClients.filter(c => c !== res);
+  });
+});
+
+app.set('broadcastEvent', (type, data) => {
+  sseClients.forEach(client => {
+    client.write(`data: ${JSON.stringify({ type, data })}\n\n`);
+  });
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
