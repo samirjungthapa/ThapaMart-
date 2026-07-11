@@ -40,6 +40,90 @@
       "role": "admin",
       "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
       "cartItems": []
+    },
+    {
+      "id": "user-1783751483883",
+      "name": "pritam rai",
+      "email": "rai@gmail.com",
+      "phone": "9828783600",
+      "password": "$2a$10$KNLB8yXNabxrtJ9qMsjhZuHHmB8V8Vjv/hTx/SwXOqwfhptAtDpZC",
+      "otp": "279020",
+      "otpExpires": 1783752083773,
+      "isVerified": false,
+      "role": "customer",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "user-1783751654983",
+      "name": "pritam rai",
+      "email": "rai@123gmail.com",
+      "phone": "9705764510",
+      "password": "$2a$10$wH9MUgut4hRy002yGHJH0eg4UeF4oFvQqu46rxt5fJonDwmGMHh2u",
+      "otp": "473994",
+      "otpExpires": 1783752254871,
+      "isVerified": false,
+      "role": "customer",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "user-1783752580943",
+      "name": "asmit ",
+      "email": "asmit@123gmail.com",
+      "phone": "9829306607",
+      "password": "$2a$10$VkcfXhG5YmrvU2sN7L.2.uNWwepfExfr3BLE8GeAA4aMfRwIbiZHy",
+      "otp": "873455",
+      "otpExpires": 1783753170817,
+      "isVerified": false,
+      "role": "customer",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "user-1783752646304",
+      "name": "asmit dev",
+      "email": "asmitde123@gmail.com",
+      "phone": "9829306607",
+      "password": "$2a$10$E4ml9NBT9SPCcx.hCpG0Y.G5LF2uWcT14ZKFggjzBFbHPauSlcGV6",
+      "otp": "566676",
+      "otpExpires": 1783753236170,
+      "isVerified": false,
+      "role": "customer",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "user-1783752748632",
+      "name": "Samir Don",
+      "email": "exsamir484@gmail.com",
+      "phone": "9822434711",
+      "password": "$2a$10$GmHRzg4dsmOuVXyGMK7i9.65Dq2iSCK682Yju2WN3oVeKacx3NSjS",
+      "otp": "660513",
+      "otpExpires": 1783753338508,
+      "isVerified": false,
+      "role": "customer",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "user-1783753108043",
+      "name": "Pritam Rai",
+      "email": "pritam22chamling@gmail.com",
+      "phone": "9705764510",
+      "password": "$2a$10$5NjqJviGbCdq93gSgJ8Fq.592a6ABDHKY8fFOWFhOOHKbFSmO2bAe",
+      "otp": "914578",
+      "otpExpires": 1783753697921,
+      "isVerified": false,
+      "role": "customer",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
+    },
+    {
+      "id": "user-1783753307032",
+      "name": "Samir Dada",
+      "email": "luxmee166@gmail.com",
+      "phone": "9822434711",
+      "password": "$2a$10$siBs1/cjd0TMRRn32mjTKeIhnZvBtlnlqiudwzOTrk8vqkTiM.Qa.",
+      "otp": "851822",
+      "otpExpires": 1783753896900,
+      "isVerified": false,
+      "role": "customer",
+      "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80"
     }
   ],
   "products": [
