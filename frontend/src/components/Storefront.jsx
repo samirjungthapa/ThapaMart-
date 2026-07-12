@@ -10,6 +10,7 @@ const Storefront = () => {
   const { userInfo } = useSelector((state) => state.auth);
   const [products, setProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -21,6 +22,22 @@ const Storefront = () => {
       }
     };
     fetchProducts();
+
+    const fetchRecommendations = async () => {
+      try {
+        const savedViewed = localStorage.getItem('recentlyViewed');
+        let categories = '';
+        if (savedViewed) {
+          const viewedArray = JSON.parse(savedViewed);
+          categories = [...new Set(viewedArray.map(p => p.category))].join(',');
+        }
+        const { data } = await api.get('/recommendations', { params: { categories } });
+        setRecommendations(data.recommendations || []);
+      } catch (err) {
+        console.warn("Failed to fetch recommendations:", err);
+      }
+    };
+    fetchRecommendations();
 
     const saved = localStorage.getItem('recentlyViewed');
     if (saved) {
@@ -120,6 +137,22 @@ const Storefront = () => {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {recentlyViewed.map(prod => (
+                <ProductCard key={prod.id || prod._id} product={prod} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Recommended / Tailored for You (If any) */}
+        {recommendations.length > 0 && (
+          <div style={{ marginBottom: '5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#09090B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                Tailored For You
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {recommendations.slice(0, 4).map(prod => (
                 <ProductCard key={prod.id || prod._id} product={prod} />
               ))}
             </div>

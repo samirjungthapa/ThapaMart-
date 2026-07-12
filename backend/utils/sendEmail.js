@@ -2,10 +2,10 @@ import nodemailer from 'nodemailer';
 
 export const sendEmail = async ({ to, subject, html, text }) => {
   const isConfigured = 
-    process.env.SMTP_HOST && 
+    process.env.SMTP_HOST && !process.env.SMTP_HOST.includes('your_') && !process.env.SMTP_HOST.includes('your-') &&
     process.env.SMTP_PORT && 
-    process.env.SMTP_USER && 
-    process.env.SMTP_PASS;
+    process.env.SMTP_USER && !process.env.SMTP_USER.includes('your_') && !process.env.SMTP_USER.includes('your-') &&
+    process.env.SMTP_PASS && !process.env.SMTP_PASS.includes('your_') && !process.env.SMTP_PASS.includes('your-');
 
   if (!isConfigured) {
     console.log('\n==================================================');

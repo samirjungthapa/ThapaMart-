@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
 import { readDb, writeDb } from '../utils/jsonDb.js';
+import { sendEmail } from '../utils/sendEmail.js';
+import { sendSMS } from '../utils/sendSMS.js';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'thapamart_secret_key_123456', {
@@ -55,6 +57,9 @@ export const loginUser = async (req, res) => {
 // @access  Public
 export const registerUser = async (req, res) => {
   const { name, email, password, phone } = req.body;
+  const isEmailSimulated = !process.env.SMTP_HOST || process.env.SMTP_HOST.includes('your_') || process.env.SMTP_HOST.includes('your-');
+  const isSmsSimulated = !process.env.TWILIO_ACCOUNT_SID || process.env.TWILIO_ACCOUNT_SID.includes('your_') || process.env.TWILIO_ACCOUNT_SID.includes('your-');
+  const isSimulated = isEmailSimulated && isSmsSimulated;
 
   // Password complexity check
   const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[\d\W]).{8,}$/;
@@ -64,11 +69,7 @@ export const registerUser = async (req, res) => {
     });
   }
 
-  // Generate 6-digit random OTP code
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-  console.log(`\n🔑 [OTP Verification] Code for ${email} (${phone}): ${otp}\n`);
 
   if (process.env.MONGODB_URI) {
     try {
@@ -82,9 +83,7 @@ export const registerUser = async (req, res) => {
         email,
         password,
         phone,
-        otp,
-        otpExpires,
-        isVerified: false,
+        isVerified: true,
         role: email.includes('admin') ? 'admin' : 'customer'
       });
 
@@ -97,7 +96,6 @@ export const registerUser = async (req, res) => {
           isVerified: user.isVerified,
           role: user.role,
           avatar: user.avatar,
-          otp, // Exposed for easy verification demo
           token: generateToken(user._id.toString()),
         });
       }
@@ -120,9 +118,7 @@ export const registerUser = async (req, res) => {
     email,
     phone,
     password: hashedPassword,
-    otp,
-    otpExpires: otpExpires.getTime(),
-    isVerified: false,
+    isVerified: true,
     role: email.toLowerCase().includes('admin') ? 'admin' : 'customer',
     avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'
   };
@@ -138,7 +134,6 @@ export const registerUser = async (req, res) => {
     isVerified: newUser.isVerified,
     role: newUser.role,
     avatar: newUser.avatar,
-    otp, // Exposed for easy verification demo
     token: generateToken(newUser.id),
   });
 };

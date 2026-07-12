@@ -69,16 +69,16 @@ const Dashboard = () => {
       discount: "20% OFF",
       description: "Get 20% off on your first purchase.",
       expiry: "Valid till 31 Dec 2026",
-      minSpend: "$50",
+      minSpend: "Rs. 5,000",
       category: "First Order Only",
       type: "percentage"
     },
     {
       code: "FREESHIP50",
       discount: "FREE SHIPPING",
-      description: "Free shipping on orders above $50.",
+      description: "Free shipping on orders above Rs. 5,000.",
       expiry: "Valid till 30 Nov 2026",
-      minSpend: "$50",
+      minSpend: "Rs. 5,000",
       category: "Shipping",
       type: "shipping"
     },
@@ -96,7 +96,7 @@ const Dashboard = () => {
       discount: "30% OFF",
       description: "Special high-tier discount on flash sales category.",
       expiry: "Valid till 15 Jul 2026",
-      minSpend: "$100",
+      minSpend: "Rs. 10,000",
       category: "Flash Sale",
       type: "percentage"
     }
