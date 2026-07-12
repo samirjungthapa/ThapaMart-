@@ -141,3 +141,86 @@ export const playTick = () => {
     console.warn("Audio synthesis block:", e);
   }
 };
+
+let activeOscillators = [];
+let ambientGain = null;
+
+export const startAmbientLoop = (category = 'default') => {
+  if (isMuted()) return;
+  try {
+    const ctx = getAudioContext();
+    
+    // Stop existing loop first
+    stopAmbientLoop();
+
+    ambientGain = ctx.createGain();
+    ambientGain.gain.setValueAtTime(0.0, ctx.currentTime);
+    
+    // Smooth transition
+    ambientGain.connect(ctx.destination);
+    
+    // Low pass filter
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, ctx.currentTime);
+    
+    ambientGain.connect(filter);
+    filter.connect(ctx.destination);
+
+    ambientGain.gain.linearRampToValueAtTime(0.015, ctx.currentTime + 1.5);
+
+    // Chords based on category
+    let freqs = [130.81, 164.81, 196.00, 246.94]; // C major 7 (Default / Luxury)
+    const lowerCategory = (category || 'default').toLowerCase();
+    if (lowerCategory.includes('tech') || lowerCategory.includes('electronic') || lowerCategory.includes('watch')) {
+      freqs = [146.83, 174.61, 220.00, 293.66]; // D minor 7 (Tech synthwave)
+    } else if (lowerCategory.includes('shoe') || lowerCategory.includes('clothing') || lowerCategory.includes('sport')) {
+      freqs = [164.81, 196.00, 220.00, 329.63]; // E minor 7 (Active/Fashion)
+    }
+
+    freqs.forEach((freq) => {
+      const osc = ctx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      
+      // Add subtle LFO to frequency for chorusing effect
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.frequency.value = 0.2 + Math.random() * 0.3; // Very slow LFO
+      lfoGain.gain.value = 1.0; // pitch drift depth
+      
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+      
+      osc.connect(ambientGain);
+      
+      lfo.start();
+      osc.start();
+      
+      activeOscillators.push({ osc, lfo });
+    });
+  } catch (e) {
+    console.warn("Ambient loop synthesis error:", e);
+  }
+};
+
+export const stopAmbientLoop = () => {
+  if (ambientGain) {
+    try {
+      const ctx = getAudioContext();
+      ambientGain.gain.setValueAtTime(ambientGain.gain.value, ctx.currentTime);
+      ambientGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.8); // Slow fade-out
+    } catch (e) {}
+  }
+  const oscs = [...activeOscillators];
+  activeOscillators = [];
+  ambientGain = null;
+  setTimeout(() => {
+    oscs.forEach(({ osc, lfo }) => {
+      try {
+        osc.stop();
+        lfo.stop();
+      } catch (e) {}
+    });
+  }, 1000);
+};
