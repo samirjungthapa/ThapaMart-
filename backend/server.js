@@ -1,17 +1,23 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import http from 'http';
+import { Server } from 'socket.io';
 import connectDB from './config/db.js';
+import { handleSockets } from './utils/socketHandler.js';
 
 // Route Imports
 import authRoutes from './routes/authRoutes.js';
 import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
+import aiRoutes from './routes/aiRoutes.js';
+import recommendationRoutes from './routes/recommendationRoutes.js';
 
 dotenv.config();
 
 const app = express();
+
 
 // Middlewares
 app.use(cors({
@@ -63,6 +69,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/recommendations', recommendationRoutes);
 
 app.get('/api/diagnostics', protect, admin, (req, res) => {
   res.json({
@@ -97,9 +105,22 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }
+});
+
+handleSockets(io);
+
+app.set('socketio', io);
+
 // Connect to Database then start Express server
 connectDB().then(() => {
-  app.listen(PORT, () => {
+  httpServer.listen(PORT, () => {
     console.log(`🚀 ThapaMart Premium Backend listening on port ${PORT}`);
   });
 });
