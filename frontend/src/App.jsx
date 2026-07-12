@@ -10,6 +10,8 @@ import SplashScreen from './components/SplashScreen.jsx';
 import PageTransition from './components/PageTransition.jsx';
 import SpinWheel from './components/SpinWheel.jsx';
 import MartAI from './components/MartAI.jsx';
+import CollaborativeShop from './components/CollaborativeShop.jsx';
+import SoundscapeEngine from './components/SoundscapeEngine.jsx';
 
 
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -125,6 +127,12 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
 
       {/* Conversational Assistant */}
       <MartAI />
+
+      {/* Real-time Collaborative shopping */}
+      <CollaborativeShop />
+
+      {/* Ambient Soundscapes */}
+      <SoundscapeEngine />
 
       {/* Footer */}
       <Footer />

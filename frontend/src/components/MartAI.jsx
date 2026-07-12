@@ -86,21 +86,16 @@ const MartAI = () => {
     setIsTyping(true);
     setMessages(prev => [...prev, { sender: 'user', text: `[Visual Search Upload: ${fileName}] 📸` }]);
     
-    setTimeout(async () => {
-      let replyText = "Analyzing visual features... Matching items found in our Premium footwear collection! 👟";
-      let recommendedProducts = [];
-      try {
-        const { data } = await api.get('/products', { params: { search: 'shoes', limit: 2 } });
-        recommendedProducts = data.products || [];
-      } catch (err) {
-        replyText = "Visual search processed. Check out these recommended top matching selections:";
-      }
-      
+    try {
+      const { data } = await api.post('/ai/visual-search', { fileName });
       setIsTyping(false);
       playSuccess();
-      setMessages(prev => [...prev, { sender: 'ai', text: replyText, products: recommendedProducts }]);
-      if (isTtsEnabled) speakText(replyText);
-    }, 2000);
+      setMessages(prev => [...prev, { sender: 'ai', text: data.message, products: data.recommendedProducts || [] }]);
+      if (isTtsEnabled) speakText(data.message);
+    } catch (err) {
+      setIsTyping(false);
+      setMessages(prev => [...prev, { sender: 'ai', text: "Visual search failed. Check out our standard collections on the Shop page!" }]);
+    }
   };
 
   const handleSend = async (e) => {
@@ -113,64 +108,32 @@ const MartAI = () => {
     setInput('');
     setIsTyping(true);
 
-    // AI logic response
-    setTimeout(async () => {
-      let replyText = "I see! Let me check our premium collections for that...";
-      let recommendedProducts = [];
-      let isNegotiated = false;
+    try {
+      const chatHistory = messages.slice(-5).map(m => ({
+        role: m.sender === 'user' ? 'user' : 'model',
+        parts: [{ text: m.text }]
+      }));
 
-      try {
-        // Simple NLP Keyword matching
-        const normalized = userMsg.toLowerCase();
-        let query = '';
-        
-        // Bargaining/Haggling NLP detection
-        if (normalized.includes('discount') || normalized.includes('cheap') || normalized.includes('deal') || normalized.includes('coupon') || normalized.includes('bargain') || normalized.includes('negotiate') || normalized.includes('price') || normalized.includes('haggle') || normalized.includes('off')) {
-          isNegotiated = true;
-          if (normalized.includes('30') || normalized.includes('40') || normalized.includes('50') || normalized.includes('half') || normalized.includes('30%') || normalized.includes('50%')) {
-            replyText = "Oh, a 30% to 50% discount is quite steep for our premium curated collection! But since you're a serious shopper, let's meet in the middle. I can unlock a special 15% off discount code: use 'HAGGLE15' at checkout! 🤝";
-          } else if (normalized.includes('20') || normalized.includes('20%')) {
-            replyText = "20% is slightly above my authority level, but I can compromise! Let's do an exclusive 12% off. Use coupon code 'HAGGLE12' to save on your order! 🎁";
-          } else {
-            replyText = "I normally cannot discount our curated luxury goods, but I really like your vibe! How about I give you a special 10% off coupon code? Use 'BARGAIN10' at checkout! 😉";
-          }
-          // Attach popular products as suggestions
-          const { data } = await api.get('/products', { params: { limit: 2 } });
-          recommendedProducts = data.products || [];
-        } else if (normalized.includes('watch') || normalized.includes('time')) query = 'watch';
-        else if (normalized.includes('shirt') || normalized.includes('tshirt') || normalized.includes('clothing')) query = 'shirt';
-        else if (normalized.includes('bag') || normalized.includes('leather')) query = 'bag';
-        else if (normalized.includes('shoe') || normalized.includes('sneaker') || normalized.includes('footwear')) query = 'shoes';
-        else if (normalized.includes('ring') || normalized.includes('gold')) query = 'ring';
-
-        if (!isNegotiated) {
-          if (query) {
-            const { data } = await api.get('/products', { params: { search: query, limit: 3 } });
-            recommendedProducts = data.products || [];
-            if (recommendedProducts.length > 0) {
-              replyText = `Based on your request, I highly recommend checking out these premium ${query} selections:`;
-            } else {
-              replyText = `I couldn't find active listings for "${query}" right now, but check out our other collections in the Shop page!`;
-            }
-          } else {
-            // Fallback popular products
-            const { data } = await api.get('/products', { params: { limit: 2 } });
-            recommendedProducts = data.products || [];
-            replyText = "I'm your stylistic assistant! Try asking me for 'watches', 'shirts', 'leather bags' or check out these featured styles:";
-          }
-        }
-      } catch (err) {
-        replyText = "I ran into a small connectivity hiccup, but feel free to search directly in our Shop tab!";
-      }
+      const { data } = await api.post('/ai/chat', {
+        message: userMsg,
+        history: chatHistory
+      });
 
       setIsTyping(false);
       playSuccess();
       setMessages((prev) => [
         ...prev,
-        { sender: 'ai', text: replyText, products: recommendedProducts },
+        { sender: 'ai', text: data.reply, products: data.recommendedProducts || [] },
       ]);
-      if (isTtsEnabled) speakText(replyText);
-    }, 1500);
+      if (isTtsEnabled) speakText(data.reply);
+    } catch (err) {
+      setIsTyping(false);
+      playSuccess();
+      setMessages((prev) => [
+        ...prev,
+        { sender: 'ai', text: "I ran into a small connectivity hiccup, but feel free to search directly in our Shop tab!" },
+      ]);
+    }
   };
 
   return (
