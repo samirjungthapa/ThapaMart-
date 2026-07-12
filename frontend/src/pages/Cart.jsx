@@ -122,14 +122,14 @@ const Cart = () => {
 
   const prices = calcPrices({ cartItems, coupon });
   const subtotal = prices.itemsPrice - prices.discount;
-  const shippingThreshold = 150;
+  const shippingThreshold = 10000;
   const progressToFreeShipping = Math.min((subtotal / shippingThreshold) * 100, 100);
   const remainingForFreeShipping = Math.max(shippingThreshold - subtotal, 0);
 
   // Available coupons database
   const availableCoupons = [
     { code: 'THAPA10', percent: 10, description: '10% discount on all items.' },
-    { code: 'SMART20', percent: 20, description: '20% discount on orders above $50.' },
+    { code: 'SMART20', percent: 20, description: '20% discount on orders above Rs. 5,000.' },
     { code: 'MEGA50', percent: 50, description: 'Exclusive mega 50% discount voucher!' }
   ];
 
@@ -138,21 +138,21 @@ const Cart = () => {
     {
       product: 'rec-1',
       title: 'Precision Wireless Pro Mouse',
-      price: 49.99,
+      price: 2500,
       image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=300&q=80',
       stock: 15
     },
     {
       product: 'rec-2',
       title: 'Premium Leather Headphone Case',
-      price: 29.99,
+      price: 1500,
       image: 'https://images.unsplash.com/photo-1546435770-a3e426bf472b?w=300&q=80',
       stock: 8
     },
     {
       product: 'rec-3',
       title: 'Premium Wireless Charging Stand',
-      price: 39.99,
+      price: 2000,
       image: 'https://images.unsplash.com/photo-1622445262465-2481c8573251?w=300&q=80',
       stock: 12
     }
@@ -246,7 +246,7 @@ const Cart = () => {
             <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-2xl p-5">
               <div className="flex justify-between items-center mb-2.5 text-xs font-bold text-black uppercase tracking-wider">
                 <span>Free Shipping Meter</span>
-                <span>{progressToFreeShipping >= 100 ? 'Free Shipping Unlocked!' : `$${remainingForFreeShipping.toFixed(2)} Remaining`}</span>
+                <span>{progressToFreeShipping >= 100 ? 'Free Shipping Unlocked!' : `Rs. ${remainingForFreeShipping.toLocaleString('en-NP')} Remaining`}</span>
               </div>
               <div className="w-full bg-[#E5E7EB] h-2 rounded-full overflow-hidden mb-2">
                 <div 
@@ -257,7 +257,7 @@ const Cart = () => {
               <p className="text-[11px] text-[#71717A]">
                 {progressToFreeShipping >= 100 
                   ? "🎉 Excellent! Your order qualifies for free delivery." 
-                  : `Add $${remainingForFreeShipping.toFixed(2)} more to your bag to enjoy free shipping.`}
+                  : `Add Rs. ${remainingForFreeShipping.toLocaleString('en-NP')} more to your bag to enjoy free shipping.`}
               </p>
             </div>
 
@@ -383,7 +383,7 @@ const Cart = () => {
                         <Link to={`/products/${item.product}`} style={{ fontSize: '1rem', fontWeight: 700, color: '#09090B', textDecoration: 'none', display: 'block' }}>
                           {item.title}
                         </Link>
-                        <p style={{ fontSize: '0.875rem', color: '#71717A' }}>Price: ${Number(item.price).toFixed(2)}</p>
+                        <p style={{ fontSize: '0.875rem', color: '#71717A' }}>Price: Rs. {Number(item.price).toLocaleString('en-NP')}</p>
                         
                         {item.engraving && (
                           <div className="flex items-center gap-1.5 text-xs text-indigo-650 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-md w-fit font-bold">
@@ -430,7 +430,7 @@ const Cart = () => {
 
                       <div className="text-right">
                         <span style={{ fontSize: '1rem', fontWeight: 900, color: '#09090B' }}>
-                          ${(item.price * item.quantity).toFixed(2)}
+                          Rs. {Number(item.price * item.quantity).toLocaleString('en-NP')}
                         </span>
                       </div>
                       
@@ -456,25 +456,25 @@ const Cart = () => {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', fontSize: '0.875rem', color: '#52525B' }}>
                     <div style={{ display: 'flex', justifycontent: 'space-between', justifyContent: 'space-between' }}>
                       <span>Subtotal</span>
-                      <span style={{ color: '#09090B', fontWeight: 700 }}>${prices.itemsPrice}</span>
+                      <span style={{ color: '#09090B', fontWeight: 700 }}>Rs. {prices.itemsPrice.toLocaleString('en-NP')}</span>
                     </div>
                     {coupon && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', color: '#10B981' }}>
                         <span>Discount ({coupon.code})</span>
-                        <span style={{ fontWeight: 700 }}>-${prices.discount}</span>
+                        <span style={{ fontWeight: 700 }}>-Rs. {prices.discount.toLocaleString('en-NP')}</span>
                       </div>
                     )}
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>Estimated Shipping</span>
-                      <span style={{ color: '#09090B', fontWeight: 700 }}>{prices.shippingPrice === 0 ? 'Free' : `$${prices.shippingPrice}`}</span>
+                      <span style={{ color: '#09090B', fontWeight: 700 }}>{prices.shippingPrice === 0 ? 'Free' : `Rs. ${prices.shippingPrice.toLocaleString('en-NP')}`}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span>Sales Tax</span>
-                      <span style={{ color: '#09090B', fontWeight: 700 }}>${prices.taxPrice}</span>
+                      <span style={{ color: '#09090B', fontWeight: 700 }}>Rs. {prices.taxPrice.toLocaleString('en-NP')}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid #E5E7EB', fontSize: '1.25rem', color: '#09090B', fontWeight: 900 }}>
                       <span>Total</span>
-                      <span>${prices.totalPrice}</span>
+                      <span>Rs. {prices.totalPrice.toLocaleString('en-NP')}</span>
                     </div>
                   </div>
 
@@ -545,7 +545,7 @@ const Cart = () => {
                       <img src={prod.image} alt={prod.title} className="w-16 h-16 rounded-xl object-cover border border-[#E5E7EB]" />
                       <div>
                         <h4 className="text-xs font-bold text-black">{prod.title}</h4>
-                        <p className="text-xs text-[#71717A] mt-0.5">${prod.price}</p>
+                        <p className="text-xs text-[#71717A] mt-0.5 font-mono">Rs. {prod.price.toLocaleString('en-NP')}</p>
                       </div>
                     </div>
                     <button 

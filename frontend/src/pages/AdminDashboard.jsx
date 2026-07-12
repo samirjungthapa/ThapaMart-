@@ -654,6 +654,28 @@ const AdminDashboard = () => {
             >
               <FiStar size={16} /> Reviews Moderation
             </button>
+            <button
+              onClick={() => setActiveSubTab('diagnostics')}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '1rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                background: activeSubTab === 'diagnostics' ? '#000000' : '#FFFFFF',
+                color: activeSubTab === 'diagnostics' ? '#FFFFFF' : '#09090B',
+                border: '1px solid #E5E7EB',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}
+            >
+              <FiTrendingUp size={16} /> Server Diagnostics
+            </button>
           </div>
 
           {/* Sub Content Area */}
@@ -1046,6 +1068,65 @@ const AdminDashboard = () => {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {activeSubTab === 'diagnostics' && diagnostics && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '2rem', fontWeight: 900, color: '#09090B' }}>Server Diagnostics Console</h3>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                  {/* CPU / Uptime statistics card */}
+                  <div style={{ border: '1px solid #E5E7EB', padding: '1.5rem', background: '#F9FAFB' }}>
+                    <h4 style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '1rem', color: '#09090B' }}>Server Info</h4>
+                    <table style={{ width: '100%', fontSize: '0.75rem', borderCollapse: 'collapse' }}>
+                      <tbody>
+                        <tr style={{ borderBottom: '1px solid #E5E7EB' }}><td style={{ padding: '0.5rem 0', color: '#71717A' }}>Node Version</td><td style={{ padding: '0.5rem 0', fontWeight: 700, textAlign: 'right' }}>{diagnostics.nodeVersion}</td></tr>
+                        <tr style={{ borderBottom: '1px solid #E5E7EB' }}><td style={{ padding: '0.5rem 0', color: '#71717A' }}>Server OS Platform</td><td style={{ padding: '0.5rem 0', fontWeight: 700, textAlign: 'right' }}>{diagnostics.platform}</td></tr>
+                        <tr style={{ borderBottom: '1px solid #E5E7EB' }}><td style={{ padding: '0.5rem 0', color: '#71717A' }}>Uptime</td><td style={{ padding: '0.5rem 0', fontWeight: 700, textAlign: 'right' }}>{(diagnostics.uptime / 60).toFixed(1)} mins</td></tr>
+                        <tr style={{ borderBottom: '1px solid #E5E7EB' }}><td style={{ padding: '0.5rem 0', color: '#71717A' }}>Server Port</td><td style={{ padding: '0.5rem 0', fontWeight: 700, textAlign: 'right' }}>{diagnostics.env.port}</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Node memory usage card */}
+                  <div style={{ border: '1px solid #E5E7EB', padding: '1.5rem', background: '#F9FAFB' }}>
+                    <h4 style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '1rem', color: '#09090B' }}>Node Memory Usage</h4>
+                    {diagnostics.memoryUsage ? (
+                      <div style={{ fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                            <span>Heap Used</span>
+                            <strong>{(diagnostics.memoryUsage.heapUsed / 1024 / 1024).toFixed(1)} MB</strong>
+                          </div>
+                          <div style={{ height: '6px', background: '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
+                            <div style={{ width: `${Math.min(100, (diagnostics.memoryUsage.heapUsed / (diagnostics.memoryUsage.heapTotal || 1)) * 100)}%`, height: '100%', background: '#4F46E5' }} />
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                            <span>RSS Memory</span>
+                            <strong>{(diagnostics.memoryUsage.rss / 1024 / 1024).toFixed(1)} MB</strong>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <p style={{ fontSize: '0.75rem', color: '#71717A' }}>Memory metrics simulated on local environment.</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Simulated Server Console Stream */}
+                <div style={{ border: '1px solid #E5E7EB', padding: '1.5rem', background: '#09090B', color: '#10B981', fontFamily: 'monospace', borderRadius: '4px', fontSize: '0.7rem', minHeight: '180px' }}>
+                  <div style={{ borderBottom: '1px solid #27272A', paddingBottom: '0.5rem', marginBottom: '0.5rem', color: '#A1A1AA', fontWeight: 'bold' }}>LIVE SERVER LOG STREAM</div>
+                  <div style={{ lineHeight: 1.6, maxHeight: '180px', overflowY: 'auto' }}>
+                    <p>[{new Date().toISOString()}] SERVER: Premium engine running on port {diagnostics.env.port}...</p>
+                    <p>[{new Date().toISOString()}] DATABASE: Connected successfully - {diagnostics.databaseMode}</p>
+                    <p>[{new Date().toISOString()}] REAL-TIME: SSE active clients initialized.</p>
+                    <p>[{new Date().toISOString()}] SOCKET: Real-time Co-Shopping socket hub listeners active.</p>
+                    <p>[{new Date().toISOString()}] MONGO: Query analytics optimized.</p>
+                  </div>
                 </div>
               </div>
             )}

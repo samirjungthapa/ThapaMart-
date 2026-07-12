@@ -27,7 +27,7 @@ const calcPrices = (state) => {
   }, 0);
   const discount = state.coupon ? itemsPrice * (state.coupon.percent / 100) : 0;
   const subtotalAfterDiscount = itemsPrice - discount;
-  const shippingPrice = subtotalAfterDiscount > 150 ? 0 : 15; // Free shipping above $150
+  const shippingPrice = subtotalAfterDiscount > 10000 ? 0 : 150; // Free shipping above Rs. 10,000
   const taxPrice = 0.13 * subtotalAfterDiscount; // 13% tax
   const totalPrice = subtotalAfterDiscount + shippingPrice + taxPrice;
 
