@@ -6,6 +6,8 @@ import { addToCart } from '../store/slices/cartSlice.js';
 import { addToWishlist } from '../store/slices/wishlistSlice.js';
 import api from '../store/api.js';
 import ProductCard from '../components/ProductCard.jsx';
+import ARTryOn from '../components/ARTryOn.jsx';
+import { socket } from '../utils/socket.js';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -41,6 +43,7 @@ const ProductDetails = () => {
   const [rotation, setRotation] = useState(45);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState(0);
+  const [isAROpen, setIsAROpen] = useState(false);
 
   useEffect(() => {
     if (!is3DActive) return;
@@ -184,6 +187,24 @@ const ProductDetails = () => {
     setEngravingColor('#000000');
     setAccentColor('#FFFFFF');
   }, [id]);
+
+  useEffect(() => {
+    if (product) {
+      const coShopRoomId = localStorage.getItem('coShopRoomId');
+      if (socket && socket.connected && coShopRoomId) {
+        socket.emit('view-item', {
+          roomId: coShopRoomId,
+          username: userInfo?.name || 'Guest',
+          product: {
+            id: product.id || product._id,
+            title: product.title,
+            images: product.images,
+            image: product.images?.[0]
+          }
+        });
+      }
+    }
+  }, [product, userInfo]);
 
   const handleAddToCart = () => {
     if (!userInfo) {
@@ -413,7 +434,7 @@ const ProductDetails = () => {
                   cursor: 'pointer' 
                 }}
               >
-                🖼️ PHOTO GALLERY
+                🖼️ GALLERY
               </button>
               <button 
                 onClick={() => setIs3DActive(true)}
@@ -428,7 +449,22 @@ const ProductDetails = () => {
                   cursor: 'pointer' 
                 }}
               >
-                🌐 3D STUDIO MODE
+                🌐 3D STUDIO
+              </button>
+              <button 
+                onClick={() => setIsAROpen(true)}
+                style={{ 
+                  flex: 1, 
+                  padding: '0.5rem', 
+                  fontSize: '0.75rem', 
+                  fontWeight: 700, 
+                  background: 'linear-gradient(to right, #4f46e5, #7c3aed)', 
+                  color: '#FFF',
+                  border: 'none',
+                  cursor: 'pointer' 
+                }}
+              >
+                🕶️ AR TRY-ON
               </button>
             </div>
 
@@ -782,6 +818,9 @@ const ProductDetails = () => {
             </div>
           </div>
         )}
+
+        {/* AR Modal Try On overlay */}
+        <ARTryOn product={product} isOpen={isAROpen} onClose={() => setIsAROpen(false)} />
 
       </div>
     </div>
