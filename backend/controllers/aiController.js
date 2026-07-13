@@ -94,16 +94,46 @@ If matching products are available, guide the user to check them out. Format pro
 // @route   POST /api/ai/visual-search
 // @access  Public
 export const handleVisualSearch = async (req, res) => {
-  const { fileName, category } = req.body;
+  const { fileName, category, image } = req.body;
   
-  // Predict category based on name
   let queryText = category || 'shoes';
-  if (fileName) {
-    const lowerName = fileName.toLowerCase();
-    if (lowerName.includes('watch')) queryText = 'watch';
-    else if (lowerName.includes('shoe') || lowerName.includes('sneaker') || lowerName.includes('boot')) queryText = 'shoes';
-    else if (lowerName.includes('shirt') || lowerName.includes('tshirt') || lowerName.includes('cloth')) queryText = 'clothing';
-    else if (lowerName.includes('phone') || lowerName.includes('headphone') || lowerName.includes('gadget')) queryText = 'electronics';
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (image && apiKey && apiKey !== 'your_gemini_api_key_here') {
+    try {
+      const ai = new GoogleGenerativeAI(apiKey);
+      const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      
+      const imagePart = {
+        inlineData: {
+          data: image.split(',')[1] || image,
+          mimeType: 'image/jpeg'
+        }
+      };
+
+      const prompt = "Analyze this image and identify the main consumer product category or product name (e.g. shoes, watch, clothing, electronics, bag). Respond with ONLY the category/keyword in 1-2 words so we can search a database with it.";
+      
+      const result = await model.generateContent([prompt, imagePart]);
+      const resultText = result.response.text().trim().toLowerCase();
+      
+      if (resultText) {
+        queryText = resultText.replace(/[^\w\s]/gi, '');
+        console.log(`🤖 Gemini Multimodal identified visual search category: "${queryText}"`);
+      }
+    } catch (error) {
+      console.error("Gemini Multimodal Visual Search failed, falling back to heuristics:", error);
+    }
+  }
+
+  // Fallback to name-based classification if needed
+  if (!image || queryText === (category || 'shoes')) {
+    if (fileName) {
+      const lowerName = fileName.toLowerCase();
+      if (lowerName.includes('watch')) queryText = 'watch';
+      else if (lowerName.includes('shoe') || lowerName.includes('sneaker') || lowerName.includes('boot')) queryText = 'shoes';
+      else if (lowerName.includes('shirt') || lowerName.includes('tshirt') || lowerName.includes('cloth')) queryText = 'clothing';
+      else if (lowerName.includes('phone') || lowerName.includes('headphone') || lowerName.includes('gadget')) queryText = 'electronics';
+    }
   }
 
   const matches = await findLocalMatches(queryText);
