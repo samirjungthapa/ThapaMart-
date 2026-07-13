@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 
-export const sendEmail = async ({ to, subject, html, text }) => {
+export const sendEmail = async ({ to, subject, html, text, attachments }) => {
   const isConfigured = 
     process.env.SMTP_HOST && !process.env.SMTP_HOST.includes('your_') && !process.env.SMTP_HOST.includes('your-') &&
     process.env.SMTP_PORT && 
@@ -12,6 +12,9 @@ export const sendEmail = async ({ to, subject, html, text }) => {
     console.log(`✉️  SIMULATED EMAIL SENT TO: ${to}`);
     console.log(`✉️  SUBJECT: ${subject}`);
     console.log(`✉️  TEXT CONTENT: ${text}`);
+    if (attachments && attachments.length > 0) {
+      console.log(`✉️  ATTACHMENTS: ${attachments.map(a => a.filename).join(', ')}`);
+    }
     console.log('==================================================\n');
     return { simulated: true };
   }
@@ -32,6 +35,7 @@ export const sendEmail = async ({ to, subject, html, text }) => {
       subject,
       text,
       html,
+      attachments,
     });
 
     console.log(`🔌 Email successfully sent: ${info.messageId}`);

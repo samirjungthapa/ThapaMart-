@@ -20,4 +20,32 @@ api.interceptors.request.use(
   }
 );
 
+// Response interceptor to handle token refresh on 401
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const { data } = await axios.post('/api/auth/refresh');
+        const userInfo = localStorage.getItem('userInfo')
+          ? JSON.parse(localStorage.getItem('userInfo'))
+          : {};
+        userInfo.token = data.token;
+        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+        originalRequest.headers.Authorization = `Bearer ${data.token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        // Refresh token failed or expired -> log out
+        localStorage.removeItem('userInfo');
+        // Dispatching custom event or simple reload/redirect
+        window.dispatchEvent(new Event('auth_logout'));
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

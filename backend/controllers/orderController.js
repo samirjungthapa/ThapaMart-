@@ -2,6 +2,7 @@ import Order from '../models/Order.js';
 import Product from '../models/Product.js';
 import { readDb, writeDb } from '../utils/jsonDb.js';
 import { sendEmail } from '../utils/sendEmail.js';
+import { generateInvoicePdfBuffer } from '../utils/invoiceGenerator.js';
 
 const triggerOrderEmail = async (order, user, type = 'Created') => {
   if (!user || !user.email) return;
@@ -98,8 +99,22 @@ ThapaMart Customer Support
     </div>
   `;
 
+  let attachments = [];
+  if (type === 'Paid') {
+    try {
+      const pdfBuffer = await generateInvoicePdfBuffer(order, user);
+      attachments.push({
+        filename: `invoice_${order.id || order._id}.pdf`,
+        content: pdfBuffer,
+        contentType: 'application/pdf'
+      });
+    } catch (pdfErr) {
+      console.error('⚠️ Failed to generate invoice PDF:', pdfErr.message);
+    }
+  }
+
   try {
-    await sendEmail({ to: user.email, subject, html, text });
+    await sendEmail({ to: user.email, subject, html, text, attachments });
   } catch (err) {
     console.error('⚠️ Failed to trigger email notification:', err.message);
   }
@@ -307,6 +322,12 @@ export const updateOrderStatus = async (req, res) => {
       if (order) {
         order.orderStatus = status;
         const updatedOrder = await order.save();
+        
+        const broadcast = req.app.get('broadcastEvent');
+        if (broadcast) {
+          broadcast('ORDER_UPDATED', updatedOrder);
+        }
+        
         return res.json(updatedOrder);
       }
     } catch (error) {
@@ -320,6 +341,12 @@ export const updateOrderStatus = async (req, res) => {
   if (index !== -1) {
     db.orders[index].orderStatus = status;
     writeDb(db);
+    
+    const broadcast = req.app.get('broadcastEvent');
+    if (broadcast) {
+      broadcast('ORDER_UPDATED', db.orders[index]);
+    }
+    
     return res.json(db.orders[index]);
   }
 

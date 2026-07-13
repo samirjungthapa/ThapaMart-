@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
+import cookieParser from 'cookie-parser';
 import { Server } from 'socket.io';
 import connectDB from './config/db.js';
 import { handleSockets } from './utils/socketHandler.js';
@@ -13,6 +14,7 @@ import orderRoutes from './routes/orderRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import aiRoutes from './routes/aiRoutes.js';
 import recommendationRoutes from './routes/recommendationRoutes.js';
+import couponRoutes from './routes/couponRoutes.js';
 
 dotenv.config();
 
@@ -26,6 +28,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+app.use(cookieParser());
 
 // Request logger middleware
 app.use((req, res, next) => {
@@ -71,6 +74,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/recommendations', recommendationRoutes);
+app.use('/api/coupons', couponRoutes);
 
 app.get('/api/diagnostics', protect, admin, (req, res) => {
   res.json({
