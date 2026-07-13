@@ -18,6 +18,7 @@ import ProtectedRoute from './components/ProtectedRoute.jsx';
 import AdminRoute from './components/AdminRoute.jsx';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCartItems } from './store/slices/cartSlice.js';
+import { logout } from './store/slices/authSlice.js';
 import api from './store/api.js';
 
 // Pages
@@ -47,6 +48,16 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
+    const handleAuthLogout = () => {
+      dispatch(logout());
+    };
+    window.addEventListener('auth_logout', handleAuthLogout);
+    return () => {
+      window.removeEventListener('auth_logout', handleAuthLogout);
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
     if (userInfo) {
       api.get('/auth/cart')
         .then(({ data }) => {
@@ -66,6 +77,8 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
           setToast(`🎉 New Product: ${payload.data.title}`);
         } else if (payload.type === 'PRODUCT_UPDATED') {
           setToast(`🔄 Updated: ${payload.data.title}`);
+        } else if (payload.type === 'ORDER_UPDATED') {
+          setToast(`📦 Order Status: Order #${payload.data._id || payload.data.id} is now ${payload.data.orderStatus}!`);
         }
       } catch (e) {
         console.error('SSE Error:', e);

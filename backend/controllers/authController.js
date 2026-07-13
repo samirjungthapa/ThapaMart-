@@ -7,7 +7,22 @@ import { sendSMS } from '../utils/sendSMS.js';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'thapamart_secret_key_123456', {
-    expiresIn: '30d',
+    expiresIn: '15m',
+  });
+};
+
+const generateRefreshToken = (id) => {
+  return jwt.sign({ id }, process.env.JWT_REFRESH_SECRET || 'thapamart_refresh_secret_key_789', {
+    expiresIn: '7d',
+  });
+};
+
+const setRefreshTokenCookie = (res, id) => {
+  res.cookie('refreshToken', generateRefreshToken(id), {
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
   });
 };
 
@@ -21,6 +36,7 @@ export const loginUser = async (req, res) => {
     try {
       const user = await User.findOne({ email });
       if (user && (await user.comparePassword(password))) {
+        setRefreshTokenCookie(res, user._id.toString());
         return res.json({
           _id: user._id,
           name: user.name,
@@ -39,6 +55,7 @@ export const loginUser = async (req, res) => {
   const db = readDb();
   const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (user && bcrypt.compareSync(password, user.password)) {
+    setRefreshTokenCookie(res, user.id);
     return res.json({
       _id: user.id,
       name: user.name,
@@ -88,6 +105,7 @@ export const registerUser = async (req, res) => {
       });
 
       if (user) {
+        setRefreshTokenCookie(res, user._id.toString());
         return res.status(201).json({
           _id: user._id,
           name: user.name,
@@ -126,6 +144,7 @@ export const registerUser = async (req, res) => {
   db.users.push(newUser);
   writeDb(db);
 
+  setRefreshTokenCookie(res, newUser.id);
   res.status(201).json({
     _id: newUser.id,
     name: newUser.name,
@@ -302,6 +321,7 @@ export const verifyOtp = async (req, res) => {
     delete user.otpExpires;
     writeDb(db);
 
+    setRefreshTokenCookie(res, user.id);
     return res.json({
       message: 'Account verified successfully!',
       token: generateToken(user.id),
@@ -318,4 +338,56 @@ export const verifyOtp = async (req, res) => {
   }
 
   res.status(404).json({ message: 'User not found' });
+};
+
+// @desc    Refresh access token
+// @route   POST /api/auth/refresh
+// @access  Public
+export const refreshAccessToken = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({ message: 'Not authorized, no refresh token' });
+  }
+
+  try {
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || 'thapamart_refresh_secret_key_789');
+    
+    let user;
+    if (process.env.MONGODB_URI) {
+      try {
+        user = await User.findById(decoded.id);
+      } catch (err) {
+        // Fallback below
+      }
+    }
+    
+    if (!user) {
+      const db = readDb();
+      user = db.users.find(u => u.id === decoded.id || (u._id && u._id.toString() === decoded.id));
+    }
+
+    if (!user) {
+      return res.status(401).json({ message: 'Not authorized, user not found' });
+    }
+
+    const token = generateToken(user.id || user._id.toString());
+    res.json({ token });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(401).json({ message: 'Not authorized, refresh token failed' });
+  }
+};
+
+// @desc    Logout user & clear cookie
+// @route   POST /api/auth/logout
+// @access  Public
+export const logoutUser = (req, res) => {
+  res.cookie('refreshToken', '', {
+    httpOnly: true,
+    expires: new Date(0),
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  res.json({ message: 'Logged out successfully' });
 };
