@@ -387,3 +387,78 @@ export const deleteProductReview = async (req, res) => {
 
   res.status(404).json({ message: 'Product not found' });
 };
+
+// @desc    Upvote product review
+// @route   POST /api/products/:id/reviews/:reviewId/upvote
+// @access  Private
+export const upvoteProductReview = async (req, res) => {
+  const { id, reviewId } = req.params;
+  const userId = req.user.id || req.user._id.toString();
+
+  if (process.env.MONGODB_URI) {
+    try {
+      const product = await Product.findById(id);
+      if (product) {
+        const review = product.reviews.find(r => r._id.toString() === reviewId);
+        if (!review) {
+          return res.status(404).json({ message: 'Review not found' });
+        }
+
+        if (!review.upvotedBy) {
+          review.upvotedBy = [];
+        }
+
+        const alreadyUpvoted = review.upvotedBy.some(
+          uid => uid.toString() === req.user._id.toString()
+        );
+
+        if (alreadyUpvoted) {
+          review.upvotedBy = review.upvotedBy.filter(uid => uid.toString() !== req.user._id.toString());
+          review.helpfulVotes = Math.max(0, (review.helpfulVotes || 1) - 1);
+        } else {
+          review.upvotedBy.push(req.user._id);
+          review.helpfulVotes = (review.helpfulVotes || 0) + 1;
+        }
+
+        await product.save();
+        return res.json({ message: alreadyUpvoted ? 'Upvote removed' : 'Review upvoted', review });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Error upvoting review' });
+    }
+  }
+
+  // Fallback to JSON DB
+  const db = readDb();
+  const index = db.products.findIndex(p => p.id === id || (p._id && p._id.toString() === id));
+  if (index !== -1) {
+    const product = db.products[index];
+    const review = product.reviews.find(r => r.id === reviewId || (r._id && r._id.toString() === reviewId));
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+
+    if (!review.upvotedBy) {
+      review.upvotedBy = [];
+    }
+    if (review.helpfulVotes === undefined) {
+      review.helpfulVotes = 0;
+    }
+
+    const alreadyUpvoted = review.upvotedBy.includes(userId);
+    if (alreadyUpvoted) {
+      review.upvotedBy = review.upvotedBy.filter(uid => uid !== userId);
+      review.helpfulVotes = Math.max(0, review.helpfulVotes - 1);
+    } else {
+      review.upvotedBy.push(userId);
+      review.helpfulVotes += 1;
+    }
+
+    db.products[index] = product;
+    writeDb(db);
+    return res.json({ message: alreadyUpvoted ? 'Upvote removed' : 'Review upvoted', review });
+  }
+
+  res.status(404).json({ message: 'Product not found' });
+};
