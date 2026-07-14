@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Star, Heart, ShoppingBag, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
+import { Star, Heart, ShoppingBag, Truck, ShieldCheck, RefreshCw, ThumbsUp } from 'lucide-react';
 import { addToCart } from '../store/slices/cartSlice.js';
 import { addToWishlist } from '../store/slices/wishlistSlice.js';
 import api from '../store/api.js';
@@ -233,6 +233,8 @@ const ProductDetails = () => {
     dispatch(addToWishlist(product)); 
   };
 
+  const [selectedRatingFilter, setSelectedRatingFilter] = useState(null);
+
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     setReviewError('');
@@ -246,6 +248,19 @@ const ProductDetails = () => {
     }
   };
 
+  const handleUpvoteReview = async (reviewId) => {
+    if (!userInfo) {
+      navigate(`/login?redirect=${location.pathname}`);
+      return;
+    }
+    try {
+      await api.post(`/products/${product.id || product._id}/reviews/${reviewId}/upvote`);
+      fetchProductDetails();
+    } catch (err) {
+      console.error('Failed to upvote review:', err);
+    }
+  };
+
   const getDeliveryInfo = () => {
     if (deliveryRegion === 'inside-ringroad') return { cost: 100, time: 'Same day or next day' };
     if (deliveryRegion === 'outside-ringroad') return { cost: 150, time: '1 to 2 business days' };
@@ -254,31 +269,31 @@ const ProductDetails = () => {
 
   if (loading) {
     return (
-      <div style={{ padding:'3rem 0', minHeight:'100vh', background:'#FFFFFF' }}>
+      <div style={{ padding:'3rem 0', minHeight:'100vh', background:'var(--bg-primary)', color:'var(--text-primary)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start mb-16">
             {/* Images Skeleton */}
             <div style={{ display:'flex', flexDirection:'column', gap:'1rem' }}>
-              <div style={{ aspectRatio:'4/5', background:'#F3F4F6', animation:'pulse 2s infinite', border:'1px solid #E5E7EB' }} />
+              <div style={{ aspectRatio:'4/5', background:'var(--bg-card)', animation:'pulse 2s infinite', border:'1px solid var(--border-color)' }} />
               <div style={{ display:'flex', gap:'0.5rem' }}>
                 {[...Array(4)].map((_, i) => (
-                  <div key={i} style={{ width:'70px', height:'85px', background:'#F3F4F6', animation:'pulse 2s infinite', border:'1px solid #E5E7EB' }} />
+                  <div key={i} style={{ width:'70px', height:'85px', background:'var(--bg-card)', animation:'pulse 2s infinite', border:'1px solid var(--border-color)' }} />
                 ))}
               </div>
             </div>
             {/* Details Skeleton */}
             <div style={{ display:'flex', flexDirection:'column', gap:'1.5rem', paddingTop:'2rem' }}>
               <div>
-                <div style={{ height:'0.75rem', width:'20%', background:'#F3F4F6', animation:'pulse 2s infinite', marginBottom:'0.5rem' }} />
-                <div style={{ height:'3rem', width:'80%', background:'#F3F4F6', animation:'pulse 2s infinite', marginBottom:'0.5rem' }} />
+                <div style={{ height:'0.75rem', width:'20%', background:'var(--bg-card)', animation:'pulse 2s infinite', marginBottom:'0.5rem' }} />
+                <div style={{ height:'3rem', width:'80%', background:'var(--bg-card)', animation:'pulse 2s infinite', marginBottom:'0.5rem' }} />
               </div>
-              <div style={{ height:'1.5rem', width:'30%', background:'#F3F4F6', animation:'pulse 2s infinite' }} />
-              <hr style={{ border:'none', borderTop:'1px solid #E5E7EB' }} />
-              <div style={{ height:'5rem', width:'100%', background:'#F3F4F6', animation:'pulse 2s infinite' }} />
-              <div style={{ height:'3rem', width:'40%', background:'#F3F4F6', animation:'pulse 2s infinite', marginTop:'1rem' }} />
+              <div style={{ height:'1.5rem', width:'30%', background:'var(--bg-card)', animation:'pulse 2s infinite' }} />
+              <hr style={{ border:'none', borderTop:'1px solid var(--border-color)' }} />
+              <div style={{ height:'5rem', width:'100%', background:'var(--bg-card)', animation:'pulse 2s infinite' }} />
+              <div style={{ height:'3rem', width:'40%', background:'var(--bg-card)', animation:'pulse 2s infinite', marginTop:'1rem' }} />
               <div style={{ display:'flex', gap:'1rem', marginTop:'2rem' }}>
-                <div style={{ height:'3rem', flex:1, background:'#F3F4F6', animation:'pulse 2s infinite' }} />
-                <div style={{ height:'3rem', width:'3rem', background:'#F3F4F6', animation:'pulse 2s infinite' }} />
+                <div style={{ height:'3rem', flex:1, background:'var(--bg-card)', animation:'pulse 2s infinite' }} />
+                <div style={{ height:'3rem', width:'3rem', background:'var(--bg-card)', animation:'pulse 2s infinite' }} />
               </div>
             </div>
           </div>
@@ -289,9 +304,9 @@ const ProductDetails = () => {
 
   if (!product) {
     return (
-      <div style={{ textAlign:'center', padding:'5rem 2rem', minHeight:'60vh', background:'#FFFFFF' }}>
+      <div style={{ textAlign:'center', padding:'5rem 2rem', minHeight:'60vh', background:'var(--bg-primary)', color:'var(--text-primary)' }}>
         <p style={{ color:'#71717A', marginBottom:'1rem' }}>Product not found.</p>
-        <Link to="/shop" style={{ color:'#09090B', textDecoration:'none', fontWeight:700, borderBottom:'1px solid #09090B' }}>Back to shop</Link>
+        <Link to="/shop" style={{ color:'var(--text-primary)', textDecoration:'none', fontWeight:700, borderBottom:'1px solid var(--text-primary)' }}>Back to shop</Link>
       </div>
     );
   }
@@ -299,7 +314,7 @@ const ProductDetails = () => {
   const delivery = getDeliveryInfo();
 
   return (
-    <div style={{ padding:'3rem 0', minHeight:'100vh', background:'#FFFFFF' }}>
+    <div style={{ padding:'3rem 0', minHeight:'100vh', background:'var(--bg-primary)', color:'var(--text-primary)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Main Product Info */}
@@ -669,17 +684,17 @@ const ProductDetails = () => {
         </div>
 
         {/* Reviews */}
-        <div style={{ paddingTop:'4rem', borderTop:'1px solid #E5E7EB' }}>
-          <h2 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'2.5rem', fontWeight:900, color:'#09090B', marginBottom:'3rem', textAlign:'center' }}>Customer Reviews</h2>
+        <div style={{ paddingTop:'4rem', borderTop:'1px solid var(--border-color)' }}>
+          <h2 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'2.5rem', fontWeight:900, color:'var(--text-primary)', marginBottom:'3rem', textAlign:'center' }}>Customer Reviews</h2>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
             
             {/* Reviews Summary Stats */}
             <div className="lg:col-span-1">
-              <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem', borderRadius: '0.75rem' }}>
-                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#09090B', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rating Overview</h3>
+              <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '2rem', borderRadius: '0.75rem' }}>
+                <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Rating Overview</h3>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span style={{ fontSize: '3rem', fontWeight: 900, color: '#09090B' }}>{product.ratings || 0}</span>
+                  <span style={{ fontSize: '3rem', fontWeight: 900, color: 'var(--text-primary)' }}>{product.ratings || 0}</span>
                   <span style={{ fontSize: '1rem', color: '#71717A' }}>/ 5</span>
                 </div>
                 <div style={{ display: 'flex', color: '#D4AF37', gap: '0.125rem', marginBottom: '0.5rem' }}>
@@ -695,7 +710,7 @@ const ProductDetails = () => {
                   ))}
                 </div>
                 <p style={{ fontSize: '0.8rem', color: '#71717A', marginBottom: '2rem' }}>
-                  Based on {(product.reviews || []).length} customer reviews
+                  Based on {(product.reviews || []).length} customer reviews {selectedRatingFilter && `(Filtered to ${selectedRatingFilter} Star)`}
                 </p>
 
                 {/* Star Progress Bars */}
@@ -704,60 +719,90 @@ const ProductDetails = () => {
                     const reviews = product.reviews || [];
                     const count = reviews.filter(r => Math.round(r.rating) === stars).length;
                     const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                    const isFilterActive = selectedRatingFilter === stars;
                     return (
-                      <div key={stars} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.75rem' }}>
-                        <span style={{ width: '2.5rem', color: '#09090B', fontWeight: 700 }}>{stars} Star</span>
-                        <div style={{ flexGrow: 1, height: '6px', background: '#E5E7EB', borderRadius: '3px', overflow: 'hidden' }}>
-                          <div style={{ width: `${percentage}%`, height: '100%', background: '#000000', borderRadius: '3px' }} />
+                      <div 
+                        key={stars} 
+                        onClick={() => setSelectedRatingFilter(prev => prev === stars ? null : stars)}
+                        style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '0.75rem', cursor: 'pointer', opacity: selectedRatingFilter && !isFilterActive ? 0.4 : 1, transition: 'opacity 0.2s' }}
+                        className="group"
+                      >
+                        <span style={{ width: '2.5rem', color: 'var(--text-primary)', fontWeight: 700 }} className="group-hover:underline">{stars} Star</span>
+                        <div style={{ flexGrow: 1, height: '6px', background: 'var(--border-color)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ width: `${percentage}%`, height: '100%', background: 'var(--primary-accent)', borderRadius: '3px' }} />
                         </div>
                         <span style={{ width: '1.5rem', textAlign: 'right', color: '#71717A' }}>{count}</span>
                       </div>
                     );
                   })}
+                  {selectedRatingFilter && (
+                    <button 
+                      onClick={() => setSelectedRatingFilter(null)}
+                      style={{ marginTop: '1rem', background: 'transparent', border: 'none', color: 'var(--primary-accent)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                    >
+                      Clear Filter
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
 
             {/* Reviews List */}
             <div className="lg:col-span-1 space-y-6">
-              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#09090B', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reviews List</h3>
+              <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '1.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Reviews List</h3>
               {!product.reviews || product.reviews.length === 0 ? (
-                <div style={{ padding:'3rem', textAlign:'center', color:'#71717A', border:'1px solid #E5E7EB', borderRadius: '0.75rem', background:'#F9FAFB' }}>
+                <div style={{ padding:'3rem', textAlign:'center', color:'#71717A', border:'1px solid var(--border-color)', borderRadius: '0.75rem', background:'var(--bg-card)' }}>
                   No reviews yet. Share your experience.
                 </div>
               ) : (
-                product.reviews.map((rev, idx) => (
-                  <div key={idx} style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '1.25rem', borderRadius: '0.75rem', marginBottom: '1rem' }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'0.5rem', alignItems: 'center' }}>
-                      <h4 style={{ fontSize:'0.875rem', fontWeight:700, color:'#09090B' }}>{rev.name}</h4>
-                      <div style={{ display:'flex', color:'#D4AF37', gap: '1px' }}>
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            size={12} 
-                            style={{ 
-                              fill: i < Math.floor(rev.rating) ? '#D4AF37' : 'none', 
-                              stroke: '#D4AF37' 
-                            }} 
-                          />
-                        ))}
+                (product.reviews || [])
+                  .filter(r => !selectedRatingFilter || Math.round(r.rating) === selectedRatingFilter)
+                  .map((rev, idx) => {
+                    const hasUpvoted = rev.upvotedBy && userInfo && rev.upvotedBy.includes(userInfo.id || userInfo._id);
+                    return (
+                      <div key={idx} style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '1.25rem', borderRadius: '0.75rem', marginBottom: '1rem' }}>
+                        <div style={{ display:'flex', justifyContent:'space-between', marginBottom:'0.5rem', alignItems: 'center' }}>
+                          <h4 style={{ fontSize:'0.875rem', fontWeight:700, color:'var(--text-primary)' }}>{rev.name}</h4>
+                          <div style={{ display:'flex', color:'#D4AF37', gap: '1px' }}>
+                            {[...Array(5)].map((_, i) => (
+                              <Star 
+                                key={i} 
+                                size={12} 
+                                style={{ 
+                                  fill: i < Math.floor(rev.rating) ? '#D4AF37' : 'none', 
+                                  stroke: '#D4AF37' 
+                                }} 
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <p style={{ fontSize:'0.8rem', color:'var(--text-primary)', opacity: 0.8, lineHeight:1.6, margin: 0 }}>{rev.comment}</p>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.75rem' }}>
+                          {rev.createdAt && (
+                            <span style={{ fontSize: '0.65rem', color: '#A1A1AA' }}>
+                              {new Date(rev.createdAt).toLocaleDateString()}
+                            </span>
+                          )}
+                          <button
+                            onClick={() => handleUpvoteReview(rev.id || rev._id)}
+                            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '0.7rem', color: hasUpvoted ? 'var(--primary-accent)' : '#71717A', transition: 'color 0.2s', padding: '0.25rem 0.5rem', borderRadius: '4px' }}
+                            className="hover:bg-gray-100 dark:hover:bg-gray-800"
+                            title="Helpful Review"
+                          >
+                            <ThumbsUp size={12} style={{ fill: hasUpvoted ? 'var(--primary-accent)' : 'none' }} />
+                            <span>Helpful ({rev.helpfulVotes || 0})</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <p style={{ fontSize:'0.8rem', color:'#52525B', lineHeight:1.6, margin: 0 }}>{rev.comment}</p>
-                    {rev.createdAt && (
-                      <span style={{ fontSize: '0.65rem', color: '#A1A1AA', display: 'block', marginTop: '0.5rem' }}>
-                        {new Date(rev.createdAt).toLocaleDateString()}
-                      </span>
-                    )}
-                  </div>
-                ))
+                    );
+                  })
               )}
             </div>
 
             {/* Write a Review Panel */}
             <div className="lg:col-span-1">
-              <div style={{ background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'2rem', borderRadius: '0.75rem' }}>
-                <h3 style={{ fontSize:'1rem', fontWeight:800, color:'#09090B', marginBottom:'1.5rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>Write a Review</h3>
+              <div style={{ background:'var(--bg-card)', border:'1px solid var(--border-color)', padding:'2rem', borderRadius: '0.75rem' }}>
+                <h3 style={{ fontSize:'1rem', fontWeight:800, color:'var(--text-primary)', marginBottom:'1.5rem', textTransform:'uppercase', letterSpacing:'0.05em' }}>Write a Review</h3>
                 {userInfo ? (
                   <form onSubmit={handleReviewSubmit} style={{ display:'flex', flexDirection:'column', gap:'1.25rem' }}>
                     {reviewSuccess && <div style={{ padding:'0.75rem', background:'#ECFDF5', color:'#059669', fontSize:'0.75rem', border:'1px solid #A7F3D0', borderRadius: '4px' }}>Review submitted.</div>}
@@ -786,7 +831,7 @@ const ProductDetails = () => {
                             />
                           </button>
                         ))}
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#52525B', marginLeft: '0.5rem' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-primary)', marginLeft: '0.5rem' }}>
                           {rating === 5 ? 'Excellent' : rating === 4 ? 'Good' : rating === 3 ? 'Average' : rating === 2 ? 'Poor' : 'Terrible'}
                         </span>
                       </div>
@@ -794,13 +839,13 @@ const ProductDetails = () => {
 
                     <div>
                       <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', marginBottom:'0.5rem' }}>Comments</label>
-                      <textarea required rows="4" value={comment} onChange={e=>setComment(e.target.value)} placeholder="Tell us what you liked or disliked about this product..." style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none', borderRadius: '4px' }} />
+                      <textarea required rows="4" value={comment} onChange={e=>setComment(e.target.value)} placeholder="Tell us what you liked or disliked about this product..." style={{ width:'100%', background:'var(--bg-primary)', border:'1px solid var(--border-color)', padding:'0.75rem', color:'var(--text-primary)', fontSize:'0.8rem', outline:'none', borderRadius: '4px' }} />
                     </div>
 
-                    <button type="submit" style={{ width:'100%', padding:'1rem', background:'#000000', color:'#FFFFFF', fontSize:'0.75rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer', borderRadius: '4px', transition: 'background 0.2s' }} onMouseEnter={e=>e.currentTarget.style.background='#27272A'} onMouseLeave={e=>e.currentTarget.style.background='#000000'}>Submit Review</button>
+                    <button type="submit" style={{ width:'100%', padding:'1rem', background:'var(--text-primary)', color:'var(--bg-primary)', fontSize:'0.75rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer', borderRadius: '4px', transition: 'background 0.2s' }}>Submit Review</button>
                   </form>
                 ) : (
-                  <p style={{ fontSize:'0.8rem', color:'#71717A' }}>Please <Link to="/login" style={{ color:'#09090B', fontWeight:700, borderBottom:'1px solid #09090B' }}>login</Link> to review.</p>
+                  <p style={{ fontSize:'0.8rem', color:'#71717A' }}>Please <Link to="/login" style={{ color:'var(--text-primary)', fontWeight:700, borderBottom:'1px solid var(--text-primary)' }}>login</Link> to review.</p>
                 )}
               </div>
             </div>
