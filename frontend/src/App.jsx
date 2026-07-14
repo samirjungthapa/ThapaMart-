@@ -98,7 +98,7 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   }, [toast]);
 
   return (
-    <div className="flex flex-col min-h-screen" style={{ backgroundColor:'#FFFFFF', color:'#09090B' }}>
+    <div className="flex flex-col min-h-screen" style={{ backgroundColor:'var(--bg-primary)', color:'var(--text-primary)', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       
       {/* Navigation Bar */}
       <Navbar />

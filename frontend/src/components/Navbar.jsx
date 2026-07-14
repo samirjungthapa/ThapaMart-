@@ -7,11 +7,12 @@ import { logout } from '../store/slices/authSlice.js';
 import ThapaMartLogo from './ThapaMartLogo.jsx';
 import CartDrawer from './CartDrawer.jsx';
 import CommandPalette from './CommandPalette.jsx';
+import ThemeToggle from './ThemeToggle.jsx';
 import { isMuted, setMuted, playClick } from '../utils/audio.js';
 
-const BG      = '#FFFFFF';
-const BORDER  = '#E5E7EB';
-const TEXT    = '#09090B';
+const BG      = 'var(--bg-primary)';
+const BORDER  = 'var(--border-color)';
+const TEXT    = 'var(--text-primary)';
 const MUTED   = '#71717A';
 
 const Navbar = () => {
@@ -83,7 +84,8 @@ const Navbar = () => {
       <header
         style={{
           position: 'sticky', top: 0, zIndex: 50, width: '100%',
-          background: isScrolled ? 'rgba(255,255,255,0.95)' : BG,
+          background: isScrolled ? 'rgba(var(--bg-primary-rgb, 255,255,255), 0.95)' : BG,
+          backgroundColor: BG,
           backdropFilter: isScrolled ? 'blur(16px)' : 'none',
           borderBottom: isScrolled ? `1px solid ${BORDER}` : '1px solid transparent',
           transition: 'all 0.3s ease'
@@ -120,7 +122,7 @@ const Navbar = () => {
                   >
                     {link.name}
                     {isActive && (
-                      <motion.div layoutId="nav-pill" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', background: '#000000' }} />
+                      <motion.div layoutId="nav-pill" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px', background: 'var(--primary-accent)' }} />
                     )}
                   </Link>
                 );
@@ -140,11 +142,14 @@ const Navbar = () => {
                 {muted ? <VolumeX size={20} strokeWidth={1.5} /> : <Volume2 size={20} strokeWidth={1.5} />}
               </button>
 
+              {/* Theme Toggle */}
+              <ThemeToggle />
+
               {/* Wishlist */}
               <Link to="/wishlist" onClick={playClick} style={{ color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem' }}>
                 <Heart size={20} strokeWidth={1.5} />
                 {wishlistItems.length > 0 && (
-                  <span style={{ position: 'absolute', top: 2, right: 2, width: '14px', height: '14px', background: '#000000', color: '#FFFFFF', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ position: 'absolute', top: 2, right: 2, width: '14px', height: '14px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {wishlistItems.length}
                   </span>
                 )}
@@ -154,7 +159,7 @@ const Navbar = () => {
               <button onClick={() => { playClick(); setCartDrawerOpen(true); }} style={{ background: 'transparent', border: 'none', color: TEXT, textDecoration: 'none', position: 'relative', padding: '0.5rem', cursor: 'pointer' }}>
                 <ShoppingBag size={20} strokeWidth={1.5} />
                 {cartItems.length > 0 && (
-                  <span style={{ position: 'absolute', top: 2, right: 2, width: '14px', height: '14px', background: '#000000', color: '#FFFFFF', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ position: 'absolute', top: 2, right: 2, width: '14px', height: '14px', background: 'var(--text-primary)', color: 'var(--bg-primary)', borderRadius: '50%', fontSize: '0.6rem', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {cartItems.reduce((a, c) => a + c.quantity, 0)}
                   </span>
                 )}
@@ -176,21 +181,21 @@ const Navbar = () => {
                 <AnimatePresence>
                   {profileOpen && userInfo && (
                     <motion.div initial={{ opacity: 0, y: 10, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      style={{ position: 'absolute', right: 0, top: '100%', marginTop: '0.5rem', width: '14rem', background: '#FFFFFF', border: `1px solid ${BORDER}`, borderRadius: '0.5rem', padding: '0.5rem', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', transformOrigin: 'top right' }}>
+                      style={{ position: 'absolute', right: 0, top: '100%', marginTop: '0.5rem', width: '14rem', background: 'var(--bg-primary)', border: `1px solid ${BORDER}`, borderRadius: '0.5rem', padding: '0.5rem', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', transformOrigin: 'top right', zIndex: 60 }}>
                       <div style={{ padding: '0.75rem 1rem', borderBottom: `1px solid ${BORDER}`, marginBottom: '0.5rem' }}>
-                        <p style={{ fontSize: '0.8rem', fontWeight: 700, color: TEXT }}>{userInfo.name}</p>
-                        <p style={{ fontSize: '0.7rem', color: MUTED }}>{userInfo.email}</p>
+                        <p style={{ fontSize: '0.8rem', fontWeight: 700, color: TEXT, margin: 0 }}>{userInfo.name}</p>
+                        <p style={{ fontSize: '0.7rem', color: MUTED, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{userInfo.email}</p>
                       </div>
-                      {userInfo.role === 'admin' && (
-                        <Link to="/admin" onClick={() => setProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} onMouseEnter={e=>e.currentTarget.style.background='#F9FAFB'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                          <LayoutDashboard size={16} /> Admin Dashboard
+                      <Link to="/dashboard" onClick={() => { playClick(); setProfileOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <LayoutDashboard size={14} /> My Dashboard
+                      </Link>
+                      {userInfo.isAdmin && (
+                        <Link to="/admin" onClick={() => { playClick(); setProfileOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                          <LayoutDashboard size={14} /> Admin Area
                         </Link>
                       )}
-                      <Link to="/dashboard" onClick={() => setProfileOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} onMouseEnter={e=>e.currentTarget.style.background='#F9FAFB'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                        <User size={16} /> My Account
-                      </Link>
-                      <button onClick={() => { dispatch(logout()); setProfileOpen(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.8rem', color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '0.25rem' }} onMouseEnter={e=>e.currentTarget.style.background='#FEF2F2'} onMouseLeave={e=>e.currentTarget.style.background='transparent'}>
-                        <LogOut size={16} /> Sign Out
+                      <button onClick={() => { playClick(); setProfileOpen(false); dispatch(logout()); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.8rem', color: '#EF4444', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '0.25rem', textAlign: 'left' }} className="hover:bg-red-50 dark:hover:bg-red-950/20">
+                        <LogOut size={14} /> Logout
                       </button>
                     </motion.div>
                   )}
@@ -210,13 +215,13 @@ const Navbar = () => {
         {/* Search Bar Dropdown */}
         <AnimatePresence>
           {searchOpen && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', background: '#FFFFFF', borderBottom: `1px solid ${BORDER}` }}>
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden', background: 'var(--bg-primary)', borderBottom: `1px solid ${BORDER}` }}>
               <div className="max-w-3xl mx-auto px-4 py-6">
                 <form onSubmit={handleSearch} style={{ position: 'relative' }}>
                   <Search size={20} style={{ position: 'absolute', top: '50%', left: '1rem', transform: 'translateY(-50%)', color: MUTED }} strokeWidth={1.5} />
                   <input type="text" placeholder="Search for premium products..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus
-                    style={{ width: '100%', background: '#F9FAFB', border: 'none', padding: '1rem 1rem 1rem 3rem', fontSize: '1rem', color: TEXT, outline: 'none' }} />
-                  <button type="submit" style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: '#000000', color: '#FFFFFF', border: 'none', padding: '0.5rem 1rem', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}>Search</button>
+                    style={{ width: '100%', background: 'var(--bg-card)', border: 'none', padding: '1rem 1rem 1rem 3rem', fontSize: '1rem', color: TEXT, outline: 'none' }} />
+                  <button type="submit" style={{ position: 'absolute', top: '50%', right: '1rem', transform: 'translateY(-50%)', background: 'var(--text-primary)', color: 'var(--bg-primary)', border: 'none', padding: '0.5rem 1rem', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', cursor: 'pointer' }}>Search</button>
                 </form>
               </div>
             </motion.div>
@@ -230,7 +235,7 @@ const Navbar = () => {
           <div style={{ position: 'fixed', inset: 0, zIndex: 999 }}>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileMenuOpen(false)} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }} />
             <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '80%', maxWidth: '300px', background: '#FFFFFF', display: 'flex', flexDirection: 'column' }}>
+              style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: '80%', maxWidth: '300px', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
               <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: `1px solid ${BORDER}` }}>
                 <ThapaMartLogo size="sm" variant="wordmark" />
                 <button onClick={() => setMobileMenuOpen(false)} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer' }}><X size={20} strokeWidth={1.5} /></button>
