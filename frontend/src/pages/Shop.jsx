@@ -46,6 +46,7 @@ const Shop = () => {
   const [priceRange, setPriceRange] = useState('all');
   const [customMin, setCustomMin] = useState('');
   const [customMax, setCustomMax] = useState('');
+  const [minRating, setMinRating] = useState('');
   const [sort, setSort] = useState('newest');
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState(1);
@@ -90,7 +91,7 @@ const Shop = () => {
     try {
       const categoryParam = categories.length > 0 ? categories.join(',') : 'all';
       const { data } = await api.get('/products', { 
-        params: { keyword, category: categoryParam, minPrice, maxPrice, sort, page, limit: 9 } 
+        params: { keyword, category: categoryParam, minPrice, maxPrice, sort, page, limit: 9, minRating } 
       });
       setProducts(data.products || []);
       setPages(data.pages || 1);
@@ -103,27 +104,27 @@ const Shop = () => {
 
   useEffect(() => { 
     fetchProducts(); 
-  }, [keyword, categories, priceRange, customMin, customMax, sort, page]);
+  }, [keyword, categories, priceRange, customMin, customMax, sort, page, minRating]);
 
   return (
-    <div style={{ padding:'3rem 0', minHeight:'100vh', background:'#FFFFFF' }}>
+    <div style={{ padding:'3rem 0', minHeight:'100vh', background:'var(--bg-primary)', color:'var(--text-primary)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div style={{ marginBottom:'3rem', textAlign:'center' }}>
-          <h1 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'3rem', fontWeight:900, color:'#09090B', letterSpacing:'-0.02em', marginBottom:'0.5rem' }}>
+          <h1 style={{ fontFamily:"'Cormorant Garamond', serif", fontSize:'3rem', fontWeight:900, color:'var(--text-primary)', letterSpacing:'-0.02em', marginBottom:'0.5rem' }}>
             The Collection
           </h1>
-          <div style={{ width:'2rem', height:'1px', background:'#09090B', margin:'0 auto' }} />
+          <div style={{ width:'2rem', height:'1px', background:'var(--border-color)', margin:'0 auto' }} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
           {/* Filters Sidebar */}
           <div className="lg:col-span-1">
-            <div style={{ background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'1.5rem', position:'sticky', top:'5rem' }}>
-              <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'1.5rem', paddingBottom:'1rem', borderBottom:'1px solid #E5E7EB' }}>
-                <SlidersHorizontal size={16} style={{ color:'#09090B' }} />
-                <h2 style={{ fontSize:'0.75rem', fontWeight:800, color:'#09090B', textTransform:'uppercase', letterSpacing:'0.1em' }}>Filters</h2>
+            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border-color)', padding:'1.5rem', position:'sticky', top:'5rem' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'0.5rem', marginBottom:'1.5rem', paddingBottom:'1rem', borderBottom:'1px solid var(--border-color)' }}>
+                <SlidersHorizontal size={16} style={{ color:'var(--text-primary)' }} />
+                <h2 style={{ fontSize:'0.75rem', fontWeight:800, color:'var(--text-primary)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Filters</h2>
               </div>
 
               {/* Search */}
@@ -132,8 +133,8 @@ const Shop = () => {
                 <div style={{ position:'relative' }}>
                   <Search size={14} style={{ position:'absolute', top:'50%', left:'0.875rem', transform:'translateY(-50%)', color:'#71717A' }} />
                   <input type="text" placeholder="Keywords..." value={keyword} onChange={e=>setKeyword(e.target.value)}
-                    style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem 1rem 0.75rem 2.25rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }}
-                    onFocus={e=>e.currentTarget.style.borderColor='#09090B'} onBlur={e=>e.currentTarget.style.borderColor='#E5E7EB'} />
+                    style={{ width:'100%', background:'var(--bg-primary)', border:'1px solid var(--border-color)', padding:'0.75rem 1rem 0.75rem 2.25rem', color:'var(--text-primary)', fontSize:'0.8rem', outline:'none' }}
+                    onFocus={e=>e.currentTarget.style.borderColor='var(--primary-accent)'} onBlur={e=>e.currentTarget.style.borderColor='var(--border-color)'} />
                 </div>
               </div>
 
@@ -147,9 +148,9 @@ const Shop = () => {
                         type="checkbox" 
                         checked={categories.includes(cat.id)} 
                         onChange={() => toggleCategory(cat.id)}
-                        style={{ accentColor: '#09090B', width: '1rem', height: '1rem', cursor: 'pointer' }}
+                        style={{ accentColor: 'var(--primary-accent)', width: '1rem', height: '1rem', cursor: 'pointer' }}
                       />
-                      <span style={{ fontSize:'0.875rem', color:'#52525B' }}>{cat.name}</span>
+                      <span style={{ fontSize:'0.875rem', color:'var(--text-primary)', opacity: 0.85 }}>{cat.name}</span>
                     </label>
                   ))}
                 </div>
@@ -166,9 +167,9 @@ const Shop = () => {
                         name="priceRange"
                         checked={priceRange === range.id} 
                         onChange={() => handlePriceRangeChange(range.id)}
-                        style={{ accentColor: '#09090B', width: '1rem', height: '1rem', cursor: 'pointer' }}
+                        style={{ accentColor: 'var(--primary-accent)', width: '1rem', height: '1rem', cursor: 'pointer' }}
                       />
-                      <span style={{ fontSize:'0.875rem', color:'#52525B' }}>{range.name}</span>
+                      <span style={{ fontSize:'0.875rem', color:'var(--text-primary)', opacity: 0.85 }}>{range.name}</span>
                     </label>
                   ))}
                   <label style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
@@ -177,26 +178,50 @@ const Shop = () => {
                       name="priceRange"
                       checked={priceRange === 'custom'} 
                       onChange={() => setPriceRange('custom')}
-                      style={{ accentColor: '#09090B', width: '1rem', height: '1rem', cursor: 'pointer' }}
+                      style={{ accentColor: 'var(--primary-accent)', width: '1rem', height: '1rem', cursor: 'pointer' }}
                     />
-                    <span style={{ fontSize:'0.875rem', color:'#52525B' }}>Custom Range</span>
+                    <span style={{ fontSize:'0.875rem', color:'var(--text-primary)', opacity: 0.85 }}>Custom Range</span>
                   </label>
                 </div>
 
                 {priceRange === 'custom' && (
                   <div style={{ display:'flex', gap:'0.5rem', alignItems:'center' }}>
-                    <input type="number" placeholder="Min" value={customMin} onChange={e=>setCustomMin(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }} />
+                    <input type="number" placeholder="Min" value={customMin} onChange={e=>setCustomMin(e.target.value)} style={{ width:'100%', background:'var(--bg-primary)', border:'1px solid var(--border-color)', padding:'0.75rem', color:'var(--text-primary)', fontSize:'0.8rem', outline:'none' }} />
                     <span style={{ color:'#71717A' }}>-</span>
-                    <input type="number" placeholder="Max" value={customMax} onChange={e=>setCustomMax(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }} />
+                    <input type="number" placeholder="Max" value={customMax} onChange={e=>setCustomMax(e.target.value)} style={{ width:'100%', background:'var(--bg-primary)', border:'1px solid var(--border-color)', padding:'0.75rem', color:'var(--text-primary)', fontSize:'0.8rem', outline:'none' }} />
                   </div>
                 )}
+              </div>
+
+              {/* Rating Filter */}
+              <div style={{ marginBottom:'2rem' }}>
+                <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.75rem' }}>Minimum Rating</label>
+                <div style={{ display:'flex', flexDirection:'column', gap:'0.5rem' }}>
+                  {[
+                    { val: '', name: 'Any Rating' },
+                    { val: '4', name: '4 Stars & Up' },
+                    { val: '3', name: '3 Stars & Up' },
+                    { val: '2', name: '2 Stars & Up' }
+                  ].map(item => (
+                    <label key={item.val} style={{ display:'flex', alignItems:'center', gap:'0.5rem', cursor:'pointer' }}>
+                      <input 
+                        type="radio" 
+                        name="minRating"
+                        checked={minRating === item.val} 
+                        onChange={() => { setMinRating(item.val); setPage(1); }}
+                        style={{ accentColor: 'var(--primary-accent)', width: '1rem', height: '1rem', cursor: 'pointer' }}
+                      />
+                      <span style={{ fontSize:'0.875rem', color:'var(--text-primary)', opacity: 0.85 }}>{item.name}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               {/* Sort */}
               <div>
                 <label style={{ display:'block', fontSize:'0.65rem', fontWeight:800, color:'#71717A', textTransform:'uppercase', letterSpacing:'0.1em', marginBottom:'0.75rem' }}>Sort By</label>
                 <select value={sort} onChange={e=>setSort(e.target.value)}
-                  style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem 1rem', color:'#09090B', fontSize:'0.8rem', outline:'none', cursor:'pointer' }}>
+                  style={{ width:'100%', background:'var(--bg-primary)', border:'1px solid var(--border-color)', padding:'0.75rem 1rem', color:'var(--text-primary)', fontSize:'0.8rem', outline:'none', cursor:'pointer' }}>
                   <option value="newest">Newest Arrival</option>
                   <option value="priceAsc">Price: Low to High</option>
                   <option value="priceDesc">Price: High to Low</option>
@@ -210,14 +235,14 @@ const Shop = () => {
           {/* Catalog */}
           <div className="lg:col-span-3">
             {/* Results Toolbar */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid #E5E7EB', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <span style={{ fontSize: '0.8rem', color: '#565959' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', paddingBottom: '0.75rem', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.8rem', color: '#71717A' }}>
                 {products.length > 0 ? `1-${products.length} of over ${products.length * pages} results` : '0 results'}
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '0.75rem', color: '#565959' }}>Sort by:</span>
+                <span style={{ fontSize: '0.75rem', color: '#71717A' }}>Sort by:</span>
                 <select value={sort} onChange={e=>setSort(e.target.value)}
-                  style={{ background:'#FFFFFF', border:'1px solid #D5D9D9', borderRadius: '4px', padding:'0.25rem 0.5rem', color:'#0F1111', fontSize:'0.75rem', outline:'none', cursor:'pointer', boxShadow: '0 2px 5px rgba(213,217,217,.5)' }}>
+                  style={{ background:'var(--bg-primary)', border:'1px solid var(--border-color)', borderRadius: '4px', padding:'0.25rem 0.5rem', color:'var(--text-primary)', fontSize:'0.75rem', outline:'none', cursor:'pointer' }}>
                   <option value="newest">Newest Arrival</option>
                   <option value="priceAsc">Price: Low to High</option>
                   <option value="priceDesc">Price: High to Low</option>
