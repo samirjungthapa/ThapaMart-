@@ -17,13 +17,25 @@ const generateRefreshToken = (id) => {
   });
 };
 
-const setRefreshTokenCookie = (res, id) => {
-  res.cookie('refreshToken', generateRefreshToken(id), {
+const setAuthCookies = (res, id) => {
+  const token = generateToken(id);
+  const refreshToken = generateRefreshToken(id);
+
+  res.cookie('token', token, {
+    expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+
+  res.cookie('refreshToken', refreshToken, {
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
   });
+
+  return token;
 };
 
 // @desc    Auth user & get token
@@ -36,14 +48,14 @@ export const loginUser = async (req, res) => {
     try {
       const user = await User.findOne({ email });
       if (user && (await user.comparePassword(password))) {
-        setRefreshTokenCookie(res, user._id.toString());
+        const token = setAuthCookies(res, user._id.toString());
         return res.json({
           _id: user._id,
           name: user.name,
           email: user.email,
           role: user.role,
           avatar: user.avatar,
-          token: generateToken(user._id.toString()),
+          token,
         });
       }
     } catch (error) {
@@ -55,14 +67,14 @@ export const loginUser = async (req, res) => {
   const db = readDb();
   const user = db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
   if (user && bcrypt.compareSync(password, user.password)) {
-    setRefreshTokenCookie(res, user.id);
+    const token = setAuthCookies(res, user.id);
     return res.json({
       _id: user.id,
       name: user.name,
       email: user.email,
       role: user.role,
       avatar: user.avatar,
-      token: generateToken(user.id),
+      token,
     });
   }
 
@@ -105,7 +117,7 @@ export const registerUser = async (req, res) => {
       });
 
       if (user) {
-        setRefreshTokenCookie(res, user._id.toString());
+        const token = setAuthCookies(res, user._id.toString());
         return res.status(201).json({
           _id: user._id,
           name: user.name,
@@ -114,7 +126,7 @@ export const registerUser = async (req, res) => {
           isVerified: user.isVerified,
           role: user.role,
           avatar: user.avatar,
-          token: generateToken(user._id.toString()),
+          token,
         });
       }
     } catch (error) {
@@ -144,7 +156,7 @@ export const registerUser = async (req, res) => {
   db.users.push(newUser);
   writeDb(db);
 
-  setRefreshTokenCookie(res, newUser.id);
+  const token = setAuthCookies(res, newUser.id);
   res.status(201).json({
     _id: newUser.id,
     name: newUser.name,
@@ -153,7 +165,7 @@ export const registerUser = async (req, res) => {
     isVerified: newUser.isVerified,
     role: newUser.role,
     avatar: newUser.avatar,
-    token: generateToken(newUser.id),
+    token,
   });
 };
 
@@ -288,9 +300,10 @@ export const verifyOtp = async (req, res) => {
       user.otpExpires = undefined;
       await user.save();
 
+      const token = setAuthCookies(res, user._id.toString());
       return res.json({
         message: 'Account verified successfully!',
-        token: generateToken(user._id.toString()),
+        token,
         user: {
           _id: user._id,
           name: user.name,
@@ -321,10 +334,10 @@ export const verifyOtp = async (req, res) => {
     delete user.otpExpires;
     writeDb(db);
 
-    setRefreshTokenCookie(res, user.id);
+    const token = setAuthCookies(res, user.id);
     return res.json({
       message: 'Account verified successfully!',
-      token: generateToken(user.id),
+      token,
       user: {
         _id: user.id,
         name: user.name,
@@ -366,12 +379,18 @@ export const refreshAccessToken = async (req, res) => {
       const db = readDb();
       user = db.users.find(u => u.id === decoded.id || (u._id && u._id.toString() === decoded.id));
     }
-
+ 
     if (!user) {
       return res.status(401).json({ message: 'Not authorized, user not found' });
     }
 
     const token = generateToken(user.id || user._id.toString());
+    res.cookie('token', token, {
+      expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
     res.json({ token });
   } catch (error) {
     console.error('Refresh token error:', error);
@@ -383,6 +402,12 @@ export const refreshAccessToken = async (req, res) => {
 // @route   POST /api/auth/logout
 // @access  Public
 export const logoutUser = (req, res) => {
+  res.cookie('token', '', {
+    httpOnly: true,
+    expires: new Date(0),
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
   res.cookie('refreshToken', '', {
     httpOnly: true,
     expires: new Date(0),
@@ -390,4 +415,23 @@ export const logoutUser = (req, res) => {
     sameSite: 'strict',
   });
   res.json({ message: 'Logged out successfully' });
+};
+
+// @desc    Get all users (Admin)
+// @route   GET /api/auth/users
+// @access  Private/Admin
+export const getUsers = async (req, res) => {
+  if (process.env.MONGODB_URI) {
+    try {
+      const users = await User.find({}).select('-password');
+      return res.json(users);
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // Fallback to JSON DB
+  const db = readDb();
+  const users = db.users.map(({ password, ...u }) => u);
+  res.json(users);
 };

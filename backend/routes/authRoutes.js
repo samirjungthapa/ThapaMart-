@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginUser, registerUser, verifyOtp, getUserProfile, updateUserRole, getUserCart, saveUserCart, refreshAccessToken, logoutUser } from '../controllers/authController.js';
+import { loginUser, registerUser, verifyOtp, getUserProfile, updateUserRole, getUserCart, saveUserCart, refreshAccessToken, logoutUser, getUsers } from '../controllers/authController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import { validateRegister, validateLogin } from '../middleware/validationMiddleware.js';
 
@@ -13,6 +13,7 @@ router.post('/verify-otp', verifyOtp);
 router.post('/refresh', refreshAccessToken);
 router.post('/logout', logoutUser);
 router.get('/profile', protect, getUserProfile);
+router.get('/users', protect, admin, getUsers);
 router.put('/users/:id/role', protect, admin, updateUserRole);
 
 router.route('/cart')
