@@ -141,7 +141,7 @@ export const getProductById = async (req, res) => {
 // @route   POST /api/products
 // @access  Private/Admin
 export const createProduct = async (req, res) => {
-  const { title, description, category, price, stock, images } = req.body;
+  const { title, description, category, price, stock, images, discountPercent } = req.body;
 
   if (process.env.MONGODB_URI) {
     try {
@@ -152,6 +152,7 @@ export const createProduct = async (req, res) => {
         price: Number(price),
         stock: Number(stock),
         images: images || ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'],
+        discountPercent: discountPercent !== undefined ? Number(discountPercent) : 0,
       });
       const createdProduct = await product.save();
       const broadcast = req.app.get('broadcastEvent');
@@ -174,6 +175,7 @@ export const createProduct = async (req, res) => {
     price: Number(price),
     stock: Number(stock),
     images: images || ['https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80'],
+    discountPercent: discountPercent !== undefined ? Number(discountPercent) : 0,
     ratings: 0,
     reviews: []
   };
@@ -194,7 +196,7 @@ export const createProduct = async (req, res) => {
 // @access  Private/Admin
 export const updateProduct = async (req, res) => {
   const { id } = req.params;
-  const { title, description, category, price, stock, images } = req.body;
+  const { title, description, category, price, stock, images, discountPercent } = req.body;
 
   if (process.env.MONGODB_URI) {
     try {
@@ -206,6 +208,7 @@ export const updateProduct = async (req, res) => {
         product.price = price !== undefined ? Number(price) : product.price;
         product.stock = stock !== undefined ? Number(stock) : product.stock;
         product.images = images || product.images;
+        product.discountPercent = discountPercent !== undefined ? Number(discountPercent) : product.discountPercent;
 
         const updatedProduct = await product.save();
         const broadcast = req.app.get('broadcastEvent');
@@ -231,7 +234,8 @@ export const updateProduct = async (req, res) => {
       category: category || product.category,
       price: price !== undefined ? Number(price) : product.price,
       stock: stock !== undefined ? Number(stock) : product.stock,
-      images: images || product.images
+      images: images || product.images,
+      discountPercent: discountPercent !== undefined ? Number(discountPercent) : (product.discountPercent || 0)
     };
     writeDb(db);
 

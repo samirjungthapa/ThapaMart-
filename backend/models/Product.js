@@ -17,6 +17,7 @@ const productSchema = new mongoose.Schema({
   stock: { type: Number, required: true, default: 0 },
   images: [{ type: String, required: true }],
   ratings: { type: Number, default: 0, index: true },
+  discountPercent: { type: Number, default: 0 },
   reviews: [reviewSchema]
 }, { timestamps: true });
 

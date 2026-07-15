@@ -123,13 +123,24 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
     }
     return stars;
   };
-
-  // Mock list price for retail strikethrough comparison
-  const listPrice = Number(product.price * 1.25);
-  const discountPercent = 20;
+  
+  const discountPercent = product.discountPercent || 0;
+  const listPrice = discountPercent > 0 ? Number(product.price / (1 - discountPercent / 100)) : Number(product.price * 1.25);
 
   // Mock sales volume for Amazon context
   const mockSalesCount = (index * 100 + 50) % 800 + 100;
+
+  const totalReviewsCount = product.reviews ? product.reviews.length : 0;
+  const ratingDistribution = [5, 4, 3, 2, 1].map(stars => {
+    if (totalReviewsCount === 0) {
+      // Default placeholder distributions when no reviews exist
+      const defaultPcts = { 5: 70, 4: 18, 3: 7, 2: 3, 1: 2 };
+      return { stars, pct: defaultPcts[stars] };
+    }
+    const count = product.reviews.filter(r => Math.round(r.rating) === stars).length;
+    const pct = Math.round((count / totalReviewsCount) * 100);
+    return { stars, pct };
+  });
 
   const renderRatingsBlock = () => {
     return (
@@ -140,10 +151,10 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
       >
         <div style={{ display: 'flex', gap: '0.05rem' }}>{renderStars(product.ratings)}</div>
         <span style={{ fontSize: '0.75rem', color: '#007185' }} className="hover:underline">
-          {mockSalesCount}
+          {totalReviewsCount || mockSalesCount}
         </span>
         <span style={{ fontSize: '0.7rem', color: '#565959', marginLeft: '0.25rem' }}>
-          {mockSalesCount}+ bought in past month
+          {(totalReviewsCount || mockSalesCount)}+ reviews
         </span>
 
         {/* Ratings Popover Tooltip */}
@@ -168,18 +179,12 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
               <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0F1111' }}>{product.ratings || 4.5} out of 5</span>
             </div>
             <div style={{ fontSize: '0.75rem', color: '#565959', marginBottom: '0.75rem' }}>
-              {mockSalesCount} global ratings
+              {totalReviewsCount || mockSalesCount} global ratings
             </div>
             
             {/* Histogram Bars */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-              {[
-                { stars: 5, pct: 70 },
-                { stars: 4, pct: 18 },
-                { stars: 3, pct: 7 },
-                { stars: 2, pct: 3 },
-                { stars: 1, pct: 2 }
-              ].map(item => (
+              {ratingDistribution.map(item => (
                 <div key={item.stars} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
                   <span style={{ width: '35px', color: '#007185', whiteSpace: 'nowrap' }} className="hover:underline">{item.stars} star</span>
                   <div style={{ flexGrow: 1, height: '16px', background: '#F0F2F2', borderRadius: '4px', overflow: 'hidden', border: '1px solid #D5D9D9' }}>
