@@ -2,6 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import api from '../store/api.js';
+import {
+  useGetProductsQuery,
+  useCreateProductMutation,
+  useUpdateProductMutation,
+  useDeleteProductMutation,
+  useGetOrdersQuery,
+  useUpdateOrderStatusMutation,
+  useGetUsersQuery,
+  useUpdateUserRoleMutation
+} from '../store/slices/apiSlice.js';
 import { FiTrendingUp, FiShoppingBag, FiUsers, FiBox, FiPlus, FiTrash2, FiEdit2, FiCheck, FiRefreshCw, FiStar } from 'react-icons/fi';
 
 const AdminDashboard = () => {
@@ -11,11 +21,22 @@ const AdminDashboard = () => {
   const [activeSubTab, setActiveSubTab] = useState('products'); // 'products', 'orders', 'users'
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  // Datasets
-  const [products, setProducts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // RTK Query Hooks
+  const { data: prodData, refetch: refetchProducts, isLoading: loadingProds } = useGetProductsQuery({ limit: 100 });
+  const { data: ordData, refetch: refetchOrders, isLoading: loadingOrders } = useGetOrdersQuery();
+  const { data: userData, refetch: refetchUsers, isLoading: loadingUsers } = useGetUsersQuery();
+
+  const [createProductMutation] = useCreateProductMutation();
+  const [updateProductMutation] = useUpdateProductMutation();
+  const [deleteProductMutation] = useDeleteProductMutation();
+  const [updateOrderStatusMutation] = useUpdateOrderStatusMutation();
+  const [updateUserRoleMutation] = useUpdateUserRoleMutation();
+
+  const products = prodData?.products || [];
+  const orders = ordData || [];
+  const users = userData || [];
+  const loading = loadingProds || loadingOrders || loadingUsers;
+
   const [diagnostics, setDiagnostics] = useState(null);
   const [adminSearch, setAdminSearch] = useState('');
 
@@ -25,66 +46,26 @@ const AdminDashboard = () => {
   const [category, setCategory] = useState('electronics');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
+  const [discountPercent, setDiscountPercent] = useState('');
   const [editingId, setEditingId] = useState(null);
 
   const fetchData = async () => {
-    setLoading(true);
+    refetchProducts();
+    refetchOrders();
+    refetchUsers();
     try {
-      const { data: prodData } = await api.get('/products?limit=100');
-      setProducts(prodData.products || []);
-
-      const { data: ordData } = await api.get('/orders');
-      setOrders(ordData || []);
-
-      // Mock users list or API get users
-      setUsers([
-        { id: 'u-1', name: 'Samir Thapa', email: 'samir@thapamart.com', role: 'admin' },
-        { id: 'u-2', name: 'John Customer', email: 'john@gmail.com', role: 'customer' }
-      ]);
-
-      try {
-        const { data: diagData } = await api.get('/diagnostics');
-        setDiagnostics(diagData);
-      } catch (err) {
-        setDiagnostics({
-          status: 'Healthy',
-          databaseMode: 'MongoDB Mode Active',
-          uptime: 3600,
-          platform: 'win32',
-          nodeVersion: 'v20.x',
-          env: { port: 5000, cloudinaryName: 'Configured', stripeKey: 'Configured' }
-        });
-      }
+      const { data: diagData } = await api.get('/diagnostics');
+      setDiagnostics(diagData);
     } catch (err) {
-      console.warn("ℹ️ API failed. Loading premium simulated datasets in Admin Console.");
-      loadMockData();
-    } finally {
-      setLoading(false);
+      setDiagnostics({
+        status: 'Healthy',
+        databaseMode: 'MongoDB Mode Active',
+        uptime: 3600,
+        platform: 'win32',
+        nodeVersion: 'v20.x',
+        env: { port: 5000, cloudinaryName: 'Configured', stripeKey: 'Configured' }
+      });
     }
-  };
-
-  const loadMockData = () => {
-    setProducts([
-      { id: "prod-1", title: "Pro Sound Max Wireless Headphones", category: "electronics", price: 189.99, stock: 25 },
-      { id: "prod-2", title: "Minimalist Leather Smart Watch", category: "electronics", price: 249.99, stock: 15 },
-      { id: "prod-3", title: "Classic Cotton Bomber Jacket", category: "fashion", price: 89.99, stock: 50 }
-    ]);
-    setOrders([
-      { id: "ord-1", user: { name: 'Samir Thapa' }, totalPrice: 229.69, paymentStatus: 'Paid', orderStatus: 'Shipped' },
-      { id: "ord-2", user: { name: 'John Customer' }, totalPrice: 89.99, paymentStatus: 'Pending', orderStatus: 'Pending' }
-    ]);
-    setUsers([
-      { id: 'u-1', name: 'Samir Thapa', email: 'samir@thapamart.com', role: 'admin' },
-      { id: 'u-2', name: 'John Customer', email: 'john@gmail.com', role: 'customer' }
-    ]);
-    setDiagnostics({
-      status: 'Healthy',
-      databaseMode: 'High-Performance JSON Fallback Mode (Simulated)',
-      uptime: 4800,
-      platform: 'win32',
-      nodeVersion: 'v20.11.0',
-      env: { port: 5000, cloudinaryName: 'Configured', stripeKey: 'Configured' }
-    });
   };
 
   useEffect(() => {
@@ -99,59 +80,28 @@ const AdminDashboard = () => {
     setAdminSearch('');
   }, [activeSubTab]);
 
-  // Live order processing simulation interval
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setOrders(prevOrders => {
-        let changed = false;
-        const nextOrders = prevOrders.map(o => {
-          if (o.paymentStatus === 'Paid') {
-            if (o.orderStatus === 'Pending' || o.orderStatus === 'Processing') {
-              changed = true;
-              return { ...o, orderStatus: 'Shipped' };
-            } else if (o.orderStatus === 'Shipped') {
-              changed = true;
-              return { ...o, orderStatus: 'Delivered' };
-            }
-          }
-          return o;
-        });
-        return nextOrders;
-      });
-    }, 8000); // Auto-advance every 8 seconds
-
-    return () => clearInterval(timer);
-  }, []);
-
   const handleToggleUserRole = async (userId, currentRole) => {
     const nextRole = currentRole === 'admin' ? 'customer' : 'admin';
     try {
-      await api.put(`/auth/users/${userId}/role`, { role: nextRole });
-      fetchData();
+      await updateUserRoleMutation({ id: userId, role: nextRole }).unwrap();
     } catch (err) {
-      setUsers(users.map(u => (u.id === userId || u._id === userId) ? { ...u, role: nextRole } : u));
+      console.error(err);
     }
   };
 
   const handleProductSubmit = async (e) => {
     e.preventDefault();
-    const payload = { title, description, category, price: Number(price), stock: Number(stock) };
+    const payload = { title, description, category, price: Number(price), stock: Number(stock), discountPercent: Number(discountPercent || 0) };
 
     try {
       if (editingId) {
-        await api.put(`/products/${editingId}`, payload);
+        await updateProductMutation({ id: editingId, ...payload }).unwrap();
       } else {
-        await api.post('/products', payload);
+        await createProductMutation(payload).unwrap();
       }
       resetForm();
-      fetchData();
     } catch (err) {
-      // Simulate on mock state
-      if (editingId) {
-        setProducts(products.map(p => p.id === editingId ? { ...p, ...payload } : p));
-      } else {
-        setProducts([...products, { id: `prod-mock-${Date.now()}`, ...payload }]);
-      }
+      console.error(err);
       resetForm();
     }
   };
@@ -162,6 +112,7 @@ const AdminDashboard = () => {
     setCategory('electronics');
     setPrice('');
     setStock('');
+    setDiscountPercent('');
     setEditingId(null);
   };
 
@@ -176,12 +127,7 @@ const AdminDashboard = () => {
   };
 
   const handleBulkStockAdjustment = (percent) => {
-    const nextProducts = products.map(p => {
-      const nextStock = Math.max(0, Math.round(p.stock * (1 + percent / 100)));
-      return { ...p, stock: nextStock };
-    });
-    setProducts(nextProducts);
-    alert(`Visual preview: Adjusted stock of all products by ${percent}%`);
+    alert('Stock adjustment preview requested. (Bulk edit disabled in dynamic mode)');
   };
 
   const handleEditProductClick = (p) => {
@@ -191,14 +137,14 @@ const AdminDashboard = () => {
     setCategory(p.category);
     setPrice(p.price);
     setStock(p.stock);
+    setDiscountPercent(p.discountPercent || '');
   };
 
   const handleDeleteProduct = async (id) => {
     try {
-      await api.delete(`/products/${id}`);
-      fetchData();
+      await deleteProductMutation(id).unwrap();
     } catch (err) {
-      setProducts(products.filter(p => p.id !== id && p._id !== id));
+      console.error(err);
     }
   };
 
@@ -769,6 +715,16 @@ const AdminDashboard = () => {
                         style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.875rem 1rem', color: '#09090B', fontSize: '0.875rem', outline: 'none' }}
                         value={stock}
                         onChange={(e) => setStock(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#71717A', marginBottom: '0.5rem' }}>Discount Percent (%)</label>
+                      <input
+                        type="number"
+                        style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.875rem 1rem', color: '#09090B', fontSize: '0.875rem', outline: 'none' }}
+                        value={discountPercent}
+                        onChange={(e) => setDiscountPercent(e.target.value)}
+                        placeholder="0"
                       />
                     </div>
                     <div className="sm:col-span-2 flex justify-end gap-3 pt-2">

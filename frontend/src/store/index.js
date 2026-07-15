@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slices/authSlice.js';
 import cartReducer from './slices/cartSlice.js';
 import wishlistReducer from './slices/wishlistSlice.js';
+import { apiSlice } from './slices/apiSlice.js';
 import api from './api.js';
 
 const cartSyncMiddleware = (store) => (next) => (action) => {
@@ -27,7 +28,8 @@ export const store = configureStore({
     auth: authReducer,
     cart: cartReducer,
     wishlist: wishlistReducer,
+    [apiSlice.reducerPath]: apiSlice.reducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(cartSyncMiddleware),
+    getDefaultMiddleware().concat(cartSyncMiddleware, apiSlice.middleware),
 });
