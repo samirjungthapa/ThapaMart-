@@ -123,8 +123,11 @@ handleSockets(io);
 app.set('socketio', io);
 
 // Connect to Database then start Express server
+import { startSyncScheduler } from './utils/syncWorker.js';
+
 connectDB().then(() => {
   httpServer.listen(PORT, () => {
     console.log(`🚀 ThapaMart Premium Backend listening on port ${PORT}`);
+    startSyncScheduler();
   });
 });

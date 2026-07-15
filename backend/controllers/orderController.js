@@ -159,6 +159,20 @@ export const addOrderItems = async (req, res) => {
       });
 
       const createdOrder = await order.save();
+
+      // Decrement stock levels and broadcast updates
+      for (const item of orderItems) {
+        const productObj = await Product.findById(item.product);
+        if (productObj) {
+          productObj.stock = Math.max(0, productObj.stock - item.quantity);
+          await productObj.save();
+          const broadcast = req.app.get('broadcastEvent');
+          if (broadcast) {
+            broadcast('PRODUCT_UPDATED', productObj);
+          }
+        }
+      }
+
       triggerOrderEmail(createdOrder, req.user, 'Created');
       return res.status(201).json(createdOrder);
     } catch (error) {
@@ -188,6 +202,18 @@ export const addOrderItems = async (req, res) => {
     orderStatus: 'Pending',
     createdAt: new Date().toISOString()
   };
+
+  // Decrement stock levels and broadcast updates in fallback mode
+  for (const item of orderItems) {
+    const productIdx = db.products.findIndex(p => p.id === item.product || (p._id && p._id.toString() === item.product));
+    if (productIdx !== -1) {
+      db.products[productIdx].stock = Math.max(0, db.products[productIdx].stock - item.quantity);
+      const broadcast = req.app.get('broadcastEvent');
+      if (broadcast) {
+        broadcast('PRODUCT_UPDATED', db.products[productIdx]);
+      }
+    }
+  }
 
   db.orders.push(newOrder);
   writeDb(db);
