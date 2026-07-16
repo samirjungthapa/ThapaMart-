@@ -29,7 +29,8 @@ const orderSchema = new mongoose.Schema({
   paymentMethod: { type: String, default: 'Stripe' },
   paymentStatus: { type: String, default: 'Pending' }, // 'Pending', 'Paid', 'Failed'
   orderStatus: { type: String, default: 'Pending' }, // 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'
-  stripePaymentIntentId: { type: String }
+  stripePaymentIntentId: { type: String },
+  offlineId: { type: String, unique: true, sparse: true }
 }, { timestamps: true });
 
 const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);

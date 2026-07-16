@@ -73,6 +73,92 @@ export const syncOfflineData = async () => {
       }
     }
 
+    // 3. Sync Orders
+    if (db.orders && db.orders.length > 0) {
+      for (const localOrder of db.orders) {
+        const orderExists = await Order.findOne({ offlineId: localOrder.id });
+        if (orderExists) continue;
+
+        console.log(`➕ Syncing order: ${localOrder.id}`);
+
+        let mongoUser = null;
+        if (localOrder.user) {
+          if (localOrder.user.match(/^[0-9a-fA-F]{24}$/)) {
+            mongoUser = await User.findById(localOrder.user);
+          }
+          if (!mongoUser) {
+            const localUser = db.users.find(u => u.id === localOrder.user || (u._id && u._id.toString() === localOrder.user));
+            if (localUser) {
+              mongoUser = await User.findOne({ email: localUser.email });
+            }
+          }
+        }
+
+        if (!mongoUser) {
+          console.warn(`⚠️ Sync Worker: Could not resolve user for order ${localOrder.id}. Skipping.`);
+          continue;
+        }
+
+        const resolvedProducts = [];
+        let productResolutionFailed = false;
+
+        for (const item of localOrder.products) {
+          let mongoProduct = null;
+          if (item.product && item.product.match(/^[0-9a-fA-F]{24}$/)) {
+            mongoProduct = await Product.findById(item.product);
+          }
+          if (!mongoProduct) {
+            const localProd = db.products.find(p => p.id === item.product || (p._id && p._id.toString() === item.product));
+            const lookupTitle = localProd ? localProd.title : item.title;
+            mongoProduct = await Product.findOne({ title: lookupTitle });
+          }
+
+          if (!mongoProduct) {
+            console.warn(`⚠️ Sync Worker: Could not resolve product "${item.title}" for order ${localOrder.id}. Skipping order.`);
+            productResolutionFailed = true;
+            break;
+          }
+
+          resolvedProducts.push({
+            product: mongoProduct._id,
+            title: mongoProduct.title,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image || mongoProduct.images[0]
+          });
+        }
+
+        if (productResolutionFailed) {
+          continue;
+        }
+
+        await Order.create({
+          user: mongoUser._id,
+          products: resolvedProducts,
+          shippingAddress: localOrder.shippingAddress,
+          billingInfo: localOrder.billingInfo,
+          totalPrice: localOrder.totalPrice,
+          taxPrice: localOrder.taxPrice,
+          shippingPrice: localOrder.shippingPrice,
+          paymentMethod: localOrder.paymentMethod || 'Stripe',
+          paymentStatus: localOrder.paymentStatus || 'Pending',
+          orderStatus: localOrder.orderStatus || 'Pending',
+          stripePaymentIntentId: localOrder.stripePaymentIntentId,
+          offlineId: localOrder.id,
+          createdAt: localOrder.createdAt ? new Date(localOrder.createdAt) : new Date()
+        });
+
+        // Deduct MongoDB stock levels
+        for (const resolvedItem of resolvedProducts) {
+          const productObj = await Product.findById(resolvedItem.product);
+          if (productObj) {
+            productObj.stock = Math.max(0, productObj.stock - resolvedItem.quantity);
+            await productObj.save();
+          }
+        }
+      }
+    }
+
     console.log('✅ Sync Worker: Database synchronization completed successfully.');
   } catch (error) {
     console.error('❌ Sync Worker: Synchronization failed:', error.message);

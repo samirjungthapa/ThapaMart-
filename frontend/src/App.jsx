@@ -46,6 +46,20 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   const dispatch = useDispatch();
   const { userInfo } = useSelector((state) => state.auth);
   const [toast, setToast] = useState(null);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const handleAuthLogout = () => {
@@ -100,6 +114,30 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   return (
     <div className="flex flex-col min-h-screen" style={{ backgroundColor:'var(--bg-primary)', color:'var(--text-primary)', transition: 'background-color 0.3s ease, color 0.3s ease' }}>
       
+      {!isOnline && (
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.15)',
+          backdropFilter: 'blur(10px)',
+          color: '#f59e0b',
+          borderBottom: '1px solid rgba(245, 158, 11, 0.25)',
+          textAlign: 'center',
+          padding: '0.5rem',
+          fontSize: '0.75rem',
+          fontWeight: 600,
+          letterSpacing: '0.05em',
+          zIndex: 10000,
+          position: 'sticky',
+          top: 0,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <span style={{ width: '6px', height: '6px', background: '#f59e0b', borderRadius: '50%', display: 'inline-block' }} />
+          ⚠️ Operating in high-performance local offline mode. Orders and profiles will sync once back online.
+        </div>
+      )}
+
       {/* Navigation Bar */}
       <Navbar />
 
