@@ -11,6 +11,7 @@ export const sendSMS = async ({ to, body }) => {
   }
 
   const isConfigured = 
+    process.env.DISABLE_SMS !== 'true' &&
     process.env.TWILIO_ACCOUNT_SID && !process.env.TWILIO_ACCOUNT_SID.includes('your_') && !process.env.TWILIO_ACCOUNT_SID.includes('your-') &&
     process.env.TWILIO_AUTH_TOKEN && !process.env.TWILIO_AUTH_TOKEN.includes('your_') && !process.env.TWILIO_AUTH_TOKEN.includes('your-') &&
     process.env.TWILIO_PHONE_NUMBER && !process.env.TWILIO_PHONE_NUMBER.includes('your_') && !process.env.TWILIO_PHONE_NUMBER.includes('your-');
