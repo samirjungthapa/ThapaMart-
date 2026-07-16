@@ -45,11 +45,23 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   const location = useLocation();
   const dispatch = useDispatch();
   const { userInfo } = useSelector((state) => state.auth);
+  const { cartItems } = useSelector((state) => state.cart);
   const [toast, setToast] = useState(null);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
+    const handleOnline = () => {
+      setIsOnline(true);
+      const needsSync = localStorage.getItem('cartNeedsSync');
+      if (needsSync === 'true' && userInfo) {
+        api.put('/auth/cart', { cartItems })
+          .then(() => {
+            console.log('✅ Cart successfully synchronized with server.');
+            localStorage.removeItem('cartNeedsSync');
+          })
+          .catch((err) => console.error('Failed to retry syncing cart:', err));
+      }
+    };
     const handleOffline = () => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);
@@ -59,7 +71,7 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, []);
+  }, [userInfo, cartItems]);
 
   useEffect(() => {
     const handleAuthLogout = () => {
@@ -82,6 +94,8 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   }, [userInfo, dispatch]);
 
   useEffect(() => {
+    if (!isOnline) return;
+
     const eventSource = new EventSource('/api/live-updates');
 
     eventSource.onmessage = (event) => {
@@ -102,7 +116,7 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
     return () => {
       eventSource.close();
     };
-  }, []);
+  }, [isOnline]);
 
   useEffect(() => {
     if (toast) {

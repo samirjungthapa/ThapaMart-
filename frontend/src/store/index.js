@@ -9,13 +9,22 @@ const cartSyncMiddleware = (store) => (next) => (action) => {
   const result = next(action);
 
   if (action.type.startsWith('cart/')) {
-    // Avoid recursion if the action is loading database cart items
     if (action.type !== 'cart/setCartItems') {
       const state = store.getState();
       const { userInfo } = state.auth;
       if (userInfo) {
-        api.put('/auth/cart', { cartItems: state.cart.cartItems })
-          .catch((err) => console.error('Failed to sync cart:', err));
+        if (!navigator.onLine) {
+          localStorage.setItem('cartNeedsSync', 'true');
+        } else {
+          api.put('/auth/cart', { cartItems: state.cart.cartItems })
+            .then(() => {
+              localStorage.removeItem('cartNeedsSync');
+            })
+            .catch((err) => {
+              console.error('Failed to sync cart:', err);
+              localStorage.setItem('cartNeedsSync', 'true');
+            });
+        }
       }
     }
   }

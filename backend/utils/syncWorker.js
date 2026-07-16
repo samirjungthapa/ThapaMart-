@@ -1,6 +1,7 @@
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import User from '../models/User.js';
+import Coupon from '../models/Coupon.js';
 import { readDb } from './jsonDb.js';
 
 export const syncOfflineData = async () => {
@@ -155,6 +156,24 @@ export const syncOfflineData = async () => {
             productObj.stock = Math.max(0, productObj.stock - resolvedItem.quantity);
             await productObj.save();
           }
+        }
+      }
+    }
+
+    // 4. Sync Coupons
+    if (db.coupons && db.coupons.length > 0) {
+      for (const localCoupon of db.coupons) {
+        const exists = await Coupon.findOne({ code: localCoupon.code.toUpperCase() });
+        if (!exists) {
+          console.log(`➕ Syncing coupon: ${localCoupon.code}`);
+          await Coupon.create({
+            code: localCoupon.code.toUpperCase(),
+            discountType: localCoupon.discountType || 'percentage',
+            discountAmount: Number(localCoupon.discountAmount || 0),
+            minCartAmount: Number(localCoupon.minCartAmount || 0),
+            expiryDate: localCoupon.expiryDate ? new Date(localCoupon.expiryDate) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            isActive: localCoupon.isActive !== undefined ? localCoupon.isActive : true
+          });
         }
       }
     }
