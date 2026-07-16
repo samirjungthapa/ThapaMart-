@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import http from 'http';
 import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
 import { Server } from 'socket.io';
 import connectDB from './config/db.js';
 import { handleSockets } from './utils/socketHandler.js';
@@ -22,13 +23,57 @@ const app = express();
 
 
 // Middlewares
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173'
+].filter(Boolean);
+
 app.use(cors({
-  origin: '*', // Allow frontend connection
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(express.json());
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Too many requests from this IP, please try again after 15 minutes.' }
+});
+
+app.use('/api', apiLimiter);
+app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
+
+// NoSQL Injection Mitigation Middleware
+const sanitizeInput = (obj) => {
+  if (obj instanceof Object) {
+    for (const key in obj) {
+      if (key.startsWith('$') || key.includes('.')) {
+        delete obj[key];
+      } else {
+        sanitizeInput(obj[key]);
+      }
+    }
+  }
+};
+
+app.use((req, res, next) => {
+  if (req.body) sanitizeInput(req.body);
+  if (req.query) sanitizeInput(req.query);
+  if (req.params) sanitizeInput(req.params);
+  next();
+});
 
 // Request logger middleware
 app.use((req, res, next) => {
@@ -41,6 +86,9 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  res.setHeader('X-Permitted-Cross-Domain-Policies', 'none');
   res.setHeader('Content-Security-Policy', "default-src 'self' *; script-src 'self' 'unsafe-inline' 'unsafe-eval' *; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com *; font-src 'self' data: https://fonts.gstatic.com *; img-src 'self' data: https: *; connect-src 'self' https: *;");
   next();
 });
