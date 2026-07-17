@@ -138,7 +138,7 @@ const Checkout = () => {
                 </h2>
 
                 <div style={{ display:'flex', flexDirection:'column', gap:'0.75rem' }}>
-                  {['eSewa', 'Khalti', 'IME Pay', 'Cash On Delivery'].map(method => (
+                  {['eSewa', 'Khalti', 'IME Pay', 'Stripe Credit/Debit Card', 'Cash On Delivery'].map(method => (
                     <label key={method} style={{ display:'flex', alignItems:'center', gap:'1rem', padding:'1rem', border:`1px solid ${paymentMethod===method ? '#09090B' : '#E5E7EB'}`, background: paymentMethod===method ? '#F9FAFB' : '#FFFFFF', cursor:'pointer' }}>
                       <input type="radio" name="paymentMethod" value={method} checked={paymentMethod===method} onChange={e=>setPaymentMethod(e.target.value)} style={{ accentColor:'#000000' }} />
                       <span style={{ fontSize:'0.875rem', fontWeight:700, color:'#09090B' }}>{method}</span>
