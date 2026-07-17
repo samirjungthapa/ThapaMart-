@@ -48,6 +48,28 @@ const AdminDashboard = () => {
   const [stock, setStock] = useState('');
   const [discountPercent, setDiscountPercent] = useState('');
   const [editingId, setEditingId] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const handleAiAutoGenerate = async () => {
+    if (!title.trim()) {
+      alert('Please enter a product title first to auto-generate metadata.');
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const { data } = await api.post('/ai/suggest-metadata', { title, category });
+      if (data && data.success) {
+        setDescription(data.description || '');
+        setPrice(data.price || '');
+        setDiscountPercent(data.discountPercent || '');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('AI Generation failed. Check console or API key setup.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const fetchData = async () => {
     refetchProducts();
@@ -664,7 +686,27 @@ const AdminDashboard = () => {
 
                   <form onSubmit={handleProductSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
-                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#71717A', marginBottom: '0.5rem' }}>Product Title</label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#71717A' }}>Product Title</label>
+                        <button
+                          type="button"
+                          onClick={handleAiAutoGenerate}
+                          disabled={aiLoading}
+                          style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            color: '#4F46E5',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          {aiLoading ? '✨ Generating...' : '✨ Auto-Generate via Gemini'}
+                        </button>
+                      </div>
                       <input
                         type="text"
                         required

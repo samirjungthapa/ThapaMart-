@@ -14,6 +14,8 @@ const MartAI = () => {
   
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'outfit'
+  const [outfitRecs, setOutfitRecs] = useState([]);
+  const [loadingOutfit, setLoadingOutfit] = useState(false);
   const [messages, setMessages] = useState([
     { sender: 'ai', text: "Hello! I am your ThapaMart Personal Stylist. What premium pieces can I help you find today?" },
   ]);
@@ -24,6 +26,20 @@ const MartAI = () => {
   const [isDragging, setIsDragging] = useState(false);
   const messagesEndRef = useRef(null);
 
+  useEffect(() => {
+    if (activeTab === 'outfit') {
+      setLoadingOutfit(true);
+      const cartCats = cartItems.map(item => item.category).filter(Boolean).join(',');
+      api.get(`/recommendations?categories=${encodeURIComponent(cartCats)}`)
+        .then(({ data }) => {
+          if (data && data.recommendations) {
+            setOutfitRecs(data.recommendations);
+          }
+        })
+        .catch(err => console.error('Failed to get stylist recommendations:', err))
+        .finally(() => setLoadingOutfit(false));
+    }
+  }, [activeTab, cartItems]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -282,67 +298,73 @@ const MartAI = () => {
                     Recommended Combinations
                   </span>
 
-                  {[
-                    {
-                      id: 'style-pair-1',
-                      title: 'Luxury Gold Chronograph Watch',
-                      price: 24999,
-                      image: 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?w=300&q=80',
-                      styleWith: 'Best paired with formal blazers or casual linen shirts.'
-                    },
-                    {
-                      id: 'style-pair-2',
-                      title: 'Premium Leather Chelsea Boots',
-                      price: 18500,
-                      image: 'https://images.unsplash.com/photo-1520639888713-7851133b1ed0?w=300&q=80',
-                      styleWith: 'Complements tailored trousers or raw denim jeans.'
-                    }
-                  ].map(pair => (
-                    <div 
-                      key={pair.id}
-                      style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '0.75rem', padding: '0.75rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}
-                    >
-                      <img src={pair.image} alt="" style={{ width: '50px', height: '65px', objectFit: 'cover', borderRadius: '4px' }} />
-                      <div style={{ flexGrow: 1, minWidth: 0 }}>
-                        <h6 style={{ fontSize: '0.75rem', fontWeight: 850, color: '#09090B', margin: '0 0 2px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {pair.title}
-                        </h6>
-                        <p style={{ fontSize: '0.65rem', color: '#10B981', fontWeight: 600, margin: '0 0 4px 0' }}>
-                          Rs. {pair.price.toLocaleString()}
-                        </p>
-                        <p style={{ fontSize: '0.65rem', color: '#71717A', margin: 0, fontStyle: 'italic', lineHeight: 1.2 }}>
-                          {pair.styleWith}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          playSuccess();
-                          dispatch(addToCart({
-                            product: pair.id,
-                            title: pair.title,
-                            price: pair.price,
-                            image: pair.image,
-                            quantity: 1,
-                            stock: 5
-                          }));
-                          alert(`${pair.title} added to shopping bag!`);
-                        }}
-                        style={{
-                          background: '#000000',
-                          color: '#FFFFFF',
-                          border: 'none',
-                          padding: '0.4rem 0.6rem',
-                          borderRadius: '4px',
-                          fontSize: '0.65rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        Add
-                      </button>
+                  {loadingOutfit ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '2rem 0' }}>
+                      <Loader size={20} className="animate-spin text-slate-500" />
+                      <span style={{ fontSize: '0.7rem', color: '#71717A' }}>AI styling generator loading...</span>
                     </div>
-                  ))}
+                  ) : outfitRecs.length > 0 ? (
+                    outfitRecs.map(pair => {
+                      const styleAdvice = pair.category === 'electronics'
+                        ? 'Integrates perfectly with your modern tech lifestyle.'
+                        : pair.category === 'fashion'
+                        ? 'A signature coordinate to complement your luxury silhouette.'
+                        : pair.category === 'accessories' || pair.category === 'beauty'
+                        ? 'Brings immediate sophistication and style detail.'
+                        : 'Elevates wellness and functional style standards.';
+                      
+                      return (
+                        <div 
+                          key={pair._id || pair.id}
+                          style={{ background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '0.75rem', padding: '0.75rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}
+                        >
+                          <img src={pair.images?.[0] || pair.image} alt="" style={{ width: '50px', height: '65px', objectFit: 'cover', borderRadius: '4px' }} />
+                          <div style={{ flexGrow: 1, minWidth: 0 }}>
+                            <h6 style={{ fontSize: '0.75rem', fontWeight: 850, color: '#09090B', margin: '0 0 2px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {pair.title}
+                            </h6>
+                            <p style={{ fontSize: '0.65rem', color: '#10B981', fontWeight: 600, margin: '0 0 4px 0' }}>
+                              Rs. {pair.price.toLocaleString()}
+                            </p>
+                            <p style={{ fontSize: '0.65rem', color: '#71717A', margin: 0, fontStyle: 'italic', lineHeight: 1.2 }}>
+                              {styleAdvice}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              playSuccess();
+                              dispatch(addToCart({
+                                product: pair._id || pair.id,
+                                title: pair.title,
+                                price: pair.price,
+                                image: pair.images?.[0] || pair.image,
+                                quantity: 1,
+                                stock: pair.stock || 5
+                              }));
+                              alert(`${pair.title} added to shopping bag!`);
+                            }}
+                            style={{
+                              background: '#000000',
+                              color: '#FFFFFF',
+                              border: 'none',
+                              padding: '0.4rem 0.6rem',
+                              borderRadius: '4px',
+                              fontSize: '0.65rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Add
+                          </button>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ fontSize: '0.7rem', color: '#71717A', textAlign: 'center', padding: '1.5rem' }}>
+                      No styling recommendations found. Visit the shop page to explore the collections.
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (

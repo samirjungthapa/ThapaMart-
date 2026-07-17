@@ -142,3 +142,69 @@ export const handleVisualSearch = async (req, res) => {
     recommendedProducts: matches
   });
 };
+
+// @desc    Suggest descriptions, prices, and discounts based on product title using Gemini
+// @route   POST /api/ai/suggest-metadata
+// @access  Private/Admin
+export const handleSuggestMetadata = async (req, res) => {
+  const { title, category } = req.body;
+
+  if (!title) {
+    return res.status(400).json({ message: 'Product title is required' });
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (apiKey && apiKey !== 'your_gemini_api_key_here') {
+    try {
+      const ai = new GoogleGenerativeAI(apiKey);
+      const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
+      const prompt = `You are a product management assistant at ThapaMart. Given the product title "${title}" and category "${category || 'general'}", generate:
+1. A luxury brand style description (1-2 sentences).
+2. A suggested retail price in Nepalese Rupees (Rs. value, integer between 500 and 300000).
+3. A suggested promotional discount percentage (integer between 0 and 50).
+
+Respond with ONLY a valid raw JSON object matching this schema (do not wrap in markdown blocks, do not add any explanation or backticks):
+{
+  "description": "product description here",
+  "suggestedPrice": 12000,
+  "discountPercent": 10
+}`;
+
+      const result = await model.generateContent(prompt);
+      let rawText = result.response.text().trim();
+      
+      // Clean JSON in case model wrapped it in markdown code blocks
+      if (rawText.startsWith('```')) {
+        rawText = rawText.replace(/^```json\s*/i, '').replace(/```$/, '').trim();
+      }
+
+      const metadata = JSON.parse(rawText);
+
+      return res.json({
+        success: true,
+        description: metadata.description || '',
+        price: metadata.suggestedPrice || 15000,
+        discountPercent: metadata.discountPercent || 0
+      });
+    } catch (error) {
+      console.error("Gemini metadata generation failed, using fallback:", error);
+    }
+  }
+
+  // Local static fallback
+  const mockDescriptions = [
+    `Experience the premium quality and refined craftsmanship of our newly cataloged ${title}. Built to elevate your lifestyle.`,
+    `A signature statement piece, the new ${title} blends timeless aesthetics with modern practicality.`,
+    `Crafted from curated materials, the ${title} delivers outstanding durability and unmatched premium style.`
+  ];
+  const randomDesc = mockDescriptions[Math.floor(Math.random() * mockDescriptions.length)];
+
+  return res.json({
+    success: true,
+    description: randomDesc,
+    price: 45000,
+    discountPercent: 15,
+    isMock: true
+  });
+};
