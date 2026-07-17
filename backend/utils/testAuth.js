@@ -57,7 +57,7 @@ const runTests = () => {
 
   // Test 3: validateRegister rejects weak passwords
   try {
-    const req = { body: { name: 'Thapa User', email: 'user@thapamart.com', password: '123' } };
+    const req = { body: { name: 'Thapa User', email: 'user@thapamart.com', password: '123', phone: '+1234567890' } };
     const res = mockResponse();
     let nextCalled = false;
     validateRegister(req, res, () => { nextCalled = true; });
@@ -69,7 +69,7 @@ const runTests = () => {
 
   // Test 4: validateRegister accepts valid registration details
   try {
-    const req = { body: { name: 'Thapa User', email: 'user@thapamart.com', password: 'StrongPassword1!' } };
+    const req = { body: { name: 'Thapa User', email: 'user@thapamart.com', password: 'StrongPassword1!', phone: '+1234567890' } };
     const res = mockResponse();
     let nextCalled = false;
     validateRegister(req, res, () => { nextCalled = true; });
