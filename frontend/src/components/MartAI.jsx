@@ -98,12 +98,20 @@ const MartAI = () => {
   };
 
   // Handle Drag & Drop / Visual Search mockup
-  const handleVisualSearch = async (fileName) => {
+  const handleVisualSearch = async (file) => {
+    if (!file) return;
     setIsTyping(true);
-    setMessages(prev => [...prev, { sender: 'user', text: `[Visual Search Upload: ${fileName}] 📸` }]);
+    setMessages(prev => [...prev, { sender: 'user', text: `[Visual Search Upload: ${file.name}] 📸` }]);
     
     try {
-      const { data } = await api.post('/ai/visual-search', { fileName });
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      const { data } = await api.post('/ai/visual-search', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
       setIsTyping(false);
       playSuccess();
       setMessages(prev => [...prev, { sender: 'ai', text: data.message, products: data.recommendedProducts || [] }]);
@@ -377,7 +385,7 @@ const MartAI = () => {
                     e.preventDefault();
                     setIsDragging(false);
                     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                      handleVisualSearch(e.dataTransfer.files[0].name);
+                      handleVisualSearch(e.dataTransfer.files[0]);
                     }
                   }}
                   style={{ 
@@ -526,7 +534,7 @@ const MartAI = () => {
                       accept="image/*" 
                       onChange={(e) => {
                         if (e.target.files && e.target.files[0]) {
-                          handleVisualSearch(e.target.files[0].name);
+                          handleVisualSearch(e.target.files[0]);
                         }
                       }}
                       style={{ display: 'none' }} 

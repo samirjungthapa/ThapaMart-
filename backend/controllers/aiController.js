@@ -94,22 +94,36 @@ If matching products are available, guide the user to check them out. Format pro
 // @route   POST /api/ai/visual-search
 // @access  Public
 export const handleVisualSearch = async (req, res) => {
-  const { fileName, category, image } = req.body;
+  const { category, image } = req.body || {};
+  let fileName = req.body?.fileName || (req.file ? req.file.originalname : '');
   
   let queryText = category || 'shoes';
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (image && apiKey && apiKey !== 'your_gemini_api_key_here') {
+  const hasUploadedFile = req.file;
+  const hasBase64Image = image;
+
+  if ((hasUploadedFile || hasBase64Image) && apiKey && apiKey !== 'your_gemini_api_key_here') {
     try {
       const ai = new GoogleGenerativeAI(apiKey);
       const model = ai.getGenerativeModel({ model: 'gemini-1.5-flash' });
       
-      const imagePart = {
-        inlineData: {
-          data: image.split(',')[1] || image,
-          mimeType: 'image/jpeg'
-        }
-      };
+      let imagePart;
+      if (hasUploadedFile) {
+        imagePart = {
+          inlineData: {
+            data: req.file.buffer.toString('base64'),
+            mimeType: req.file.mimetype
+          }
+        };
+      } else {
+        imagePart = {
+          inlineData: {
+            data: image.split(',')[1] || image,
+            mimeType: 'image/jpeg'
+          }
+        };
+      }
 
       const prompt = "Analyze this image and identify the main consumer product category or product name (e.g. shoes, watch, clothing, electronics, bag). Respond with ONLY the category/keyword in 1-2 words so we can search a database with it.";
       
@@ -126,7 +140,7 @@ export const handleVisualSearch = async (req, res) => {
   }
 
   // Fallback to name-based classification if needed
-  if (!image || queryText === (category || 'shoes')) {
+  if (!hasUploadedFile && (!image || queryText === (category || 'shoes'))) {
     if (fileName) {
       const lowerName = fileName.toLowerCase();
       if (lowerName.includes('watch')) queryText = 'watch';
