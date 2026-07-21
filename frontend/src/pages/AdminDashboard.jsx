@@ -12,7 +12,7 @@ import {
   useGetUsersQuery,
   useUpdateUserRoleMutation
 } from '../store/slices/apiSlice.js';
-import { FiTrendingUp, FiShoppingBag, FiUsers, FiBox, FiPlus, FiTrash2, FiEdit2, FiCheck, FiRefreshCw, FiStar } from 'react-icons/fi';
+import { FiTrendingUp, FiShoppingBag, FiUsers, FiBox, FiPlus, FiTrash2, FiEdit2, FiCheck, FiRefreshCw, FiStar, FiSend } from 'react-icons/fi';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -644,6 +644,28 @@ const AdminDashboard = () => {
             >
               <FiTrendingUp size={16} /> Server Diagnostics
             </button>
+            <button
+              onClick={() => setActiveSubTab('broadcast')}
+              style={{
+                width: '100%',
+                textAlign: 'left',
+                padding: '1rem',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                background: activeSubTab === 'broadcast' ? '#000000' : '#FFFFFF',
+                color: activeSubTab === 'broadcast' ? '#FFFFFF' : '#09090B',
+                border: '1px solid #E5E7EB',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}
+            >
+              <FiSend size={16} /> Live Broadcast
+            </button>
           </div>
 
           {/* Sub Content Area */}
@@ -1125,6 +1147,61 @@ const AdminDashboard = () => {
                     <p>[{new Date().toISOString()}] SOCKET: Real-time Co-Shopping socket hub listeners active.</p>
                     <p>[{new Date().toISOString()}] MONGO: Query analytics optimized.</p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeSubTab === 'broadcast' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '2rem', fontWeight: 900, color: '#09090B' }}>Live Announcement Broadcast</h3>
+                
+                <div style={{ border: '1px solid #E5E7EB', padding: '2rem', background: '#F9FAFB' }}>
+                  <p style={{ fontSize: '0.8rem', color: '#52525B', marginBottom: '1.5rem' }}>
+                    Send a manual promotional alert or announcement to all active users on ThapaMart. This notification is sent instantly via Server-Sent Events (SSE) and displays as a global popup toast on their screens.
+                  </p>
+                  
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    const msg = e.target.promoMessage.value.trim();
+                    if (!msg) return;
+                    try {
+                      const { data } = await api.post('/products/broadcast', { message: msg });
+                      if (data.success) {
+                        alert('Broadcast announcement dispatched successfully!');
+                        e.target.reset();
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      alert('Failed to dispatch broadcast. Ensure backend is running and you are logged in as admin.');
+                    }
+                  }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: '#71717A', marginBottom: '0.5rem' }}>Announcement Message</label>
+                      <input
+                        type="text"
+                        name="promoMessage"
+                        required
+                        placeholder="e.g. Flash Sale! Use code LUXURY20 for 20% off all designer fashion items."
+                        style={{ width: '100%', background: '#FFFFFF', border: '1px solid #E5E7EB', padding: '0.875rem 1rem', color: '#09090B', fontSize: '0.875rem', outline: 'none' }}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      style={{
+                        alignSelf: 'flex-start',
+                        padding: '0.75rem 2rem',
+                        background: '#000000',
+                        color: '#FFFFFF',
+                        border: 'none',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        textTransform: 'uppercase',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Dispatch SSE Broadcast
+                    </button>
+                  </form>
                 </div>
               </div>
             )}

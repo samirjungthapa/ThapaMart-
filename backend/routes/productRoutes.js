@@ -13,6 +13,17 @@ import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
+router.post('/broadcast', protect, admin, (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ message: 'Message is required' });
+  const broadcast = req.app.get('broadcastEvent');
+  if (broadcast) {
+    broadcast('PROMO_BROADCAST', { message });
+    return res.json({ success: true, message: 'Broadcast sent successfully' });
+  }
+  return res.status(500).json({ message: 'Broadcast channel unavailable' });
+});
+
 router.route('/')
   .get(getProducts)
   .post(protect, admin, createProduct);

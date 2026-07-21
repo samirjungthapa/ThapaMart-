@@ -107,6 +107,8 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
           setToast(`🔄 Updated: ${payload.data.title}`);
         } else if (payload.type === 'ORDER_UPDATED') {
           setToast(`📦 Order Status: Order #${payload.data._id || payload.data.id} is now ${payload.data.orderStatus}!`);
+        } else if (payload.type === 'PROMO_BROADCAST') {
+          setToast(`📢 Announcement: ${payload.data.message}`);
         }
       } catch (e) {
         console.error('SSE Error:', e);
