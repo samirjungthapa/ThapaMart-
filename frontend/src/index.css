@@ -204,3 +204,8 @@
   z-index: 99;
 }
 
+@keyframes visualizerBar {
+  0% { transform: scaleY(0.15); }
+  100% { transform: scaleY(1.0); }
+}
+
