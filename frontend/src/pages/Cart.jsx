@@ -203,7 +203,7 @@ const Cart = () => {
   };
 
   return (
-    <div style={{ padding: '3rem 0', minHeight: '100vh', background: '#FFFFFF', color: '#09090B' }}>
+    <div style={{ padding: '3rem 0', minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', transition: 'all 0.3s ease' }}>
       
       {/* Toast Notification */}
       <AnimatePresence>
@@ -222,20 +222,20 @@ const Cart = () => {
       <div style={{ width: '100%', padding: '0 4%', boxSizing: 'border-box' }}>
         
         <div style={{ marginBottom: '3rem', textAlign: 'center' }}>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 900, color: '#09090B', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
             Shopping Bag
           </h1>
-          <div style={{ width: '2rem', height: '1px', background: '#09090B', margin: '0 auto' }} />
+          <div style={{ width: '2rem', height: '1px', background: 'var(--primary-accent)', margin: '0 auto' }} />
         </div>
 
         {cartItems.length === 0 ? (
-          <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '5rem 2rem', textAlign: 'center', maxWidth: '32rem', margin: '0 auto' }}>
-            <div style={{ display: 'inline-flex', padding: '1rem', background: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: '50%', marginBottom: '1.5rem' }}>
-              <ShoppingBag size={24} style={{ color: '#09090B' }} />
+          <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)', padding: '5rem 2rem', textAlign: 'center', maxWidth: '32rem', margin: '0 auto' }}>
+            <div style={{ display: 'inline-flex', padding: '1rem', background: 'var(--bg-primary)', border: '1px solid var(--border-color)', borderRadius: '50%', marginBottom: '1.5rem' }}>
+              <ShoppingBag size={24} style={{ color: 'var(--text-primary)' }} />
             </div>
-            <p style={{ fontSize: '1.125rem', fontWeight: 700, color: '#09090B', marginBottom: '0.5rem' }}>Your shopping bag is empty.</p>
-            <p style={{ fontSize: '0.875rem', color: '#71717A', marginBottom: '2rem' }}>Discover our premium collections.</p>
-            <Link to="/shop" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '1rem 2rem', background: '#000000', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none' }}>
+            <p style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Your shopping bag is empty.</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--text-primary)', opacity: 0.6, marginBottom: '2rem' }}>Discover our premium collections.</p>
+            <Link to="/shop" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '1rem 2rem', background: 'var(--primary-accent)', color: '#FFFFFF', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none' }}>
               Start Shopping <ArrowRight size={14} />
             </Link>
           </div>
@@ -243,18 +243,18 @@ const Cart = () => {
           <div className="space-y-12">
             
             {/* Free Shipping Progress Indicator */}
-            <div className="bg-[#F9FAFB] border border-[#E5E7EB] rounded-2xl p-5">
-              <div className="flex justify-between items-center mb-2.5 text-xs font-bold text-black uppercase tracking-wider">
+            <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border-color)' }} className="rounded-2xl p-5">
+              <div style={{ color: 'var(--text-primary)' }} className="flex justify-between items-center mb-2.5 text-xs font-bold uppercase tracking-wider">
                 <span>Free Shipping Meter</span>
                 <span>{progressToFreeShipping >= 100 ? 'Free Shipping Unlocked!' : `Rs. ${remainingForFreeShipping.toLocaleString('en-NP')} Remaining`}</span>
               </div>
-              <div className="w-full bg-[#E5E7EB] h-2 rounded-full overflow-hidden mb-2">
+              <div style={{ background: 'var(--border-color)' }} className="w-full h-2 rounded-full overflow-hidden mb-2">
                 <div 
-                  className="bg-black h-full transition-all duration-500" 
-                  style={{ width: `${progressToFreeShipping}%` }}
+                  className="h-full transition-all duration-500" 
+                  style={{ width: `${progressToFreeShipping}%`, background: 'var(--primary-accent)' }}
                 ></div>
               </div>
-              <p className="text-[11px] text-[#71717A]">
+              <p className="text-[11px]" style={{ color: 'var(--text-primary)', opacity: 0.6 }}>
                 {progressToFreeShipping >= 100 
                   ? "🎉 Excellent! Your order qualifies for free delivery." 
                   : `Add Rs. ${remainingForFreeShipping.toLocaleString('en-NP')} more to your bag to enjoy free shipping.`}

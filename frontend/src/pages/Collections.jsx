@@ -21,7 +21,7 @@ const Collections = () => {
     }
   }, [userInfo, navigate]);
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100vh', padding: '6rem 0' }}>
+    <div style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)', minHeight: '100vh', padding: '6rem 0', transition: 'all 0.3s ease' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header Section */}
@@ -29,13 +29,13 @@ const Collections = () => {
           initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
           style={{ textAlign: 'center', marginBottom: '6rem' }}
         >
-          <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#71717A', marginBottom: '1rem', display: 'block' }}>
+          <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-primary)', opacity: 0.6, marginBottom: '1rem', display: 'block' }}>
             Lookbooks
           </span>
-          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '4rem', fontWeight: 900, color: '#09090B', letterSpacing: '-0.02em', marginBottom: '1.5rem', lineHeight: 1.1 }}>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '4rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.02em', marginBottom: '1.5rem', lineHeight: 1.1 }}>
             Curated Collections.
           </h1>
-          <div style={{ width: '3rem', height: '1px', background: '#09090B', margin: '0 auto' }} />
+          <div style={{ width: '3rem', height: '1px', background: 'var(--primary-accent)', margin: '0 auto' }} />
         </motion.div>
 
         {/* Collections Grid */}
@@ -50,7 +50,7 @@ const Collections = () => {
               className={`grid grid-cols-1 md:grid-cols-2 gap-12 items-center ${idx % 2 !== 0 ? 'md:grid-flow-col-dense' : ''}`}
             >
               <div style={{ order: idx % 2 !== 0 ? 2 : 1 }}>
-                <Link to={`/shop?category=${col.id}`} style={{ display: 'block', aspectRatio: '4/5', overflow: 'hidden', background: '#F9FAFB' }}>
+                <Link to={`/shop?category=${col.id}`} style={{ display: 'block', aspectRatio: '4/5', overflow: 'hidden', background: 'var(--bg-card)', border: '1px solid var(--border-color)' }}>
                   <motion.img 
                     whileHover={{ scale: 1.05 }} transition={{ duration: 0.7 }}
                     src={col.img} alt={col.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
@@ -59,10 +59,10 @@ const Collections = () => {
               </div>
               
               <div style={{ order: idx % 2 !== 0 ? 1 : 2, padding: idx % 2 !== 0 ? '0 4rem 0 0' : '0 0 0 4rem' }}>
-                <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#71717A', display: 'block', marginBottom: '1rem' }}>Edition 0{idx + 1}</span>
-                <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 900, color: '#09090B', marginBottom: '1rem', lineHeight: 1.1 }}>{col.title}</h2>
-                <p style={{ fontSize: '1rem', color: '#52525B', lineHeight: 1.6, marginBottom: '2.5rem' }}>{col.desc}</p>
-                <Link to={`/shop?category=${col.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: '#09090B', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none', borderBottom: '1px solid #09090B', paddingBottom: '0.25rem' }}>
+                <span style={{ fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-primary)', opacity: 0.6, display: 'block', marginBottom: '1rem' }}>Edition 0{idx + 1}</span>
+                <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 900, color: 'var(--text-primary)', marginBottom: '1rem', lineHeight: 1.1 }}>{col.title}</h2>
+                <p style={{ fontSize: '1rem', color: 'var(--text-primary)', opacity: 0.8, lineHeight: 1.6, marginBottom: '2.5rem' }}>{col.desc}</p>
+                <Link to={`/shop?category=${col.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', color: 'var(--primary-accent)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none', borderBottom: '1px solid var(--primary-accent)', paddingBottom: '0.25rem' }}>
                   Shop Collection <ArrowUpRight size={14} />
                 </Link>
               </div>

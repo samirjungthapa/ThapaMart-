@@ -504,7 +504,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div style={{ background: '#FFFFFF', minHeight: '100vh', padding: '3rem 0 6rem 0', color: '#09090B' }}>
+    <div style={{ background: 'var(--bg-primary)', minHeight: '100vh', padding: '3rem 0 6rem 0', color: 'var(--text-primary)', transition: 'all 0.3s ease' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Animated Success Toasts */}

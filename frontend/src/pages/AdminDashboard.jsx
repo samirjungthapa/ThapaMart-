@@ -261,13 +261,13 @@ const AdminDashboard = () => {
   );
 
   return (
-    <div style={{ padding: '4rem 0', minHeight: '100vh', background: '#FFFFFF' }}>
+    <div style={{ padding: '4rem 0', minHeight: '100vh', background: 'var(--bg-primary)', color: 'var(--text-primary)', transition: 'all 0.3s ease' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Title Banner */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem', paddingBottom: '2rem', borderBottom: '1px solid #E5E7EB', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '3rem', paddingBottom: '2rem', borderBottom: '1px solid var(--border-color)', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 900, color: '#09090B', lineHeight: 1.1 }}>
+            <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '3rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1.1 }}>
               Admin Console
             </h1>
             <p style={{ fontSize: '0.875rem', color: '#71717A', margin: '0.5rem 0 0 0' }}>

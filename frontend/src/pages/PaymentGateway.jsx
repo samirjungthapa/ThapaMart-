@@ -232,16 +232,17 @@ const PaymentGateway = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(to bottom right, #F3F4F6, #E5E7EB)', padding: '1.5rem' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', padding: '1.5rem', transition: 'all 0.3s ease' }}>
       <div style={{
         width: '100%',
         maxWidth: '520px',
-        background: 'rgba(255, 255, 255, 0.95)',
+        background: 'var(--bg-card)',
         backdropFilter: 'blur(20px)',
         borderRadius: '2rem',
         overflow: 'hidden',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.15)',
-        border: '1px solid rgba(255, 255, 255, 0.7)'
+        border: '1px solid var(--border-color)',
+        color: 'var(--text-primary)'
       }}>
         
         {/* Gateway Header */}
@@ -349,9 +350,9 @@ const PaymentGateway = () => {
                     style={{
                       width: '100%',
                       padding: '1.1rem',
-                      background: '#FFFFFF',
-                      color: '#71717A',
-                      border: '1px solid #E5E7EB',
+                      background: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-color)',
                       borderRadius: '0.75rem',
                       fontSize: '0.85rem',
                       fontWeight: 700,
@@ -360,8 +361,8 @@ const PaymentGateway = () => {
                       cursor: 'pointer',
                       transition: 'all 0.2s'
                     }}
-                    onMouseEnter={e => { e.currentTarget.style.background = '#F9FAFB'; e.currentTarget.style.color = '#09090B'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = '#FFFFFF'; e.currentTarget.style.color = '#71717A'; }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.color = 'var(--primary-accent)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--bg-primary)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
                   >
                     Cancel / Simulate Fail
                   </button>
