@@ -141,9 +141,117 @@ export const playTick = () => {
     console.warn("Audio synthesis block:", e);
   }
 };
+// Play a soft, high-frequency hover pluck
+export const playHoverPluck = () => {
+  if (isMuted()) return;
+  try {
+    const ctx = getAudioContext();
+    const osc = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1600, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.05);
+
+    gainNode.gain.setValueAtTime(0.015, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+
+    osc.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  } catch (e) {}
+};
+
+// Play a short major pentatonic arpeggio sweep when adding items to cart
+export const playCartSuccessSound = () => {
+  if (isMuted()) return;
+  try {
+    const ctx = getAudioContext();
+    const playNote = (freq, delay, duration) => {
+      const osc = ctx.createOscillator();
+      const gainNode = ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + delay);
+      osc.frequency.exponentialRampToValueAtTime(freq * 1.5, ctx.currentTime + delay + duration);
+
+      gainNode.gain.setValueAtTime(0.0, ctx.currentTime + delay);
+      gainNode.gain.linearRampToValueAtTime(0.03, ctx.currentTime + delay + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + duration);
+
+      osc.connect(gainNode);
+      gainNode.connect(ctx.destination);
+
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + duration);
+    };
+
+    // Quick arpeggio sweep (E major pentatonic / Luxury)
+    playNote(329.63, 0.0, 0.2); // E4
+    playNote(392.00, 0.05, 0.2); // G4
+    playNote(440.00, 0.1, 0.2); // A4
+    playNote(523.25, 0.15, 0.3); // C5
+  } catch (e) {}
+};
+
+// Play a resonant low frequency metallic gong decay for successful checkouts
+export const playCheckoutGong = () => {
+  if (isMuted()) return;
+  try {
+    const ctx = getAudioContext();
+    const osc1 = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc1.type = 'triangle';
+    osc1.frequency.setValueAtTime(110, ctx.currentTime); // Low A2
+    osc1.frequency.linearRampToValueAtTime(90, ctx.currentTime + 1.5);
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(165, ctx.currentTime); // Perfect fifth E3
+    osc2.frequency.linearRampToValueAtTime(130, ctx.currentTime + 1.5);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(500, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 1.5);
+
+    gainNode.gain.setValueAtTime(0.06, ctx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
+
+    osc1.connect(filter);
+    osc2.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(ctx.destination);
+
+    osc1.start();
+    osc2.start();
+    osc1.stop(ctx.currentTime + 1.5);
+    osc2.stop(ctx.currentTime + 1.5);
+  } catch (e) {}
+};
 
 let activeOscillators = [];
 let ambientGain = null;
+let ambientVolume = parseFloat(localStorage.getItem('ambientVolume') || '0.5');
+
+export const getAmbientVolume = () => {
+  return ambientVolume;
+};
+
+export const setAmbientVolume = (volume) => {
+  ambientVolume = parseFloat(volume);
+  localStorage.setItem('ambientVolume', String(ambientVolume));
+  if (ambientGain) {
+    try {
+      const ctx = getAudioContext();
+      ambientGain.gain.setValueAtTime(ambientGain.gain.value, ctx.currentTime);
+      ambientGain.gain.linearRampToValueAtTime(0.03 * ambientVolume, ctx.currentTime + 0.2);
+    } catch (e) {}
+  }
+};
 
 export const startAmbientLoop = (category = 'default') => {
   if (isMuted()) return;
@@ -167,13 +275,18 @@ export const startAmbientLoop = (category = 'default') => {
     ambientGain.connect(filter);
     filter.connect(ctx.destination);
 
-    ambientGain.gain.linearRampToValueAtTime(0.015, ctx.currentTime + 1.5);
+    ambientGain.gain.linearRampToValueAtTime(0.03 * ambientVolume, ctx.currentTime + 1.5);
 
-    // Chords based on category
+    // Chords based on category or track
     let freqs = [130.81, 164.81, 196.00, 246.94]; // C major 7 (Default / Luxury)
     const lowerCategory = (category || 'default').toLowerCase();
-    if (lowerCategory.includes('tech') || lowerCategory.includes('electronic') || lowerCategory.includes('watch')) {
-      freqs = [146.83, 174.61, 220.00, 293.66]; // D minor 7 (Tech synthwave)
+    
+    if (lowerCategory.includes('rain') || lowerCategory === 'rain') {
+      freqs = [87.31, 130.81, 174.61, 220.00]; // F major 9 / Kathmandu Rain
+    } else if (lowerCategory.includes('lounge') || lowerCategory === 'lounge') {
+      freqs = [110.00, 146.83, 164.81, 196.00]; // A minor 9 / Luxury Lounge
+    } else if (lowerCategory.includes('cyberpunk') || lowerCategory === 'cyberpunk' || lowerCategory.includes('tech') || lowerCategory.includes('electronic') || lowerCategory.includes('watch')) {
+      freqs = [73.42, 110.00, 146.83, 174.61]; // D minor 7 / Cyberpunk Neon
     } else if (lowerCategory.includes('shoe') || lowerCategory.includes('clothing') || lowerCategory.includes('sport')) {
       freqs = [164.81, 196.00, 220.00, 329.63]; // E minor 7 (Active/Fashion)
     }
