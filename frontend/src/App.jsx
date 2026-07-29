@@ -20,25 +20,47 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setCartItems } from './store/slices/cartSlice.js';
 import { logout } from './store/slices/authSlice.js';
 import api from './store/api.js';
+import { showToast } from './utils/toast.js';
 
-// Pages
-import Home from './pages/Home.jsx';
-import Login from './pages/Login.jsx';
-import Register from './pages/Register.jsx';
-import Shop from './pages/Shop.jsx';
-import Collections from './pages/Collections.jsx';
-import About from './pages/About.jsx';
-import Categories from './pages/Categories.jsx';
-import ProductDetails from './pages/ProductDetails.jsx';
-import Cart from './pages/Cart.jsx';
-import Wishlist from './pages/Wishlist.jsx';
-import Checkout from './pages/Checkout.jsx';
-import OrderSuccess from './pages/OrderSuccess.jsx';
-import OrderFailed from './pages/OrderFailed.jsx';
-import Dashboard from './pages/Dashboard.jsx';
-import AdminDashboard from './pages/AdminDashboard.jsx';
-import PaymentGateway from './pages/PaymentGateway.jsx';
-import LoyaltyHub from './pages/LoyaltyHub.jsx';
+import { lazy, Suspense } from 'react';
+
+// Lazy loaded Pages
+const Home = lazy(() => import('./pages/Home.jsx'));
+const Login = lazy(() => import('./pages/Login.jsx'));
+const Register = lazy(() => import('./pages/Register.jsx'));
+const Shop = lazy(() => import('./pages/Shop.jsx'));
+const Collections = lazy(() => import('./pages/Collections.jsx'));
+const About = lazy(() => import('./pages/About.jsx'));
+const Categories = lazy(() => import('./pages/Categories.jsx'));
+const ProductDetails = lazy(() => import('./pages/ProductDetails.jsx'));
+const Cart = lazy(() => import('./pages/Cart.jsx'));
+const Wishlist = lazy(() => import('./pages/Wishlist.jsx'));
+const Checkout = lazy(() => import('./pages/Checkout.jsx'));
+const OrderSuccess = lazy(() => import('./pages/OrderSuccess.jsx'));
+const OrderFailed = lazy(() => import('./pages/OrderFailed.jsx'));
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const PaymentGateway = lazy(() => import('./pages/PaymentGateway.jsx'));
+const LoyaltyHub = lazy(() => import('./pages/LoyaltyHub.jsx'));
+
+const LoadingFallback = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', width: '100%' }}>
+    <div style={{
+      width: '40px',
+      height: '40px',
+      border: '3px solid rgba(16, 185, 129, 0.1)',
+      borderTop: '3px solid var(--primary-accent)',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite'
+    }} />
+    <style>{`
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+);
 
 export const CompareContext = createContext();
 
@@ -140,6 +162,18 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   }, [isOnline]);
 
   useEffect(() => {
+    const handleShowToast = (e) => {
+      if (e.detail && e.detail.message) {
+        setToast(e.detail.message);
+      }
+    };
+    window.addEventListener('show_toast', handleShowToast);
+    return () => {
+      window.removeEventListener('show_toast', handleShowToast);
+    };
+  }, []);
+
+  useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 5000);
       return () => clearTimeout(timer);
@@ -179,26 +213,28 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
       {/* Main Content Area */}
       <main className="flex-grow relative">
         <AnimatePresence mode="wait" initial={false}>
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-            <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-            <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
-            <Route path="/shop" element={<PageTransition><Shop /></PageTransition>} />
-            <Route path="/collections" element={<PageTransition><Collections /></PageTransition>} />
-            <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-            <Route path="/categories" element={<PageTransition><Categories /></PageTransition>} />
-            <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
-            <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
-            <Route path="/wishlist" element={<PageTransition><Wishlist /></PageTransition>} />
-            <Route path="/checkout" element={<PageTransition><ProtectedRoute><Checkout /></ProtectedRoute></PageTransition>} />
-            <Route path="/order-success" element={<PageTransition><ProtectedRoute><OrderSuccess /></ProtectedRoute></PageTransition>} />
-            <Route path="/payment-gateway" element={<PageTransition><ProtectedRoute><PaymentGateway /></ProtectedRoute></PageTransition>} />
-            <Route path="/order-failed" element={<PageTransition><ProtectedRoute><OrderFailed /></ProtectedRoute></PageTransition>} />
-            <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
-            <Route path="/profile" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
-            <Route path="/loyalty" element={<PageTransition><ProtectedRoute><LoyaltyHub /></ProtectedRoute></PageTransition>} />
-            <Route path="/admin" element={<PageTransition><AdminRoute><AdminDashboard /></AdminRoute></PageTransition>} />
-          </Routes>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes location={location} key={location.pathname}>
+              <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+              <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+              <Route path="/register" element={<PageTransition><Register /></PageTransition>} />
+              <Route path="/shop" element={<PageTransition><Shop /></PageTransition>} />
+              <Route path="/collections" element={<PageTransition><Collections /></PageTransition>} />
+              <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+              <Route path="/categories" element={<PageTransition><Categories /></PageTransition>} />
+              <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
+              <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
+              <Route path="/wishlist" element={<PageTransition><Wishlist /></PageTransition>} />
+              <Route path="/checkout" element={<PageTransition><ProtectedRoute><Checkout /></ProtectedRoute></PageTransition>} />
+              <Route path="/order-success" element={<PageTransition><ProtectedRoute><OrderSuccess /></ProtectedRoute></PageTransition>} />
+              <Route path="/payment-gateway" element={<PageTransition><ProtectedRoute><PaymentGateway /></ProtectedRoute></PageTransition>} />
+              <Route path="/order-failed" element={<PageTransition><ProtectedRoute><OrderFailed /></ProtectedRoute></PageTransition>} />
+              <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
+              <Route path="/profile" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
+              <Route path="/loyalty" element={<PageTransition><ProtectedRoute><LoyaltyHub /></ProtectedRoute></PageTransition>} />
+              <Route path="/admin" element={<PageTransition><AdminRoute><AdminDashboard /></AdminRoute></PageTransition>} />
+            </Routes>
+          </Suspense>
         </AnimatePresence>
       </main>
 
@@ -259,7 +295,7 @@ function App() {
 
   const addToCompare = (product) => {
     if (compareList.length >= 4) {
-      alert("You can compare up to 4 products at once!");
+      showToast("You can compare up to 4 products at once!");
       return;
     }
     if (!compareList.some(p => (p.id || p._id) === (product.id || product._id))) {
