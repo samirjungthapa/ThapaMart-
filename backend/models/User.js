@@ -21,7 +21,13 @@ const userSchema = new mongoose.Schema({
       stock: { type: Number },
       subscribed: { type: Boolean, default: false }
     }
-  ]
+  ],
+  preferences: {
+    theme: { type: String, default: 'light' },
+    soundscapeTrack: { type: String, default: 'default' },
+    soundscapeVolume: { type: Number, default: 0.5 },
+    soundscapeMuted: { type: Boolean, default: false }
+  }
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

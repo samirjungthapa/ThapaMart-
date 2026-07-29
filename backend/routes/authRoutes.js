@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginUser, registerUser, verifyOtp, getUserProfile, updateUserRole, getUserCart, saveUserCart, refreshAccessToken, logoutUser, getUsers } from '../controllers/authController.js';
+import { loginUser, registerUser, verifyOtp, getUserProfile, updateUserRole, getUserCart, saveUserCart, refreshAccessToken, logoutUser, getUsers, getUserPreferences, saveUserPreferences } from '../controllers/authController.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
 import { validateRegister, validateLogin } from '../middleware/validationMiddleware.js';
 
@@ -19,5 +19,9 @@ router.put('/users/:id/role', protect, admin, updateUserRole);
 router.route('/cart')
   .get(protect, getUserCart)
   .put(protect, saveUserCart);
+
+router.route('/preferences')
+  .get(protect, getUserPreferences)
+  .put(protect, saveUserPreferences);
 
 export default router;

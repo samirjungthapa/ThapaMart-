@@ -55,6 +55,7 @@ export const loginUser = async (req, res) => {
           email: user.email,
           role: user.role,
           avatar: user.avatar,
+          preferences: user.preferences || { theme: 'light', soundscapeTrack: 'default', soundscapeVolume: 0.5, soundscapeMuted: false },
           token,
         });
       }
@@ -74,6 +75,7 @@ export const loginUser = async (req, res) => {
       email: user.email,
       role: user.role,
       avatar: user.avatar,
+      preferences: user.preferences || { theme: 'light', soundscapeTrack: 'default', soundscapeVolume: 0.5, soundscapeMuted: false },
       token,
     });
   }
@@ -181,6 +183,7 @@ export const getUserProfile = async (req, res) => {
       email: req.user.email,
       role: req.user.role,
       avatar: req.user.avatar,
+      preferences: req.user.preferences || { theme: 'light', soundscapeTrack: 'default', soundscapeVolume: 0.5, soundscapeMuted: false }
     });
   }
 };
@@ -311,7 +314,8 @@ export const verifyOtp = async (req, res) => {
           phone: user.phone,
           isVerified: true,
           role: user.role,
-          avatar: user.avatar
+          avatar: user.avatar,
+          preferences: user.preferences || { theme: 'light', soundscapeTrack: 'default', soundscapeVolume: 0.5, soundscapeMuted: false }
         }
       });
     } catch (error) {
@@ -345,7 +349,8 @@ export const verifyOtp = async (req, res) => {
         phone: user.phone,
         isVerified: true,
         role: user.role,
-        avatar: user.avatar
+        avatar: user.avatar,
+        preferences: user.preferences || { theme: 'light', soundscapeTrack: 'default', soundscapeVolume: 0.5, soundscapeMuted: false }
       }
     });
   }
@@ -434,4 +439,57 @@ export const getUsers = async (req, res) => {
   const db = readDb();
   const users = db.users.map(({ password, ...u }) => u);
   res.json(users);
+};
+
+// @desc    Get user preferences
+// @route   GET /api/auth/preferences
+// @access  Private
+export const getUserPreferences = async (req, res) => {
+  if (req.user) {
+    return res.json(req.user.preferences || { theme: 'light', soundscapeTrack: 'default', soundscapeVolume: 0.5, soundscapeMuted: false });
+  }
+  res.status(404).json({ message: 'User not found' });
+};
+
+// @desc    Save/Sync user preferences
+// @route   PUT /api/auth/preferences
+// @access  Private
+export const saveUserPreferences = async (req, res) => {
+  const { theme, soundscapeTrack, soundscapeVolume, soundscapeMuted } = req.body;
+
+  if (process.env.MONGODB_URI) {
+    try {
+      const user = await User.findById(req.user._id);
+      if (user) {
+        user.preferences = {
+          theme: theme || user.preferences?.theme || 'light',
+          soundscapeTrack: soundscapeTrack || user.preferences?.soundscapeTrack || 'default',
+          soundscapeVolume: soundscapeVolume !== undefined ? soundscapeVolume : (user.preferences?.soundscapeVolume || 0.5),
+          soundscapeMuted: soundscapeMuted !== undefined ? soundscapeMuted : (user.preferences?.soundscapeMuted || false)
+        };
+        await user.save();
+        return res.json({ message: 'Preferences updated successfully', preferences: user.preferences });
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // Fallback to JSON DB
+  const db = readDb();
+  const userId = req.user.id || req.user._id.toString();
+  const index = db.users.findIndex(u => u.id === userId || (u._id && u._id.toString() === userId));
+  if (index !== -1) {
+    const user = db.users[index];
+    user.preferences = {
+      theme: theme || user.preferences?.theme || 'light',
+      soundscapeTrack: soundscapeTrack || user.preferences?.soundscapeTrack || 'default',
+      soundscapeVolume: soundscapeVolume !== undefined ? soundscapeVolume : (user.preferences?.soundscapeVolume || 0.5),
+      soundscapeMuted: soundscapeMuted !== undefined ? soundscapeMuted : (user.preferences?.soundscapeMuted || false)
+    };
+    writeDb(db);
+    return res.json({ message: 'Preferences updated successfully', preferences: user.preferences });
+  }
+
+  res.status(404).json({ message: 'User not found' });
 };
