@@ -94,6 +94,24 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
   }, [userInfo, dispatch]);
 
   useEffect(() => {
+    if (userInfo && userInfo.preferences) {
+      const { theme, soundscapeTrack, soundscapeVolume, soundscapeMuted } = userInfo.preferences;
+      if (theme) {
+        localStorage.setItem('theme', theme);
+        const root = window.document.documentElement;
+        ['light', 'dark', 'luxury-gold', 'cyberpunk'].forEach(t => root.classList.remove(t));
+        if (theme !== 'light') {
+          root.classList.add(theme);
+        }
+      }
+      if (soundscapeTrack) localStorage.setItem('soundscapeCategory', soundscapeTrack);
+      if (soundscapeVolume !== undefined) localStorage.setItem('ambientVolume', String(soundscapeVolume));
+      if (soundscapeMuted !== undefined) localStorage.setItem('soundMuted', soundscapeMuted ? 'true' : 'false');
+      window.dispatchEvent(new Event('soundscape_settings_synced'));
+    }
+  }, [userInfo]);
+
+  useEffect(() => {
     if (!isOnline) return;
 
     const eventSource = new EventSource('/api/live-updates');

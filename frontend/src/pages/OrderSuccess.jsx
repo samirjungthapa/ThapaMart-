@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { FiCheckCircle, FiArrowRight, FiPrinter, FiShoppingBag, FiMapPin, FiCalendar, FiCreditCard, FiCopy, FiCheck, FiMail, FiStar } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../store/api.js';
+import { playCheckoutGong } from '../utils/audio.js';
 
 // Setup colorful confetti arrays
 const CONFETTI_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6'];
@@ -167,6 +168,7 @@ const OrderSuccess = () => {
     };
 
     fetchOrderAndRecs(true);
+    playCheckoutGong();
 
     // Set up polling interval to get order updates every 5 seconds
     intervalId = setInterval(() => {
@@ -337,7 +339,7 @@ const OrderSuccess = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white py-12 px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen flex items-center justify-center bg-transparent py-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-3xl space-y-4">
           <div className="h-12 bg-slate-100 rounded-lg animate-pulse w-3/4 mx-auto"></div>
           <div className="h-6 bg-slate-100 rounded-lg animate-pulse w-1/2 mx-auto"></div>
@@ -402,7 +404,7 @@ const OrderSuccess = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white py-16 px-4 sm:px-6 lg:px-8 print:bg-white print:py-0 print:px-0 relative overflow-hidden">
+    <div className="min-h-screen bg-transparent py-16 px-4 sm:px-6 lg:px-8 print:bg-white print:py-0 print:px-0 relative overflow-hidden">
       
       {/* Confetti Rain Particle Elements */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden print-hide">
@@ -475,7 +477,7 @@ const OrderSuccess = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white border border-slate-100 shadow-sm rounded-3xl p-8 sm:p-10 text-center mb-8 print:border-none print:shadow-none print-avoid-break"
+          className="bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] shadow-sm rounded-3xl p-8 sm:p-10 text-center mb-8 print:border-none print:shadow-none print-avoid-break"
         >
           <div className="mx-auto w-20 h-20 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mb-6 print:w-16 print:h-16">
             <FiCheckCircle className="w-12 h-12" />
@@ -513,7 +515,7 @@ const OrderSuccess = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.05 }}
-          className="bg-white border border-slate-100 shadow-sm rounded-3xl p-6 sm:p-8 mb-8 print-avoid-break print-hide"
+          className="bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] shadow-sm rounded-3xl p-6 sm:p-8 mb-8 print-avoid-break print-hide"
         >
           <h2 className="text-sm font-extrabold uppercase tracking-wider text-zinc-400 mb-6">
             Order Lifecycle Progress
@@ -562,7 +564,7 @@ const OrderSuccess = () => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="bg-white border border-slate-100 shadow-sm rounded-3xl p-6 sm:p-8 print-avoid-break"
+              className="bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] shadow-sm rounded-3xl p-6 sm:p-8 print-avoid-break"
             >
               <h2 className="text-lg font-bold text-zinc-900 flex items-center gap-2 mb-6 border-b border-zinc-100 pb-4">
                 <FiShoppingBag className="text-zinc-900 w-5 h-5" />
@@ -638,7 +640,7 @@ const OrderSuccess = () => {
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.15 }}
-              className="bg-white border border-slate-100 shadow-sm rounded-3xl p-6 sm:p-8 print-avoid-break"
+              className="bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] shadow-sm rounded-3xl p-6 sm:p-8 print-avoid-break"
             >
               <h2 className="text-lg font-bold text-zinc-900 mb-6 border-b border-zinc-100 pb-4">
                 Payment & Billing Details
@@ -710,7 +712,7 @@ const OrderSuccess = () => {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="bg-white border border-slate-100 shadow-sm rounded-3xl p-6 text-center print-hide"
+              className="bg-[var(--bg-card)] border border-[var(--border-color)] text-[var(--text-primary)] shadow-sm rounded-3xl p-6 text-center print-hide"
             >
               <h3 className="text-sm font-bold text-zinc-800 mb-2">How was your checkout experience?</h3>
               <p className="text-xs text-zinc-400 mb-4">Your rating helps us improve ThapaMart services.</p>

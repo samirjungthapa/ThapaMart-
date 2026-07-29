@@ -6,7 +6,7 @@ import { Heart, Star, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { addToCart, removeFromCart } from '../store/slices/cartSlice.js';
 import { addToWishlist, removeFromWishlist } from '../store/slices/wishlistSlice.js';
 import QuickViewModal from './QuickViewModal.jsx';
-import { playClick, playSuccess } from '../utils/audio.js';
+import { playClick, playSuccess, playCartSuccessSound } from '../utils/audio.js';
 import { CompareContext } from '../App.jsx';
 
 const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
@@ -35,7 +35,7 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
 
   const handleAddToCart = (e) => {
     e.preventDefault();
-    playSuccess();
+    playCartSuccessSound();
     if (!userInfo) {
       navigate(`/login?redirect=${location.pathname}`);
       return;

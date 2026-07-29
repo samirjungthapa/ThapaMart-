@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Sun, Moon, Crown, Zap } from 'lucide-react';
+import api from '../store/api.js';
 
 const ThemeToggle = () => {
   const themes = ['light', 'dark', 'luxury-gold', 'cyberpunk'];
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const { userInfo } = useSelector((state) => state.auth);
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -12,7 +15,12 @@ const ThemeToggle = () => {
       root.classList.add(theme);
     }
     localStorage.setItem('theme', theme);
-  }, [theme]);
+
+    if (userInfo) {
+      api.put('/auth/preferences', { theme })
+        .catch(e => console.warn("Failed to sync theme preference:", e));
+    }
+  }, [theme, userInfo]);
 
   const cycleTheme = () => {
     const currentIndex = themes.indexOf(theme);

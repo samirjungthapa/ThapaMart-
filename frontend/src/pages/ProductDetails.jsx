@@ -8,6 +8,7 @@ import api from '../store/api.js';
 import ProductCard from '../components/ProductCard.jsx';
 import ARTryOn from '../components/ARTryOn.jsx';
 import { socket } from '../utils/socket.js';
+import { playCartSuccessSound, playHoverPluck } from '../utils/audio.js';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -211,6 +212,7 @@ const ProductDetails = () => {
       navigate(`/login?redirect=${location.pathname}`);
       return;
     }
+    playCartSuccessSound();
     dispatch(addToCart({ 
       product: product.id || product._id, 
       title: product.title, 
@@ -443,9 +445,9 @@ const ProductDetails = () => {
                   padding: '0.5rem', 
                   fontSize: '0.75rem', 
                   fontWeight: 700, 
-                  background: !is3DActive ? '#000' : '#FFF', 
-                  color: !is3DActive ? '#FFF' : '#000',
-                  border: '1px solid #000',
+                  background: !is3DActive ? 'var(--text-primary)' : 'var(--bg-primary)', 
+                  color: !is3DActive ? 'var(--bg-primary)' : 'var(--text-primary)',
+                  border: '1px solid var(--border-color)',
                   cursor: 'pointer' 
                 }}
               >
@@ -458,9 +460,9 @@ const ProductDetails = () => {
                   padding: '0.5rem', 
                   fontSize: '0.75rem', 
                   fontWeight: 700, 
-                  background: is3DActive ? '#000' : '#FFF', 
-                  color: is3DActive ? '#FFF' : '#000',
-                  border: '1px solid #000',
+                  background: is3DActive ? 'var(--text-primary)' : 'var(--bg-primary)', 
+                  color: is3DActive ? 'var(--bg-primary)' : 'var(--text-primary)',
+                  border: '1px solid var(--border-color)',
                   cursor: 'pointer' 
                 }}
               >
@@ -639,13 +641,13 @@ const ProductDetails = () => {
 
             {product.stock > 0 && (
               <div style={{ display:'flex', alignItems:'center', gap:'1rem', marginTop:'1rem' }}>
-                <select value={quantity} onChange={e=>setQuantity(Number(e.target.value))} style={{ width:'5rem', background:'#F9FAFB', border:'1px solid #E5E7EB', padding:'1rem', color:'#09090B', fontSize:'0.875rem', outline:'none', cursor:'pointer' }}>
+                <select value={quantity} onChange={e=>setQuantity(Number(e.target.value))} style={{ width:'5rem', background:'var(--bg-card)', border:'1px solid var(--border-color)', padding:'1rem', color:'var(--text-primary)', fontSize:'0.875rem', outline:'none', cursor:'pointer' }}>
                   {[...Array(Math.min(product.stock, 10))].map((_, i) => <option key={i+1} value={i+1}>{i+1}</option>)}
                 </select>
-                <button onClick={handleAddToCart} style={{ flexGrow:1, display:'flex', alignItems:'center', justifyContent:'center', gap:'0.5rem', padding:'1rem 2rem', background:'#000000', color:'#FFFFFF', fontSize:'0.875rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer', transition:'background 0.2s' }} onMouseEnter={e=>e.currentTarget.style.background='#27272A'} onMouseLeave={e=>e.currentTarget.style.background='#000000'}>
+                <button onClick={handleAddToCart} style={{ flexGrow:1, display:'flex', alignItems:'center', justifyContent:'center', gap:'0.5rem', padding:'1rem 2rem', background:'var(--primary-accent)', color:'#FFFFFF', fontSize:'0.875rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', border:'none', cursor:'pointer', transition:'opacity 0.2s' }} onMouseEnter={e=>e.currentTarget.style.opacity='0.9'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
                   Add to Bag
                 </button>
-                <button onClick={handleAddToWishlist} style={{ padding:'1rem', background:'#FFFFFF', border:'1px solid #E5E7EB', color:'#09090B', cursor:'pointer', transition:'border-color 0.2s' }} onMouseEnter={e=>e.currentTarget.style.borderColor='#09090B'} onMouseLeave={e=>e.currentTarget.style.borderColor='#E5E7EB'}>
+                <button onClick={handleAddToWishlist} style={{ padding:'1rem', background:'var(--bg-card)', border:'1px solid var(--border-color)', color:'var(--text-primary)', cursor:'pointer', transition:'border-color 0.2s' }} onMouseEnter={e=>e.currentTarget.style.borderColor='var(--primary-accent)'} onMouseLeave={e=>e.currentTarget.style.borderColor='var(--border-color)'}>
                   <Heart size={20} />
                 </button>
               </div>
@@ -665,17 +667,17 @@ const ProductDetails = () => {
             </div>
 
             {/* Delivery Estimator */}
-            <div style={{ background:'#F9FAFB', padding:'1.5rem', marginTop:'2rem' }}>
-              <h4 style={{ fontSize:'0.75rem', fontWeight:800, color:'#09090B', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'1rem' }}>Delivery Estimate</h4>
+            <div style={{ background:'var(--bg-card)', border:'1px solid var(--border-color)', padding:'1.5rem', marginTop:'2rem' }}>
+              <h4 style={{ fontSize:'0.75rem', fontWeight:800, color:'var(--text-primary)', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:'1rem' }}>Delivery Estimate</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <select value={deliveryRegion} onChange={e=>setDeliveryRegion(e.target.value)} style={{ width:'100%', background:'#FFFFFF', border:'1px solid #E5E7EB', padding:'0.75rem', color:'#09090B', fontSize:'0.8rem', outline:'none' }}>
+                <select value={deliveryRegion} onChange={e=>setDeliveryRegion(e.target.value)} style={{ width:'100%', background:'var(--bg-primary)', border:'1px solid var(--border-color)', padding:'0.75rem', color:'var(--text-primary)', fontSize:'0.8rem', outline:'none' }}>
                   <option value="inside-ringroad">Inside Ring Road</option>
                   <option value="outside-ringroad">Outside Ring Road</option>
                   <option value="outside-valley">Outside Valley</option>
                 </select>
                 <div style={{ display:'flex', flexDirection:'column', justifyContent:'center', fontSize:'0.75rem' }}>
-                  <p style={{ color:'#71717A' }}>Cost: <strong style={{ color:'#09090B' }}>Rs. {delivery.cost}</strong></p>
-                  <p style={{ color:'#71717A', marginTop:'0.25rem' }}>Time: <strong style={{ color:'#09090B' }}>{delivery.time}</strong></p>
+                  <p style={{ color:'var(--text-primary)', opacity: 0.6 }}>Cost: <strong style={{ color:'var(--text-primary)' }}>Rs. {delivery.cost}</strong></p>
+                  <p style={{ color:'var(--text-primary)', opacity: 0.6, marginTop:'0.25rem' }}>Time: <strong style={{ color:'var(--text-primary)' }}>{delivery.time}</strong></p>
                 </div>
               </div>
             </div>
