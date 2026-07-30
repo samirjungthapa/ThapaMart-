@@ -40,7 +40,13 @@
       "password": "$2a$10$SJ/udgT5ulWcxCOnvxrQD.y9o9jvCKsE3pecr.6Hxn4AVbxQkG9tq",
       "role": "admin",
       "avatar": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80",
-      "cartItems": []
+      "cartItems": [],
+      "preferences": {
+        "theme": "light",
+        "soundscapeTrack": "default",
+        "soundscapeVolume": 0.5,
+        "soundscapeMuted": false
+      }
     },
     {
       "id": "user-1783751483883",
@@ -1003,7 +1009,7 @@
       "category": "jewelry",
       "price": 2450000,
       "discount": 0,
-      "stock": 3,
+      "stock": 2,
       "images": [
         "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=600&auto=format&fit=crop&q=80"
       ],
@@ -15827,6 +15833,34 @@
       "orderStatus": "Processing",
       "createdAt": "2026-07-12T14:52:30.053Z",
       "stripePaymentIntentId": "IME PAY-957351"
+    },
+    {
+      "id": "ord-1785429703930",
+      "user": "user-1783178316887",
+      "products": [
+        {
+          "product": "prod-100",
+          "title": "Rolex Submariner Date",
+          "price": 2450000,
+          "quantity": 1,
+          "image": "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?w=600&auto=format&fit=crop&q=80"
+        }
+      ],
+      "shippingAddress": {
+        "address": "Shivapuri chowk",
+        "city": "Kathmandu",
+        "postalCode": "01",
+        "country": "Nepal",
+        "fullName": "Admin"
+      },
+      "paymentMethod": "eSewa",
+      "taxPrice": 318500,
+      "shippingPrice": 0,
+      "totalPrice": 2768500,
+      "paymentStatus": "Paid",
+      "orderStatus": "Processing",
+      "createdAt": "2026-07-30T16:41:43.930Z",
+      "stripePaymentIntentId": "ESEWA-892051"
     }
   ],
   "carts": {},
