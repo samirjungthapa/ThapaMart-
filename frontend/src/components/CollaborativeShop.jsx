@@ -237,17 +237,35 @@ const CollaborativeShop = () => {
 
                     {/* Active users */}
                     <div>
-                      <h5 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Connected Shoppers ({users.length})</h5>
-                      <div className="flex flex-wrap gap-2">
-                        {users.map((u, i) => (
-                          <span
-                            key={i}
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-600 text-xs font-medium"
-                          >
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                            {u.username}
-                          </span>
-                        ))}
+                      <h5 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2.5">Connected Shoppers ({users.length})</h5>
+                      <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1">
+                        {users.map((u, i) => {
+                          const mockActivities = [
+                            'Customizing in 3D Studio',
+                            'Comparing product specs',
+                            'Optimizing Cart coupons',
+                            'Scanning Visual AI items',
+                            'Spinning for discounts'
+                          ];
+                          const activity = mockActivities[i % mockActivities.length];
+                          return (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/80 rounded-xl"
+                            >
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
+                                <span className="relative flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                {u.username}
+                              </span>
+                              <span className="text-[9px] text-indigo-400 font-black bg-indigo-500/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                {activity}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
