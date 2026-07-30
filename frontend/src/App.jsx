@@ -38,6 +38,7 @@ import OrderFailed from './pages/OrderFailed.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import PaymentGateway from './pages/PaymentGateway.jsx';
+import LoyaltyHub from './pages/LoyaltyHub.jsx';
 
 export const CompareContext = createContext();
 
@@ -195,6 +196,7 @@ function AppContent({ compareList, removeFromCompare, clearCompare }) {
             <Route path="/order-failed" element={<PageTransition><ProtectedRoute><OrderFailed /></ProtectedRoute></PageTransition>} />
             <Route path="/dashboard" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
             <Route path="/profile" element={<PageTransition><ProtectedRoute><Dashboard /></ProtectedRoute></PageTransition>} />
+            <Route path="/loyalty" element={<PageTransition><ProtectedRoute><LoyaltyHub /></ProtectedRoute></PageTransition>} />
             <Route path="/admin" element={<PageTransition><AdminRoute><AdminDashboard /></AdminRoute></PageTransition>} />
           </Routes>
         </AnimatePresence>
