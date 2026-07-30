@@ -2,12 +2,13 @@ import React, { useState, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingBag, Heart, Search, User, LogOut, LayoutDashboard, Menu, X, ArrowRight, Volume2, VolumeX } from 'lucide-react';
+import { ShoppingBag, Heart, Search, User, LogOut, LayoutDashboard, Menu, X, ArrowRight, Volume2, VolumeX, Camera, Award } from 'lucide-react';
 import { logout } from '../store/slices/authSlice.js';
 import ThapaMartLogo from './ThapaMartLogo.jsx';
 import CartDrawer from './CartDrawer.jsx';
 import CommandPalette from './CommandPalette.jsx';
 import ThemeToggle from './ThemeToggle.jsx';
+import VisualSearchModal from './VisualSearchModal.jsx';
 import { isMuted, setMuted, playClick } from '../utils/audio.js';
 
 const BG      = 'var(--bg-primary)';
@@ -27,6 +28,7 @@ const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [visualSearchOpen, setVisualSearchOpen] = useState(false);
   const [muted, setMutedState] = useState(isMuted());
 
   const toggleSound = () => {
@@ -137,6 +139,11 @@ const Navbar = () => {
                 <Search size={20} strokeWidth={1.5} />
               </button>
 
+              {/* Visual AI Search Trigger */}
+              <button onClick={() => { playClick(); setVisualSearchOpen(true); }} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }} title="Visual AI Search">
+                <Camera size={20} strokeWidth={1.5} />
+              </button>
+
               {/* Sound Toggle */}
               <button onClick={toggleSound} style={{ background: 'transparent', border: 'none', color: TEXT, cursor: 'pointer', padding: '0.5rem' }} title={muted ? "Unmute Sounds" : "Mute Sounds"}>
                 {muted ? <VolumeX size={20} strokeWidth={1.5} /> : <Volume2 size={20} strokeWidth={1.5} />}
@@ -188,6 +195,9 @@ const Navbar = () => {
                       </div>
                       <Link to="/dashboard" onClick={() => { playClick(); setProfileOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} className="hover:bg-gray-100 dark:hover:bg-gray-800">
                         <LayoutDashboard size={14} /> My Dashboard
+                      </Link>
+                      <Link to="/loyalty" onClick={() => { playClick(); setProfileOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} className="hover:bg-gray-100 dark:hover:bg-gray-800">
+                        <Award size={14} /> Loyalty Rewards
                       </Link>
                       {userInfo.isAdmin && (
                         <Link to="/admin" onClick={() => { playClick(); setProfileOpen(false); }} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.8rem', color: TEXT, textDecoration: 'none', borderRadius: '0.25rem' }} className="hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -253,6 +263,7 @@ const Navbar = () => {
       </AnimatePresence>
       <CartDrawer isOpen={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} />
       <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
+      <VisualSearchModal isOpen={visualSearchOpen} onClose={() => setVisualSearchOpen(false)} />
     </>
   );
 };
