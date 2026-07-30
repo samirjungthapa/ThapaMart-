@@ -5,6 +5,7 @@ import { ShoppingBag, ArrowRight, X, Trash2, Plus, Minus, Tag, Check, Calendar, 
 import { addToCart, removeFromCart, applyCoupon, removeCoupon, calcPrices } from '../store/slices/cartSlice.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { playClick } from '../utils/audio.js';
+import SmartCartOptimizer from '../components/SmartCartOptimizer.jsx';
 
 const Cart = () => {
   const navigate = useNavigate();
@@ -448,6 +449,13 @@ const Cart = () => {
 
               {/* Order Summary Panel */}
               <div className="lg:col-span-1 space-y-6">
+                <SmartCartOptimizer 
+                  cartItems={cartItems} 
+                  subtotal={subtotal} 
+                  currentCoupon={coupon}
+                  onApplied={(msg) => showToast(msg)}
+                />
+
                 <div style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', padding: '2rem' }}>
                   <h3 style={{ fontSize: '1rem', fontWeight: 800, color: '#09090B', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #E5E7EB' }}>
                     Order Summary
