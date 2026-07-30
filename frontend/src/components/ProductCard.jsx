@@ -229,7 +229,7 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
         {/* Left: Product Image Slider */}
         <div style={{ position: 'relative', width: '220px', minWidth: '150px', aspectRatio: '1/1', overflow: 'hidden', background: '#F7F7F7', flexShrink: 0, borderRadius: '8px 0 0 8px' }}>
           <Link to={`/products/${product.id || product._id}`} onClick={playClick} style={{ display: 'block', width: '100%', height: '100%', padding: '1rem' }}>
-            <img src={product.images[activeImgIdx] || product.images[0]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }} />
+            <img src={product.images[activeImgIdx] || product.images[0]} alt={product.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }} />
           </Link>
           
           {product.images && product.images.length > 1 && isHovered && (
@@ -424,7 +424,7 @@ const ProductCard = ({ product, index = 0, layoutMode = 'grid' }) => {
       {/* Product Image Slider */}
       <div style={{ position: 'relative', aspectRatio: '1/1', overflow: 'hidden', background: '#F7F7F7', borderRadius: '8px 8px 0 0' }}>
         <Link to={`/products/${product.id || product._id}`} onClick={playClick} style={{ display: 'block', width: '100%', height: '100%', padding: '1rem' }}>
-          <img src={product.images[activeImgIdx] || product.images[0]} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }} />
+          <img src={product.images[activeImgIdx] || product.images[0]} alt={product.title} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain', transition: 'transform 0.5s ease', transform: isHovered ? 'scale(1.02)' : 'scale(1)' }} />
         </Link>
         
         {product.images && product.images.length > 1 && isHovered && (
