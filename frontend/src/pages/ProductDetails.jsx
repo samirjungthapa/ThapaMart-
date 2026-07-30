@@ -7,6 +7,7 @@ import { addToWishlist } from '../store/slices/wishlistSlice.js';
 import api from '../store/api.js';
 import ProductCard from '../components/ProductCard.jsx';
 import ARTryOn from '../components/ARTryOn.jsx';
+import ThreeDShowroom from '../components/ThreeDShowroom.jsx';
 import { socket } from '../utils/socket.js';
 import { playCartSuccessSound, playHoverPluck } from '../utils/audio.js';
 
@@ -325,42 +326,7 @@ const ProductDetails = () => {
           {/* Images */}
           <div style={{ position:'sticky', top:'5rem', display:'flex', flexDirection:'column', gap:'1rem' }}>
             {is3DActive ? (
-              <div 
-                style={{ 
-                  aspectRatio:'4/5', 
-                  background:'#0B0F19', 
-                  overflow:'hidden', 
-                  border:'1px solid #E5E7EB',
-                  position:'relative',
-                  cursor:'grab',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column'
-                }}
-                onMouseDown={(e) => {
-                  setIsDragging(true);
-                  setDragStart(e.clientX);
-                }}
-                onMouseMove={(e) => {
-                  if (!isDragging) return;
-                  const delta = e.clientX - dragStart;
-                  setRotation(prev => prev + delta * 0.7);
-                  setDragStart(e.clientX);
-                }}
-                onMouseUp={() => setIsDragging(false)}
-                onMouseLeave={() => setIsDragging(false)}
-              >
-                <div style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'rgba(0,0,0,0.6)', color: '#FFF', fontSize: '10px', padding: '4px 8px', borderRadius: '4px', pointerEvents: 'none' }}>
-                  Drag to Rotate 🔄
-                </div>
-                <canvas 
-                  id="customizer-3d-canvas" 
-                  width={400} 
-                  height={450} 
-                  style={{ width: '100%', height: '100%', maxHeight: '450px' }} 
-                />
-              </div>
+              <ThreeDShowroom product={product} />
             ) : (
               <div 
                 onMouseMove={(e) => {
