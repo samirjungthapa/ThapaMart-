@@ -5,6 +5,7 @@ import { Heart, ArrowRight, Trash2, ShoppingBag, Share2 } from 'lucide-react';
 import { removeFromWishlist, addToWishlist } from '../store/slices/wishlistSlice.js';
 import { addToCart } from '../store/slices/cartSlice.js';
 import api from '../store/api.js';
+import { showToast } from '../utils/toast.js';
 
 const Wishlist = () => {
   const dispatch = useDispatch();
@@ -52,8 +53,8 @@ const Wishlist = () => {
     const ids = wishlistItems.map(item => item.id || item._id).join(',');
     const shareUrl = `${window.location.origin}/wishlist?items=${ids}`;
     navigator.clipboard.writeText(shareUrl)
-      .then(() => alert('Wishlist shareable link copied to clipboard! 📋'))
-      .catch(() => alert('Failed to copy link.'));
+      .then(() => showToast('Wishlist shareable link copied to clipboard! 📋'))
+      .catch(() => showToast('Failed to copy link.'));
   };
 
   return (
