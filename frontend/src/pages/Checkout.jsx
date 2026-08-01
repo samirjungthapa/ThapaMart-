@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { clearCart, calcPrices, applyCoupon, removeCoupon } from '../store/slices/cartSlice.js';
 import api from '../store/api.js';
+import { showToast } from '../utils/toast.js';
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -25,19 +26,19 @@ const Checkout = () => {
     const code = couponCode.trim().toUpperCase();
     if (code === 'SAVE20') {
       dispatch(applyCoupon({ code: 'SAVE20', percent: 20 }));
-      alert('Coupon SAVE20 applied successfully! (20% off)');
+      showToast('Coupon SAVE20 applied successfully! (20% off)');
     } else if (code === 'WELCOME10') {
       dispatch(applyCoupon({ code: 'WELCOME10', percent: 10 }));
-      alert('Coupon WELCOME10 applied successfully! (10% off)');
+      showToast('Coupon WELCOME10 applied successfully! (10% off)');
     } else {
-      alert('Invalid coupon code! Try SAVE20 or WELCOME10.');
+      showToast('Invalid coupon code! Try SAVE20 or WELCOME10.');
     }
   };
 
   const handleRemoveCoupon = () => {
     dispatch(removeCoupon());
     setCouponCode('');
-    alert('Coupon removed.');
+    showToast('Coupon removed.');
   };
 
   useEffect(() => {
