@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addToCart } from '../store/slices/cartSlice.js';
 import api from '../store/api.js';
 import { playClick, playSuccess } from '../utils/audio.js';
+import { showToast } from '../utils/toast.js';
 
 const MartAI = () => {
   const navigate = useNavigate();
@@ -350,7 +351,7 @@ const MartAI = () => {
                                 quantity: 1,
                                 stock: pair.stock || 5
                               }));
-                              alert(`${pair.title} added to shopping bag!`);
+                              showToast(`${pair.title} added to shopping bag!`);
                             }}
                             style={{
                               background: '#000000',
