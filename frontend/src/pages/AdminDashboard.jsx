@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import api from '../store/api.js';
+import { showToast } from '../utils/toast.js';
 import {
   useGetProductsQuery,
   useCreateProductMutation,
@@ -52,7 +53,7 @@ const AdminDashboard = () => {
 
   const handleAiAutoGenerate = async () => {
     if (!title.trim()) {
-      alert('Please enter a product title first to auto-generate metadata.');
+      showToast('Please enter a product title first to auto-generate metadata.');
       return;
     }
     setAiLoading(true);
@@ -65,7 +66,7 @@ const AdminDashboard = () => {
       }
     } catch (err) {
       console.error(err);
-      alert('AI Generation failed. Check console or API key setup.');
+      showToast('AI Generation failed. Check console or API key setup.');
     } finally {
       setAiLoading(false);
     }
@@ -149,7 +150,7 @@ const AdminDashboard = () => {
   };
 
   const handleBulkStockAdjustment = (percent) => {
-    alert('Stock adjustment preview requested. (Bulk edit disabled in dynamic mode)');
+    showToast('Stock adjustment preview requested. (Bulk edit disabled in dynamic mode)');
   };
 
   const handleEditProductClick = (p) => {
@@ -174,7 +175,7 @@ const AdminDashboard = () => {
     try {
       await api.delete(`/products/${productId}/reviews/${reviewId}`);
       fetchData();
-      alert('Review deleted successfully.');
+      showToast('Review deleted successfully.');
     } catch (err) {
       // Offline fallback
       setProducts(products.map(p => {
@@ -188,7 +189,7 @@ const AdminDashboard = () => {
         }
         return p;
       }));
-      alert('Review deleted successfully (simulated fallback).');
+      showToast('Review deleted successfully (simulated fallback).');
     }
   };
 
@@ -1167,12 +1168,12 @@ const AdminDashboard = () => {
                     try {
                       const { data } = await api.post('/products/broadcast', { message: msg });
                       if (data.success) {
-                        alert('Broadcast announcement dispatched successfully!');
+                        showToast('Broadcast announcement dispatched successfully!');
                         e.target.reset();
                       }
                     } catch (err) {
                       console.error(err);
-                      alert('Failed to dispatch broadcast. Ensure backend is running and you are logged in as admin.');
+                      showToast('Failed to dispatch broadcast. Ensure backend is running and you are logged in as admin.');
                     }
                   }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
