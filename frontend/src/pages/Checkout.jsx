@@ -46,8 +46,11 @@ const Checkout = () => {
     if (cartItems.length === 0 && !orderPlaced) navigate('/cart');
   }, [userInfo, cartItems, navigate, orderPlaced]);
 
-  const submitHandler = async (e) => {
-    e.preventDefault();
+  const [showBiometrics, setShowBiometrics] = useState(false);
+  const [biometricScanning, setBiometricScanning] = useState(false);
+  const [biometricVerified, setBiometricVerified] = useState(false);
+
+  const executeOrderSubmission = async () => {
     setLoading(true);
     setError('');
 
@@ -84,8 +87,27 @@ const Checkout = () => {
       setError(err.response?.data?.message || 'Order creation failed');
     } finally {
       setLoading(false);
+      setShowBiometrics(false);
+      setBiometricVerified(false);
     }
   };
+
+  const submitHandler = (e) => {
+    e.preventDefault();
+    setShowBiometrics(true);
+  };
+
+  const handleStartBiometricScan = () => {
+    setBiometricScanning(true);
+    setTimeout(() => {
+      setBiometricScanning(false);
+      setBiometricVerified(true);
+      setTimeout(() => {
+        executeOrderSubmission();
+      }, 1000);
+    }, 2000);
+  };
+
 
   return (
     <div style={{ padding:'3rem 0', minHeight:'100vh', background:'#FFFFFF' }}>
@@ -235,6 +257,124 @@ const Checkout = () => {
 
         </div>
       </div>
+
+      {/* Biometric Verification Modal Overlay */}
+      {showBiometrics && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(9, 9, 11, 0.95)',
+          backdropFilter: 'blur(20px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          color: '#FFFFFF',
+          fontFamily: 'Inter, sans-serif',
+          padding: '1rem',
+        }}>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '24px',
+            padding: '2.5rem 2rem',
+            width: '100%',
+            maxWidth: '380px',
+            textAlign: 'center',
+            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+          }}>
+            <span style={{ fontSize: '0.65rem', fontWeight: 800, color: '#D4AF37', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'block', marginBottom: '0.5rem' }}>
+              Secure Checkout Gateway
+            </span>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '2rem' }}>Biometric Verification</h3>
+            
+            {/* Visual Scanner Circle */}
+            <div style={{
+              position: 'relative',
+              width: '110px',
+              height: '110px',
+              margin: '0 auto 2.5rem auto',
+              borderRadius: '50%',
+              border: '2px solid rgba(255, 255, 255, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              cursor: 'pointer',
+            }} onClick={handleStartBiometricScan}>
+              {/* Dynamic Scanning Laser Bar */}
+              {biometricScanning && (
+                <div style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '3px',
+                  background: '#10B981',
+                  boxShadow: '0 0 15px #10B981, 0 0 5px #10B981',
+                  animation: 'scannerMove 2s infinite linear',
+                  zIndex: 2,
+                }} />
+              )}
+              {/* Inner Circle / Icon */}
+              <div style={{
+                fontSize: '2.5rem',
+                color: biometricVerified ? '#10B981' : biometricScanning ? '#6366F1' : '#FFFFFF',
+                transition: 'color 0.3s',
+              }}>
+                {biometricVerified ? '✓' : '👤'}
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.8rem', color: '#A1A1AA', marginBottom: '2rem', lineHeight: '1.5' }}>
+              {biometricVerified 
+                ? 'Identity Authorized. Completing purchase secure routing...'
+                : biometricScanning 
+                ? 'Analyzing face structure & signature keys...' 
+                : 'Click the scanner above to simulate Apple Face ID / Windows Hello authorization.'}
+            </p>
+
+            {!biometricScanning && !biometricVerified && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <button
+                  onClick={handleStartBiometricScan}
+                  style={{
+                    background: '#FFFFFF',
+                    color: '#09090B',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '0.75rem',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Verify with Touch/Face ID
+                </button>
+                <button
+                  onClick={() => setShowBiometrics(false)}
+                  style={{
+                    background: 'transparent',
+                    color: '#71717A',
+                    border: 'none',
+                    padding: '0.5rem',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel & Use Passcode
+                </button>
+              </div>
+            )}
+          </div>
+          
+          <style>{`
+            @keyframes scannerMove {
+              0% { top: 0%; }
+              50% { top: 100%; }
+              100% { top: 0%; }
+            }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 };
