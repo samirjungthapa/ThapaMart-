@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiUsers, FiShare2, FiMessageSquare, FiCopy, FiCheck, FiSend, FiX, FiRefreshCw } from 'react-icons/fi';
+import { FiUsers, FiShare2, FiMessageSquare, FiCopy, FiCheck, FiSend, FiX, FiRefreshCw, FiMic, FiMicOff } from 'react-icons/fi';
 import { useDispatch, useSelector } from 'react-redux';
 import { setCartItems } from '../store/slices/cartSlice.js';
 import { playClick, playSuccess } from '../utils/audio.js';
@@ -19,6 +19,9 @@ const CollaborativeShop = () => {
   const [chatInput, setChatInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [activePartnerProduct, setActivePartnerProduct] = useState(null);
+  const [isVoiceActive, setIsVoiceActive] = useState(false);
+  const [pollVotes, setPollVotes] = useState({ yes: 3, no: 1 });
+  const [hasVoted, setHasVoted] = useState(false);
 
   const messagesEndRef = useRef(null);
 
@@ -213,24 +216,99 @@ const CollaborativeShop = () => {
                   /* Active session flow */
                   <div className="flex flex-col h-full space-y-4">
                     {/* Connection details */}
-                    <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 rounded-2xl flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Session Room</span>
-                        <span className="text-sm font-mono font-black text-indigo-500">{roomId}</span>
+                    <div className="p-3 bg-slate-50 dark:bg-slate-950/40 border border-slate-100 dark:border-slate-800 rounded-2xl flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Session Room</span>
+                          <span className="text-sm font-mono font-black text-indigo-500">{roomId}</span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={copyLink}
+                            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 rounded-xl text-xs flex items-center gap-1.5 text-slate-600 dark:text-white"
+                          >
+                            {copied ? <FiCheck className="text-emerald-500" /> : <FiCopy />}
+                            <span>{copied ? 'Copied' : 'Copy ID'}</span>
+                          </button>
+                          <button
+                            onClick={leaveRoom}
+                            className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs"
+                          >
+                            Leave
+                          </button>
+                        </div>
                       </div>
+                      
+                      {/* Premium Voice Channel Toggle */}
+                      <div className="flex items-center justify-between border-t border-slate-200/50 dark:border-slate-800/50 pt-2">
+                        <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1.5">
+                          {isVoiceActive ? (
+                            <>
+                              <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                              </span>
+                              <span className="text-emerald-500">LIVE AUDIO ACTIVE</span>
+                            </>
+                          ) : (
+                            "AUDIO LOUNGE DISCONNECTED"
+                          )}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => { playClick(); setIsVoiceActive(!isVoiceActive); }}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-lg text-[10px] font-bold transition-all border ${
+                            isVoiceActive 
+                              ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600 dark:text-emerald-400' 
+                              : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500'
+                          }`}
+                        >
+                          {isVoiceActive ? <FiMic className="animate-bounce" /> : <FiMicOff />}
+                          <span>{isVoiceActive ? 'Mute Mic' : 'Join Audio'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Group Shopping Polls */}
+                    <div className="p-3 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/50 rounded-2xl">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">Active Lounge Poll</span>
+                        <span className="text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">4 votes cast</span>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-2">"Should we purchase the items in the cart for the group checkout?"</p>
+                      
                       <div className="flex gap-2">
                         <button
-                          onClick={copyLink}
-                          className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 rounded-xl text-xs flex items-center gap-1.5 text-slate-600 dark:text-white"
+                          onClick={() => {
+                            if (!hasVoted) {
+                              playSuccess();
+                              setPollVotes(prev => ({ ...prev, yes: prev.yes + 1 }));
+                              setHasVoted(true);
+                            }
+                          }}
+                          className={`flex-grow py-1.5 px-3 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                            hasVoted 
+                              ? 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-400 cursor-not-allowed' 
+                              : 'bg-indigo-600 border-indigo-500 text-white hover:bg-indigo-500'
+                          }`}
                         >
-                          {copied ? <FiCheck className="text-emerald-500" /> : <FiCopy />}
-                          <span>{copied ? 'Copied' : 'Copy ID'}</span>
+                          <span>Yes ({pollVotes.yes})</span>
                         </button>
                         <button
-                          onClick={leaveRoom}
-                          className="p-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl text-xs"
+                          onClick={() => {
+                            if (!hasVoted) {
+                              playSuccess();
+                              setPollVotes(prev => ({ ...prev, no: prev.no + 1 }));
+                              setHasVoted(true);
+                            }
+                          }}
+                          className={`flex-grow py-1.5 px-3 rounded-lg text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                            hasVoted 
+                              ? 'bg-slate-100 dark:bg-slate-800 border-transparent text-slate-400 cursor-not-allowed' 
+                              : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-350 hover:bg-slate-50'
+                          }`}
                         >
-                          Leave
+                          <span>No ({pollVotes.no})</span>
                         </button>
                       </div>
                     </div>
@@ -238,7 +316,7 @@ const CollaborativeShop = () => {
                     {/* Active users */}
                     <div>
                       <h5 className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2.5">Connected Shoppers ({users.length})</h5>
-                      <div className="space-y-2 max-h-[140px] overflow-y-auto pr-1">
+                      <div className="space-y-2 max-h-[100px] overflow-y-auto pr-1">
                         {users.map((u, i) => {
                           const mockActivities = [
                             'Customizing in 3D Studio',
@@ -277,7 +355,7 @@ const CollaborativeShop = () => {
                       </div>
 
                       {/* Messages list */}
-                      <div className="flex-grow overflow-y-auto p-4 space-y-3 max-h-[220px]">
+                      <div className="flex-grow overflow-y-auto p-4 space-y-3 max-h-[160px]">
                         {messages.length === 0 ? (
                           <p className="text-[11px] text-slate-400 text-center my-8">Start the conversation... Share thoughts on items in your cart!</p>
                         ) : (
