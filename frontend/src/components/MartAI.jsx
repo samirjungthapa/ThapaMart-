@@ -93,6 +93,9 @@ const MartAI = () => {
     recognition.onresult = (event) => {
       const speechToText = event.results[0][0].transcript;
       setInput(speechToText);
+      setTimeout(() => {
+        handleSendWithText(speechToText);
+      }, 500);
     };
 
     recognition.start();
@@ -123,13 +126,10 @@ const MartAI = () => {
     }
   };
 
-  const handleSend = async (e) => {
-    if (e) e.preventDefault();
-    if (!input.trim()) return;
-
+  const handleSendWithText = async (textToSend) => {
+    if (!textToSend.trim()) return;
     playClick();
-    const userMsg = input.trim();
-    setMessages((prev) => [...prev, { sender: 'user', text: userMsg }]);
+    setMessages((prev) => [...prev, { sender: 'user', text: textToSend }]);
     setInput('');
     setIsTyping(true);
 
@@ -139,8 +139,8 @@ const MartAI = () => {
         parts: [{ text: m.text }]
       }));
 
-      const { data } = await api.post('/ai/chat', {
-        message: userMsg,
+      const { data } = await api.post('/api/ai/chat', {
+        message: textToSend,
         history: chatHistory
       });
 
@@ -159,6 +159,11 @@ const MartAI = () => {
         { sender: 'ai', text: "I ran into a small connectivity hiccup, but feel free to search directly in our Shop tab!" },
       ]);
     }
+  };
+
+  const handleSend = async (e) => {
+    if (e) e.preventDefault();
+    handleSendWithText(input);
   };
 
   return (
@@ -443,27 +448,67 @@ const MartAI = () => {
 
                       {/* Recommended Products UI */}
                       {msg.products && msg.products.length > 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.75rem', width: '100%' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.75rem', width: '100%' }}>
                           {msg.products.map((prod) => (
                             <div
                               key={prod.id || prod._id}
-                              onClick={() => { playClick(); setIsOpen(false); navigate(`/products/${prod.id || prod._id}`); }}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.5rem',
-                                padding: '0.5rem',
+                                gap: '0.75rem',
+                                padding: '0.65rem',
                                 background: '#FFFFFF',
-                                border: '1px solid #E5E7EB',
-                                borderRadius: '0.5rem',
-                                cursor: 'pointer',
+                                border: '1px solid #F3F4F6',
+                                borderRadius: '0.75rem',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                                transition: 'transform 0.2s',
                               }}
                             >
-                              <img src={prod.images[0]} alt="" style={{ width: '40px', height: '50px', objectFit: 'cover', borderRadius: '4px' }} />
-                              <div style={{ flexGrow: 1, minWidth: 0 }}>
-                                <p style={{ fontSize: '0.75rem', fontWeight: 700, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prod.title}</p>
-                                <p style={{ fontSize: '0.7rem', color: '#71717A', margin: 0 }}>Rs. {Number(prod.price).toLocaleString()}</p>
+                              <img 
+                                src={prod.images?.[0] || prod.image} 
+                                alt="" 
+                                onClick={() => { playClick(); setIsOpen(false); navigate(`/products/${prod.id || prod._id}`); }}
+                                style={{ width: '45px', height: '55px', objectFit: 'cover', borderRadius: '6px', cursor: 'pointer' }} 
+                              />
+                              <div style={{ flexGrow: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => { playClick(); setIsOpen(false); navigate(`/products/${prod.id || prod._id}`); }}>
+                                <p style={{ fontSize: '0.75rem', fontWeight: 800, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#09090B' }}>
+                                  {prod.title}
+                                </p>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', margin: '2px 0' }}>
+                                  <span style={{ color: '#F59E0B', fontSize: '0.65rem' }}>★</span>
+                                  <span style={{ fontSize: '0.65rem', color: '#71717A', fontWeight: 650 }}>{prod.ratings || prod.rating || '4.8'}</span>
+                                </div>
+                                <p style={{ fontSize: '0.7rem', color: '#10B981', fontWeight: 700, margin: 0 }}>Rs. {Number(prod.price).toLocaleString()}</p>
                               </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  playSuccess();
+                                  dispatch(addToCart({
+                                    product: prod._id || prod.id,
+                                    title: prod.title,
+                                    price: prod.price,
+                                    image: prod.images?.[0] || prod.image,
+                                    quantity: 1,
+                                    stock: prod.stock || 5
+                                  }));
+                                  showToast(`${prod.title} added to shopping bag!`);
+                                }}
+                                style={{
+                                  background: '#09090B',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  padding: '0.35rem 0.55rem',
+                                  borderRadius: '6px',
+                                  fontSize: '0.65rem',
+                                  fontWeight: 750,
+                                  cursor: 'pointer',
+                                  transition: 'background 0.2s',
+                                }}
+                              >
+                                Add
+                              </button>
                             </div>
                           ))}
                         </div>
