@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { FiAward, FiGift, FiZap, FiCheckCircle, FiCompass, FiUsers, FiDisc } from 'react-icons/fi';
 import { playClick, playSuccess } from '../utils/audio.js';
@@ -155,6 +155,9 @@ const LoyaltyHub = () => {
 
         </div>
 
+        {/* Interactive Scratch & Win Game */}
+        <ScratchCard rewardPoints={500} onRedeem={(p) => setPoints(prev => prev + p)} />
+
         {/* Badges / Milestones Section */}
         <div>
           <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
@@ -182,6 +185,142 @@ const LoyaltyHub = () => {
           </div>
         </div>
 
+      </div>
+    </div>
+  );
+};
+
+const ScratchCard = ({ rewardPoints, onRedeem }) => {
+  const canvasRef = useRef(null);
+  const [scratched, setScratched] = useState(false);
+  const [claimed, setClaimed] = useState(false);
+  const isDrawing = useRef(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    // Fill silver background
+    ctx.fillStyle = '#C0C0C0';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Add patterns
+    ctx.fillStyle = '#A9A9A9';
+    for (let i = 0; i < canvas.width; i += 20) {
+      for (let j = 0; j < canvas.height; j += 20) {
+        ctx.fillRect(i + 5, j + 5, 2, 2);
+      }
+    }
+    
+    // Draw guide text
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillStyle = '#555555';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('SCRATCH HERE TO REVEAL', canvas.width / 2, canvas.height / 2);
+  }, []);
+
+  const getMousePos = (e) => {
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top
+    };
+  };
+
+  const draw = (e) => {
+    if (!isDrawing.current || scratched) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const pos = getMousePos(e);
+    
+    ctx.globalCompositeOperation = 'destination-out';
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 16, 0, Math.PI * 2);
+    ctx.fill();
+    
+    checkScratchPercentage();
+  };
+
+  const checkScratchPercentage = () => {
+    if (scratched) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imgData.data;
+    let cleared = 0;
+    
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i + 3] === 0) {
+        cleared++;
+      }
+    }
+    
+    const percent = (cleared / (pixels.length / 4)) * 100;
+    if (percent > 45) {
+      setScratched(true);
+      playSuccess();
+    }
+  };
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl mb-10 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl relative overflow-hidden">
+      <div>
+        <span className="px-2.5 py-0.5 text-[9px] font-bold bg-amber-500/10 border border-amber-500/35 text-amber-400 rounded-full uppercase tracking-wider">
+          Daily Bonus Game
+        </span>
+        <h4 className="text-sm font-extrabold text-white mt-2">Elite Scratch & Win Card</h4>
+        <p className="text-xs text-slate-400 mt-1 leading-normal max-w-sm font-medium">
+          Use your cursor or touchscreen to scratch off the silver layer and unlock high-tier rewards.
+        </p>
+      </div>
+      
+      <div className="relative w-[260px] h-[100px] bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex items-center justify-center">
+        {/* Underlay Reward Code */}
+        <div className="absolute text-center">
+          <span className="text-[9px] text-indigo-400 font-bold tracking-widest block uppercase mb-1">PROMO CODE REVEALED</span>
+          <span className="text-xl font-mono font-black text-amber-400 tracking-wider">LUCKY500</span>
+          <span className="text-[10px] text-slate-400 block mt-1">+{rewardPoints} MartPoints</span>
+        </div>
+        
+        {/* Canvas overlay */}
+        <canvas
+          ref={canvasRef}
+          width="260"
+          height="100"
+          onMouseDown={() => { isDrawing.current = true; }}
+          onMouseUp={() => { isDrawing.current = false; }}
+          onMouseLeave={() => { isDrawing.current = false; }}
+          onMouseMove={draw}
+          onTouchStart={() => { isDrawing.current = true; }}
+          onTouchEnd={() => { isDrawing.current = false; }}
+          onTouchMove={draw}
+          className={`absolute top-0 left-0 w-full h-full cursor-crosshair z-10 transition-opacity duration-500 ${scratched ? 'opacity-0 pointer-events-none' : ''}`}
+        />
+      </div>
+
+      <div className="flex-shrink-0">
+        <button
+          disabled={!scratched || claimed}
+          onClick={() => {
+            playSuccess();
+            onRedeem(rewardPoints);
+            setClaimed(true);
+          }}
+          className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-colors ${
+            claimed
+              ? 'bg-slate-800 text-slate-500 cursor-not-allowed'
+              : scratched
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg'
+              : 'bg-slate-900 border border-slate-800 text-slate-650 cursor-not-allowed'
+          }`}
+        >
+          {claimed ? 'Claimed' : scratched ? 'Claim Rewards' : 'Scratch Card First'}
+        </button>
       </div>
     </div>
   );
