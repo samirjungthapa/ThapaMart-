@@ -298,12 +298,42 @@ const ThreeDShowroom = ({ product }) => {
     };
   }, [lightingMode, isRotating]);
 
+  const [activeHotspot, setActiveHotspot] = useState(null);
+
+  const hotspots = [
+    { id: 'cushion', label: 'Ear Cushions', x: '35%', y: '55%', detail: 'Breathable Memory Foam with magnetic attach mechanics and cooling gel layer.' },
+    { id: 'driver', label: 'Drivers', x: '65%', y: '50%', detail: 'Custom 40mm Beryllium diaphragms delivering ultra-low distortion and premium response.' },
+    { id: 'headband', label: 'Headband', x: '50%', y: '22%', detail: 'Reinforced carbon fiber core wrapped in premium full-grain leather for ergonomic comfort.' }
+  ];
+
   return (
     <div className="flex flex-col lg:flex-row bg-slate-900/60 dark:bg-slate-950/40 backdrop-blur-md rounded-2xl overflow-hidden border border-slate-800 shadow-2xl h-[520px]">
       {/* 3D Viewport */}
       <div className="relative flex-grow h-[350px] lg:h-full cursor-grab active:cursor-grabbing">
         <div ref={mountRef} className="w-full h-full" />
         
+        {/* Interactive Spec Hotspots */}
+        {hotspots.map((hs) => (
+          <div 
+            key={hs.id} 
+            style={{ position: 'absolute', left: hs.x, top: hs.y }}
+            className="z-10 group"
+          >
+            <button
+              onClick={() => setActiveHotspot(activeHotspot === hs.id ? null : hs.id)}
+              className="w-5 h-5 bg-indigo-500 hover:bg-indigo-400 border border-white/40 text-white rounded-full flex items-center justify-center text-[10px] font-bold shadow-lg animate-pulse transition-all cursor-pointer pointer-events-auto"
+            >
+              +
+            </button>
+            {activeHotspot === hs.id && (
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 w-48 bg-slate-950/90 border border-slate-800 p-2.5 rounded-lg text-[10px] text-white shadow-xl pointer-events-auto z-20">
+                <p className="font-bold text-indigo-400 mb-0.5">{hs.label}</p>
+                <p className="text-slate-300 leading-normal">{hs.detail}</p>
+              </div>
+            )}
+          </div>
+        ))}
+
         {/* Interactive Overlay HUD */}
         <div className="absolute top-4 left-4 pointer-events-none">
           <span className="px-2.5 py-1 text-[10px] font-bold tracking-widest text-indigo-400 bg-indigo-950/60 border border-indigo-500/30 rounded-full uppercase">

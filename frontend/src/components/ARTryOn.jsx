@@ -13,6 +13,24 @@ const ARTryOn = ({ product, isOpen, onClose }) => {
   const [posY, setPosY] = useState(-30); // offset from center Y (starting near face)
   const [isPhotoTaken, setIsPhotoTaken] = useState(false);
   const [photoUrl, setPhotoUrl] = useState(null);
+  const [isFaceTracking, setIsFaceTracking] = useState(true);
+
+  // Simulated face tracking movement animation loop
+  useEffect(() => {
+    if (!isFaceTracking || isPhotoTaken || !isOpen) return;
+
+    let animFrame;
+    const animate = (time) => {
+      // Simulate small natural movement around head/face coordinate
+      const angle = time * 0.002;
+      setPosX(Math.sin(angle) * 8);
+      setPosY(-30 + Math.cos(angle * 1.5) * 6);
+      animFrame = requestAnimationFrame(animate);
+    };
+
+    animFrame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animFrame);
+  }, [isFaceTracking, isPhotoTaken, isOpen]);
 
   // Auto-detect accessories type to select best image or default
   const productImg = product?.images?.[0] || product?.image;
@@ -135,6 +153,27 @@ const ARTryOn = ({ product, isOpen, onClose }) => {
                   className="w-full h-full object-cover scale-x-[-1]"
                 />
                 
+                {/* Simulated Green Face Mesh/Tracking Brackets */}
+                {isFaceTracking && (
+                  <motion.div 
+                    animate={{ opacity: [0.4, 0.9, 0.4] }}
+                    transition={{ repeat: Infinity, duration: 2 }}
+                    style={{
+                      position: 'absolute',
+                      top: `calc(50% + ${posY}px)`,
+                      left: `calc(50% + ${posX}px)`,
+                      width: '200px',
+                      height: '240px',
+                      transform: 'translate(-50%, -50%)',
+                      border: '2px dashed #10B981',
+                      borderRadius: '40%',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    <span className="absolute top-2 left-2 text-[9px] text-[#10B981] font-mono tracking-widest bg-black/60 px-1.5 py-0.5 rounded">FACE MATCHED (89%)</span>
+                  </motion.div>
+                )}
+
                 {/* Dynamic Product Overlay */}
                 <motion.div
                   style={{
@@ -162,7 +201,7 @@ const ARTryOn = ({ product, isOpen, onClose }) => {
                 </motion.div>
                 
                 <span className="absolute bottom-3 left-3 bg-slate-900/80 backdrop-blur-md text-[10px] text-indigo-400 font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
-                  Live View - Drag to position item
+                  Live View - {isFaceTracking ? "AI Face Tracking Active" : "Drag to position"}
                 </span>
               </div>
             ) : (
@@ -182,7 +221,25 @@ const ARTryOn = ({ product, isOpen, onClose }) => {
           <div className="p-6 bg-slate-900/50 border-t border-white/10 space-y-4">
             {!isPhotoTaken ? (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Face Tracking Toggle */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">AI Face-Track</label>
+                    <div>
+                      <button
+                        type="button"
+                        onClick={() => { playClick(); setIsFaceTracking(!isFaceTracking); }}
+                        className={`w-full py-2 rounded-xl text-xs font-bold transition-all border ${
+                          isFaceTracking 
+                            ? 'bg-emerald-500/10 border-emerald-500 text-emerald-400' 
+                            : 'bg-white/5 border-white/10 text-slate-400'
+                        }`}
+                      >
+                        {isFaceTracking ? 'Enabled' : 'Disabled'}
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Scale control */}
                   <div className="space-y-1.5">
                     <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Scale Size</label>
@@ -204,12 +261,12 @@ const ARTryOn = ({ product, isOpen, onClose }) => {
                   </div>
 
                   {/* Reset Control */}
-                  <div className="col-span-2 md:col-span-1 flex items-end">
+                  <div className="flex items-end">
                     <button
                       onClick={() => { setScale(1); setRotation(0); setPosX(0); setPosY(-30); }}
-                      className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-bold transition-all"
+                      className="w-full py-2 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-bold transition-all border border-white/10"
                     >
-                      Reset Alignment
+                      Reset
                     </button>
                   </div>
                 </div>
