@@ -895,15 +895,46 @@ if (!fs.existsSync(DB_FILE)) {
   fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2));
 }
 
+let cachedDb = null;
+let writeQueue = Promise.resolve();
+
 export const readDb = () => {
+  if (cachedDb) {
+    return cachedDb;
+  }
   try {
-    const data = fs.readFileSync(DB_FILE, 'utf8');
-    return JSON.parse(data);
+    if (fs.existsSync(DB_FILE)) {
+      const data = fs.readFileSync(DB_FILE, 'utf8');
+      cachedDb = JSON.parse(data);
+    } else {
+      cachedDb = JSON.parse(JSON.stringify(initialData));
+      fs.writeFileSync(DB_FILE, JSON.stringify(cachedDb, null, 2));
+    }
+    return cachedDb;
   } catch (error) {
-    return initialData;
+    cachedDb = JSON.parse(JSON.stringify(initialData));
+    return cachedDb;
   }
 };
 
 export const writeDb = (data) => {
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  cachedDb = data;
+  
+  // Use a write queue to serialize file writes asynchronously so multiple writes don't overlap,
+  // while keeping the synchronous signature alive and functional.
+  const serializedWrite = () => {
+    return new Promise((resolve) => {
+      try {
+        const tempPath = `${DB_FILE}.tmp`;
+        fs.writeFileSync(tempPath, JSON.stringify(data, null, 2));
+        fs.renameSync(tempPath, DB_FILE);
+      } catch (err) {
+        console.error('Failed to safely write JSON DB:', err);
+      }
+      resolve();
+    });
+  };
+
+  writeQueue = writeQueue.then(serializedWrite);
 };
+
