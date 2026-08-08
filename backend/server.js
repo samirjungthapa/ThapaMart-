@@ -7,6 +7,7 @@ import rateLimit from 'express-rate-limit';
 import { Server } from 'socket.io';
 import connectDB from './config/db.js';
 import { handleSockets } from './utils/socketHandler.js';
+import mongoSanitize from 'express-mongo-sanitize';
 
 // Route Imports
 import authRoutes from './routes/authRoutes.js';
@@ -55,25 +56,8 @@ app.use('/api', apiLimiter);
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
-// NoSQL Injection Mitigation Middleware
-const sanitizeInput = (obj) => {
-  if (obj instanceof Object) {
-    for (const key in obj) {
-      if (key.startsWith('$') || key.includes('.')) {
-        delete obj[key];
-      } else {
-        sanitizeInput(obj[key]);
-      }
-    }
-  }
-};
-
-app.use((req, res, next) => {
-  if (req.body) sanitizeInput(req.body);
-  if (req.query) sanitizeInput(req.query);
-  if (req.params) sanitizeInput(req.params);
-  next();
-});
+// NoSQL Injection Mitigation Middleware (Robust Sanitation)
+app.use(mongoSanitize());
 
 // Request logger middleware
 app.use((req, res, next) => {
