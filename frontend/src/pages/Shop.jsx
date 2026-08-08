@@ -95,8 +95,23 @@ const Shop = () => {
       });
       setProducts(data.products || []);
       setPages(data.pages || 1);
+      if (data && data.products) {
+        localStorage.setItem(`cached_catalog_${categoryParam}_${page}`, JSON.stringify(data));
+      }
     } catch (err) {
-      setProducts([]);
+      const categoryParam = categories.length > 0 ? categories.join(',') : 'all';
+      const cached = localStorage.getItem(`cached_catalog_${categoryParam}_${page}`);
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setProducts(parsed.products || []);
+          setPages(parsed.pages || 1);
+        } catch (e) {
+          setProducts([]);
+        }
+      } else {
+        setProducts([]);
+      }
     } finally {
       setLoading(false);
     }
