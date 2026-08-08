@@ -390,12 +390,22 @@ export const refreshAccessToken = async (req, res) => {
     }
 
     const token = generateToken(user.id || user._id.toString());
+    const newRefreshToken = generateRefreshToken(user.id || user._id.toString());
+
     res.cookie('token', token, {
       expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minutes
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
     });
+
+    res.cookie('refreshToken', newRefreshToken, {
+      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+    });
+
     res.json({ token });
   } catch (error) {
     console.error('Refresh token error:', error);
